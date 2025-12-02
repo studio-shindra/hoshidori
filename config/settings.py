@@ -35,7 +35,7 @@ SECRET_KEY = 'django-insecure-pfyl1=xr^k9$iek28ykes6#m9e8%%9ksh1#l=$0xkklz39mgap
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "hoshidori.herokuapp.com", "your-custom-domain"] 
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "https://hoshidori-67b44bed2d10.herokuapp.com/", "hoshidori.com"] 
 
 
 # Application definition
