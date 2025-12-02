@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import dj_database_url
 
 # Load environment variables from a local .env file if present
 # This allows settings like CLOUDINARY_URL to be read without external loaders.
@@ -112,14 +113,21 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     'default': {
+        # ローカル開発用（Docker Postgres）
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'hoshidori',
         'USER': 'hoshidori',
         'PASSWORD': 'hoshidori',
-        'HOST': '127.0.0.1',  # DockerのPostgresにホストから繋ぐ
-        'PORT': '5433',       # docker-compose で公開してるポート
+        'HOST': '127.0.0.1',
+        'PORT': '5433',
     }
 }
+
+# Heroku 等で DATABASE_URL が設定されている場合は、そちらで上書き
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if DATABASE_URL:
+    db_from_env = dj_database_url.parse(DATABASE_URL, conn_max_age=600, ssl_require=True)
+    DATABASES['default'] = db_from_env
 
 
 REST_FRAMEWORK = {
