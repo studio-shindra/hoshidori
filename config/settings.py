@@ -83,8 +83,9 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'config.urls'
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # Vue(frontend) dev用
+    "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "https://hoshidori.netlify.app",  # ★ 追加
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -92,6 +93,8 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "https://hoshidori-67b44bed2d10.herokuapp.com",  # ★ Heroku本体も追加
+    "https://hoshidori.netlify.app",                 # ★ 追加
 ]
 
 TEMPLATES = [
