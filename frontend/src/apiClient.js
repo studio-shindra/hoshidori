@@ -1,5 +1,5 @@
 // frontend/src/apiClient.js
-const baseUrl = import.meta.env.VITE_API_BASE_URL || ''
+const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '') // 末尾のスラッシュを削除
 
 function getAccessToken() {
   // ログイン時に localStorage.setItem('hoshidori_token', access) してある想定
