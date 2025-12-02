@@ -36,7 +36,12 @@ SECRET_KEY = 'django-insecure-pfyl1=xr^k9$iek28ykes6#m9e8%%9ksh1#l=$0xkklz39mgap
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "https://hoshidori-67b44bed2d10.herokuapp.com/", "hoshidori.com"] 
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    "hoshidori-67b44bed2d10.herokuapp.com",
+    "hoshidori.com",
+]
 
 
 # Application definition
@@ -123,10 +128,14 @@ DATABASES = {
     }
 }
 
-# Heroku 等で DATABASE_URL が設定されている場合は、そちらで上書き
+# Heroku などで DATABASE_URL が設定されている場合はそちらを優先
 DATABASE_URL = os.environ.get('DATABASE_URL')
 if DATABASE_URL:
-    db_from_env = dj_database_url.parse(DATABASE_URL, conn_max_age=600, ssl_require=True)
+    db_from_env = dj_database_url.parse(
+        DATABASE_URL,
+        conn_max_age=600,
+        ssl_require=True,
+    )
     DATABASES['default'] = db_from_env
 
 
