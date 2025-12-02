@@ -2,10 +2,40 @@
 from django.contrib import admin
 from import_export import resources, fields
 from import_export.admin import ImportExportModelAdmin
-from import_export.widgets import ManyToManyWidget
+from import_export.widgets import ManyToManyWidget, ForeignKeyWidget
 from taggit.models import Tag
 
 from .models import Theater, Actor, Work, Run, ViewingLog
+
+
+# ===== カスタム Widget =====
+
+class TheaterWidget(ForeignKeyWidget):
+    """
+    Works CSV の main_theater カラムから Theater を自動で get_or_create する Widget。
+    """
+    def clean(self, value, row=None, *args, **kwargs):
+        if not value:
+            return None
+        name = value.strip()
+        obj, _ = Theater.objects.get_or_create(name=name)
+        return obj
+
+
+class ActorWidget(ManyToManyWidget):
+    """
+    Works CSV の actors カラム（例: "俳優A, 俳優B"）から
+    Actor を自動で get_or_create して紐づける Widget。
+    """
+    def clean(self, value, row=None, *args, **kwargs):
+        if not value:
+            return []
+        names = [name.strip() for name in value.split(',') if name.strip()]
+        actors = []
+        for name in names:
+            obj, _ = Actor.objects.get_or_create(name=name)
+            actors.append(obj)
+        return actors
 
 
 # ===== Theater =====
@@ -40,7 +70,23 @@ class ActorAdmin(admin.ModelAdmin):
 # ===== Work =====
 
 class WorkResource(resources.ModelResource):
-    # CSV で "タグ1,タグ2" のようにインポートしたい場合用
+    """
+    Works 用のインポート／エクスポート Resource。
+    main_theater / actors / tags を名前ベースで処理する。
+    """
+
+    main_theater = fields.Field(
+        column_name='main_theater',
+        attribute='main_theater',
+        widget=TheaterWidget(Theater, 'name'),
+    )
+
+    actors = fields.Field(
+        column_name='actors',
+        attribute='actors',
+        widget=ActorWidget(Actor, field='name', separator=','),
+    )
+
     tags = fields.Field(
         column_name='tags',
         attribute='tags',
@@ -49,22 +95,30 @@ class WorkResource(resources.ModelResource):
 
     class Meta:
         model = Work
-        fields = ('id', 'title', 'slug', 'troupe', 'main_theater', 'status', 'tags')
+        fields = (
+            'id',
+            'title',
+            'slug',
+            'troupe',
+            'main_theater',
+            'actors',
+            'status',
+            'tags',
+        )
+
+
+class RunInline(admin.TabularInline):
+    model = Run
+    extra = 0
+
 
 @admin.register(Work)
 class WorkAdmin(ImportExportModelAdmin):
     resource_class = WorkResource
     list_display = ('title', 'troupe', 'main_theater', 'status', 'created_at')
-    list_filter = ('status', 'main_theater', 'tags')
+    list_filter = ('status', 'main_theater')
     search_fields = ('title', 'troupe', 'tags__name')
-    filter_horizontal = ('actors',)  # tags は TaggableManager なので除外
-
-    # Run を Work 編集画面から追加しやすくする
-    class RunInline(admin.TabularInline):
-        model = Run
-        extra = 0
-        fields = ('label', 'area', 'theater', 'start_date', 'end_date')
-
+    filter_horizontal = ('actors',)
     inlines = [RunInline]
 
 
@@ -83,6 +137,7 @@ class RunResource(resources.ModelResource):
             'end_date',
         )
 
+
 @admin.register(Run)
 class RunAdmin(ImportExportModelAdmin):
     resource_class = RunResource
@@ -91,11 +146,12 @@ class RunAdmin(ImportExportModelAdmin):
     search_fields = ('work__title', 'label')
 
 
+
 # ===== ViewingLog =====
 
 @admin.register(ViewingLog)
 class ViewingLogAdmin(admin.ModelAdmin):
-    list_display = ('user', 'work', 'run', 'watched_at', 'rating')
-    list_filter = ('rating', 'watched_at', 'work', 'run', 'user')
+    list_display = ('user', 'work', 'watched_at', 'rating')  # watched_at に変えたならここも揃える
+    list_filter = ('rating', 'work', 'user')
     search_fields = ('work__title', 'user__username', 'user__email', 'tags__name')
     autocomplete_fields = ('work', 'user', 'run')

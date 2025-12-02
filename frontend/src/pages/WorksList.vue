@@ -60,7 +60,17 @@ onMounted(() => {
     <div v-if="works.length > 0" class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-1">
       <div v-for="work in works" :key="work.id" class="col position-relative">
         <router-link :to="`/works/${work.id}/detail`" class="text-decoration-none">
-          <div class="card h-100">
+          <div class="card h-100 border-0 shadow-sm">
+            <!-- 評価バッジ（画像の上に重ねる） -->
+            <div class="position-absolute bottom-0 end-0 p-2 bg-white" style="z-index: 10; aspect-ratio: 1/1; border-radius: 10px 0 0 0;">
+              <span
+                class="d-inline-flex align-items-center flex-column justify-content-center gap-1"
+                style="color: orange;">
+                <IconStarFilled :size="14" />
+                {{ work.avg_rating || '-' }}
+              </span>
+            </div>
+            
             <img
               v-if="work.main_image || work.main_image_url"
               :src="work.main_image || work.main_image_url"

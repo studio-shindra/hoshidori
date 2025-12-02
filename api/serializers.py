@@ -28,6 +28,14 @@ class WorkListSerializer(serializers.ModelSerializer):
         read_only=True,
         slug_field='name',
     )
+    avg_rating = serializers.SerializerMethodField()
+
+    def get_avg_rating(self, obj):
+        """この作品の全ユーザーの評価平均を計算"""
+        from django.db.models import Avg
+        result = ViewingLog.objects.filter(work=obj, rating__isnull=False).aggregate(Avg('rating'))
+        avg = result.get('rating__avg')
+        return round(avg, 1) if avg else None
 
     class Meta:
         model = Work
@@ -40,6 +48,7 @@ class WorkListSerializer(serializers.ModelSerializer):
             'status',
             'main_image',
             'tags',
+            'avg_rating',
         ]
 
 
@@ -68,6 +77,14 @@ class WorkDetailSerializer(serializers.ModelSerializer):
         read_only=True,
         slug_field='name',
     )
+    avg_rating = serializers.SerializerMethodField()
+
+    def get_avg_rating(self, obj):
+        """この作品の全ユーザーの評価平均を計算"""
+        from django.db.models import Avg
+        result = ViewingLog.objects.filter(work=obj, rating__isnull=False).aggregate(Avg('rating'))
+        avg = result.get('rating__avg')
+        return round(avg, 1) if avg else None
 
     class Meta:
         model = Work
@@ -83,6 +100,7 @@ class WorkDetailSerializer(serializers.ModelSerializer):
             'tags',
             'actors',
             'runs',
+            'avg_rating',
         ]
 
 
