@@ -1,0 +1,9 @@
+.df-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+p {
+  white-space: pre-wrap;
+}/*# sourceMappingURL=custom.css.map */
