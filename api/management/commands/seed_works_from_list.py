@@ -6,7 +6,7 @@ from django.core.management.base import BaseCommand
 from django.utils.text import slugify
 from django.utils import timezone
 
-from api.models import Work, Theater, Actor, Run
+from api.models import Work, Theater, Actor, Run, Troupe
 
 from openai import OpenAI
 
@@ -186,6 +186,39 @@ class Command(BaseCommand):
         return theater
 
     # ==========================
+    # Troupe ヘルパー
+    # ==========================
+
+    def _get_or_create_troupe(self, name: str, dry_run: bool = False):
+        name = name.strip()
+        if not name:
+            return None
+
+        if dry_run:
+            self.stdout.write(f"[DRY RUN] Troupe: {name}")
+            return None
+
+        slug = slugify(name)
+        # slug重複対策
+        original_slug = slug
+        counter = 1
+        while Troupe.objects.filter(slug=slug).exists():
+            existing = Troupe.objects.get(slug=slug)
+            if existing.name == name:
+                return existing
+            slug = f"{original_slug}-{counter}"
+            counter += 1
+
+        troupe, created = Troupe.objects.get_or_create(
+            name=name,
+            defaults={'slug': slug}
+        )
+        if created:
+            self.stdout.write(self.style.SUCCESS(f"Created Troupe: {troupe.name}"))
+
+        return troupe
+
+    # ==========================
     # Work / Actor / Run の投入
     # ==========================
 
@@ -195,7 +228,7 @@ class Command(BaseCommand):
             return
 
         slug = (data.get("slug") or slugify(title)).strip()
-        troupe = (data.get("troupe") or "").strip()
+        troupe_name = (data.get("troupe") or "").strip()
         main_theater_name = (data.get("main_theater") or "").strip()
         actor_names = data.get("actors") or []
         tags = data.get("tags") or []
@@ -206,6 +239,11 @@ class Command(BaseCommand):
         main_theater = None
         if main_theater_name:
             main_theater = self._get_or_create_theater(main_theater_name, dry_run=dry_run)
+
+        # Troupe
+        troupe = None
+        if troupe_name:
+            troupe = self._get_or_create_troupe(troupe_name, dry_run=dry_run)
 
         # Work
         if dry_run:

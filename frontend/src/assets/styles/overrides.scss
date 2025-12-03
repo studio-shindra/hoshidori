@@ -1,0 +1,14 @@
+// Bootstrap変数のオーバーライド
+
+// プライマリーカラー
+$primary: #2b2b2b;
+
+// セカンダリーカラー
+// $secondary: lighten($primary, 50%);
+
+// リンクボタンの色
+$btn-link-color: $primary;
+$btn-link-hover-color: lighten($primary, 10%);
+
+// Bootstrapをインポート
+@import 'bootstrap/scss/bootstrap';

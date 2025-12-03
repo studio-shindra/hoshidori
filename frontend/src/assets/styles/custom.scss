@@ -1,3 +1,5 @@
+@use "overrides";
+
 .df-center{
     display: flex;
     align-items: center;
@@ -6,4 +8,45 @@
 
 p{
     white-space: pre-wrap;
+}
+
+.form-label{
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 1rem;
+}
+
+.color-orange{
+    color: orange;
+}
+
+.work-new-page{
+    .form-label{
+        font-size: 0.75rem;
+        margin: 0;
+    }
+    input,textarea{
+        &::placeholder{
+            font-size: 0.75rem;
+            color: gray;
+        }
+    }
+    .multiselect-placeholder{
+        font-size: 0.75rem;
+        color: gray;
+        padding-right: 1rem;
+    }
+    .multiselect-search{
+        &::placeholder{
+            font-size: 0.75rem;
+        }
+    }
+}
+
+.must{
+    &::after{
+        content: "*";
+        color: red;
+    }
 }

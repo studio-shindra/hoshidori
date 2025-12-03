@@ -4,8 +4,9 @@ from import_export import resources, fields
 from import_export.admin import ImportExportModelAdmin
 from import_export.widgets import ManyToManyWidget, ForeignKeyWidget
 from taggit.models import Tag
+from django.utils.text import slugify
 
-from .models import Theater, Actor, Work, Run, ViewingLog
+from .models import Theater, Actor, Troupe, Work, Run, ViewingLog
 
 
 # ===== カスタム Widget =====
@@ -20,6 +21,24 @@ class TheaterWidget(ForeignKeyWidget):
         name = value.strip()
         obj, _ = Theater.objects.get_or_create(name=name)
         return obj
+
+
+class TroupeWidget(ForeignKeyWidget):
+    """
+    Works CSV の troupe カラムから Troupe を自動で get_or_create する Widget。
+    """
+    def clean(self, value, row=None, *args, **kwargs):
+        if not value:
+            return None
+        name = value.strip()
+        if not name:
+            return None
+        slug = slugify(name)
+        troupe, _ = Troupe.objects.get_or_create(
+            name=name,
+            defaults={"slug": slug},
+        )
+        return troupe
 
 
 class ActorWidget(ManyToManyWidget):
@@ -67,18 +86,41 @@ class ActorAdmin(admin.ModelAdmin):
     search_fields = ('name',)
 
 
+# ===== Troupe =====
+
+class TroupeResource(resources.ModelResource):
+    class Meta:
+        model = Troupe
+        fields = ('id', 'name', 'slug', 'official_site', 'image_allowed')
+
+
+@admin.register(Troupe)
+class TroupeAdmin(ImportExportModelAdmin):
+    resource_class = TroupeResource
+    list_display = ('name', 'slug', 'image_allowed', 'official_site')
+    list_filter = ('image_allowed',)
+    search_fields = ('name', 'slug', 'official_site')
+    list_editable = ('image_allowed',)  # リスト画面で直接編集可能
+
+
 # ===== Work =====
 
 class WorkResource(resources.ModelResource):
     """
     Works 用のインポート／エクスポート Resource。
-    main_theater / actors / tags を名前ベースで処理する。
+    main_theater / troupe / actors / tags を名前ベースで処理する。
     """
 
     main_theater = fields.Field(
         column_name='main_theater',
         attribute='main_theater',
         widget=TheaterWidget(Theater, 'name'),
+    )
+
+    troupe = fields.Field(
+        column_name='troupe',
+        attribute='troupe',
+        widget=TroupeWidget(Troupe, 'name'),
     )
 
     actors = fields.Field(
@@ -116,8 +158,8 @@ class RunInline(admin.TabularInline):
 class WorkAdmin(ImportExportModelAdmin):
     resource_class = WorkResource
     list_display = ('title', 'troupe', 'main_theater', 'status', 'created_at')
-    list_filter = ('status', 'main_theater')
-    search_fields = ('title', 'troupe', 'tags__name')
+    list_filter = ('status', 'main_theater', 'troupe')
+    search_fields = ('title', 'troupe__name', 'tags__name')
     filter_horizontal = ('actors',)
     inlines = [RunInline]
 

@@ -4,6 +4,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { request } from '@/apiClient'
 import Multiselect from '@vueform/multiselect'
+import { IconClick, IconBinoculars, IconArmchair, IconStar, IconPencil } from '@tabler/icons-vue'
 
 const router = useRouter()
 
@@ -148,49 +149,30 @@ async function handleSubmit(e) {
 
 <template>
   <main class="container py-4">
-    <h1 class="mb-3">観劇ログを追加</h1>
+    <h1 class="mb-3 fw-bold text-center">観劇ログを追加</h1>
 
     <p v-if="loading">作品一覧を読み込み中...</p>
     <p v-else-if="error">エラー: {{ error }}</p>
 
     <form v-else @submit="handleSubmit" class="mb-4">
-      <div class="mb-3">
-        <label class="form-label">作品</label>
+      <div class="wrap">
+        <label class="form-label"><IconClick/>作品を選択</label>
         <Multiselect
           v-model="form.workId"
           :options="workOptions"
           :searchable="true"
           :close-on-select="true"
-          placeholder="作品を検索..."
+          placeholder="検索 & 選択"
           :no-options-text="'見つかりません'"
           @select="onWorkChange"
         />
         
         <!-- 見つからない場合の2つのオプション -->
-        <div class="mt-3 p-3 border rounded bg-light">
-          <p class="mb-2 small text-muted">作品が見つからない場合:</p>
-          
-          <!-- オプション1: 詳細登録ページへ -->
-          <button
-            type="button"
-            class="btn btn-sm btn-outline-primary me-2 mb-2"
-            @click="router.push('/works/new')"
-          >
-            詳細登録ページで新規登録
-          </button>
-          
-          <!-- オプション2: 簡易登録フォーム表示 -->
-          <button
-            type="button"
-            class="btn btn-sm btn-outline-secondary mb-2"
-            @click="showQuickForm = !showQuickForm"
-          >
-            {{ showQuickForm ? '簡易登録を閉じる' : 'ここで簡易登録' }}
-          </button>
-          
+        <div class="p-3">
+
           <!-- 簡易登録フォーム -->
-          <div v-if="showQuickForm" class="mt-3 p-3 border rounded bg-white">
-            <h6 class="mb-3">簡易登録（DRAFT）</h6>
+          <div v-if="showQuickForm" class="mb-3 p-3 rounded bg-light">
+            <div class="mb-1 text-center fw-bold">かんたん登録</div>
             <div class="mb-2">
               <label class="form-label small">タイトル *</label>
               <input
@@ -201,12 +183,12 @@ async function handleSubmit(e) {
               />
             </div>
             <div class="mb-2">
-              <label class="form-label small">劇団</label>
+              <label class="form-label small">団体名</label>
               <input
                 type="text"
                 class="form-control form-control-sm"
                 v-model="quickForm.troupe"
-                placeholder="劇団名"
+                placeholder="団体名"
               />
             </div>
             <div class="mb-2">
@@ -218,19 +200,38 @@ async function handleSubmit(e) {
                 placeholder="劇場名"
               />
             </div>
-            <button
+            <!-- <button
               type="button"
-              class="btn btn-sm btn-success"
+              class="btn btn-sm btn-success w-100"
               @click="handleQuickCreate"
             >
-              登録して選択
+              登録
+            </button> -->
+          </div>
+          <div class="wrap df-center">
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-secondary mb-1"
+              @click="showQuickForm = !showQuickForm"
+            >
+              {{ showQuickForm ? '閉じる' : '作品が見つからない場合' }}
             </button>
           </div>
+          <div class="df-center">
+            <button
+              type="button"
+              class="btn btn-sm btn-link"
+              @click="router.push('/works/new')"
+            >
+              作品登録ページ
+            </button>
+          </div>
+
         </div>
       </div>
 
-      <div class="mb-3" v-if="form.workId && runs.length > 0">
-        <label class="form-label">公演ブロック（任意）</label>
+      <!-- <div class="mb-3" v-if="form.workId && runs.length > 0">
+        <label class="form-label">公演ブロック</label>
         <select class="form-select" v-model="form.runId">
           <option value="">選択なし</option>
           <option
@@ -241,18 +242,12 @@ async function handleSubmit(e) {
             {{ run.label }}（{{ run.area }}）
           </option>
         </select>
-      </div>
+      </div> -->
 
       <div class="mb-3">
-        <label class="form-label">観た日時</label>
-        <input
-          type="datetime-local"
-          class="form-control"
-          v-model="form.watchedDate"
-        />
-        <div v-if="todayTimes.length > 0" class="mt-2">
-          <small class="text-muted">今日の公演候補:</small>
-          <div class="d-flex gap-2 mt-1">
+        <div v-if="todayTimes.length > 0" class="d-flex align-items-center gap-4 my-4">
+          <small class="badge bg-danger text-white">今日の公演候補</small>
+          <div class="wrap d-flex gap-2">
             <button
               v-for="time in todayTimes"
               :key="time"
@@ -264,51 +259,66 @@ async function handleSubmit(e) {
             </button>
           </div>
         </div>
+        <div class="mb-3 row df-center g-1">
+          <div class="col-3">
+            <label class="form-label small"><IconBinoculars/>観劇日</label>
+          </div>
+          <div class="col-9">
+            <input
+              type="datetime-local"
+              class="form-control"
+              v-model="form.watchedDate"
+            />
+          </div>
+        </div>
       </div>
 
-      <div class="mb-3">
-        <label class="form-label">座席</label>
-        <input
-          type="text"
-          class="form-control"
-          v-model="form.seat"
-          placeholder="A列12番 など"
-        />
+      <div class="mb-3 row df-center g-1">
+        <div class="col-3">
+           <label class="form-label small"><IconArmchair />座席</label>
+        </div>
+        <div class="col-9">
+          <input
+            type="text"
+            class="form-control"
+            v-model="form.seat"
+            placeholder="A列12番 など"
+          />
+        </div>
       </div>
 
-      <div class="mb-3">
-        <label class="form-label">
-          評価（1～5）
-          <span v-if="form.rating" class="ms-2 badge bg-primary">
-            {{ Number(form.rating).toFixed(1) }}
-          </span>
-        </label>
-        <input
-          type="range"
-          min="1"
-          max="5"
-          step="0.1"
-          class="form-range"
-          v-model="form.rating"
-        />
-        <div class="d-flex justify-content-between text-muted small">
-          <span>1.0</span>
-          <span>3.0</span>
-          <span>5.0</span>
+      <div class="row mb-1 df-center g-1 mt-4 border-top pt-2">
+        <div class="col-2 df-center">
+          <div class="wrap df-center flex-column">
+            <IconStar :size="12"/>
+            <span class="fs-4">
+              {{ form.rating ? Number(form.rating).toFixed(1) : '-' }}
+            </span>
+          </div>
+        </div>
+        <div class="col-10">
+          <input
+            type="range"
+            min="1"
+            max="5"
+            step="0.1"
+            class="form-range mb-0"
+            v-model="form.rating"
+          />
         </div>
       </div>
 
       <div class="mb-3">
-        <label class="form-label">感想</label>
         <textarea
           class="form-control"
           rows="3"
           v-model="form.memo"
+          placeholder="あなたの観劇体験がより良いものでありますよう。感想をお書きください。"
           style="min-height: 200px;"
         />
       </div>
 
-      <button type="submit" class="btn btn-primary">
+      <button type="submit" class="btn btn-primary w-100">
         保存
       </button>
     </form>

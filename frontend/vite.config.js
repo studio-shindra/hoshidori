@@ -14,6 +14,14 @@ export default defineConfig(({ mode }) => {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
       },
     },
+    css: {
+      preprocessorOptions: {
+        scss: {
+          api: 'modern-compiler', // or 'modern'
+          silenceDeprecations: ['legacy-js-api', 'color-functions', 'global-builtin', 'import'],
+        },
+      },
+    },
     server: {
       proxy: {
         '/api': {

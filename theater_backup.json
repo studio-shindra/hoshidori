@@ -1,0 +1,1658 @@
+[
+{
+  "model": "api.theater",
+  "pk": 1,
+  "fields": {
+    "name": "よみうりホール",
+    "slug": "yomiuri-hall",
+    "area": "東京",
+    "address": "〒100-0006 東京都千代田区有楽町１丁目１１−１ 読売会館 7階",
+    "image_url": "",
+    "area_tags": "[\"\\u6709\\u697d\\u753a\", \"\\u5927\\u5287\\u5834\"]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 2,
+  "fields": {
+    "name": "銀河劇場",
+    "slug": "ginga-gekijo",
+    "area": "東京",
+    "address": "〒140-0002 東京都品川区東品川２丁目３−１６ シーフォートスクエア内 2階",
+    "image_url": "",
+    "area_tags": "[\"\\u5929\\u738b\\u6d32\\u30a2\\u30a4\\u30eb\", \"\\u5927\\u5287\\u5834\"]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 3,
+  "fields": {
+    "name": "紀伊國屋サザンシアター",
+    "slug": "sazan-theater",
+    "area": "東京",
+    "address": "〒151-0051 東京都渋谷区千駄ケ谷５丁目２４−２ タカシマヤタイムズスクエア南館7F",
+    "image_url": "",
+    "area_tags": "[\"\\u65b0\\u5bbf\", \"\\u4e2d\\u5287\\u5834\"]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 24,
+  "fields": {
+    "name": "本多劇場",
+    "slug": "honda-gekijo",
+    "area": "東京（下北沢）",
+    "address": "東京都世田谷区北沢2-10-15",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 25,
+  "fields": {
+    "name": "ザ・スズナリ",
+    "slug": "the-suzunari",
+    "area": "東京（下北沢）",
+    "address": "東京都世田谷区北沢1-45-15",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 26,
+  "fields": {
+    "name": "小劇場B1",
+    "slug": "small-theater-b1",
+    "area": "東京（下北沢）",
+    "address": "東京都世田谷区北沢2-8-18 北沢タウンホールB1F",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 27,
+  "fields": {
+    "name": "駅前劇場",
+    "slug": "ekimae-gekijo",
+    "area": "東京（下北沢）",
+    "address": "東京都世田谷区北沢2-11-8 TAROビル3F",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 28,
+  "fields": {
+    "name": "シアター711",
+    "slug": "theater-711",
+    "area": "東京（下北沢）",
+    "address": "東京都世田谷区北沢1-45-15",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 29,
+  "fields": {
+    "name": "東京芸術劇場 プレイハウス",
+    "slug": "tokyo-geigeki-playhouse",
+    "area": "東京（池袋）",
+    "address": "東京都豊島区西池袋1-8-1",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 30,
+  "fields": {
+    "name": "東京芸術劇場 シアターイースト",
+    "slug": "tokyo-geigeki-theater-east",
+    "area": "東京（池袋）",
+    "address": "東京都豊島区西池袋1-8-1",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 31,
+  "fields": {
+    "name": "東京芸術劇場 シアターウエスト",
+    "slug": "tokyo-geigeki-theater-west",
+    "area": "東京（池袋）",
+    "address": "東京都豊島区西池袋1-8-1",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 32,
+  "fields": {
+    "name": "新国立劇場 中劇場",
+    "slug": "shinkokuritsu-chu",
+    "area": "東京（初台）",
+    "address": "東京都渋谷区本町1-1-1",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 33,
+  "fields": {
+    "name": "新国立劇場 小劇場",
+    "slug": "shinkokuritsu-sho",
+    "area": "東京（初台）",
+    "address": "東京都渋谷区本町1-1-1",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 34,
+  "fields": {
+    "name": "紀伊國屋ホール",
+    "slug": "kinokuniya-hall",
+    "area": "東京（新宿）",
+    "address": "東京都新宿区新宿3-17-7 紀伊國屋書店新宿本店4F",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 35,
+  "fields": {
+    "name": "紀伊國屋サザンシアター TAKASHIMAYA",
+    "slug": "kinokuniya-southern-theater",
+    "area": "東京（新宿）",
+    "address": "東京都渋谷区千駄ヶ谷5-24-2 タカシマヤタイムズスクエア南館7F",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 36,
+  "fields": {
+    "name": "座・高円寺２",
+    "slug": "za-koenji-2",
+    "area": "東京（高円寺）",
+    "address": "東京都杉並区高円寺北2-1-2",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 37,
+  "fields": {
+    "name": "座・高円寺１",
+    "slug": "za-koenji-1",
+    "area": "東京（高円寺）",
+    "address": "東京都杉並区高円寺北2-1-2",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 38,
+  "fields": {
+    "name": "シアタートップス",
+    "slug": "theatre-tops",
+    "area": "東京（新宿）",
+    "address": "東京都新宿区新宿3-20-8 WaMall TOPS HOUSE4F",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 39,
+  "fields": {
+    "name": "サンモールスタジオ",
+    "slug": "sun-mall-studio",
+    "area": "東京（新宿）",
+    "address": "東京都新宿区新宿1-19-10 サンモール第3M-B1",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 40,
+  "fields": {
+    "name": "シアター風姿花伝",
+    "slug": "theater-fuushikaden",
+    "area": "東京（目白）",
+    "address": "東京都新宿区中落合2-1-10",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 41,
+  "fields": {
+    "name": "下北沢 小劇場楽園",
+    "slug": "shimokita-rakuen",
+    "area": "東京（下北沢）",
+    "address": "東京都世田谷区北沢2-10-18",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 42,
+  "fields": {
+    "name": "ABCホール（朝日放送テレビ）",
+    "slug": "abc-hall",
+    "area": "大阪（福島）",
+    "address": "大阪府大阪市福島区福島1-1-30",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 43,
+  "fields": {
+    "name": "名古屋市千種文化小劇場",
+    "slug": "chikusa-bunka-small",
+    "area": "名古屋（今池）",
+    "address": "愛知県名古屋市千種区今池1-8-8",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 44,
+  "fields": {
+    "name": "AiiA 2.5 Theater Kobe",
+    "slug": "aiia-kobe",
+    "area": "神戸",
+    "address": "〒650-0002 兵庫県神戸市中央区北野町１丁目３",
+    "image_url": "",
+    "area_tags": "[\"\\u5927\\u5287\\u5834\", \"\\u795e\\u6238\"]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 159,
+  "fields": {
+    "name": "浅草九劇",
+    "slug": "浅草九劇",
+    "area": "浅草周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 160,
+  "fields": {
+    "name": "あさくさ劇亭",
+    "slug": "あさくさ劇亭",
+    "area": "浅草周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 161,
+  "fields": {
+    "name": "浅草劇亭",
+    "slug": "浅草劇亭",
+    "area": "浅草周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 162,
+  "fields": {
+    "name": "cafe&bar 木星劇場",
+    "slug": "cafe-bar-木星劇場",
+    "area": "池袋周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 163,
+  "fields": {
+    "name": "あうるすぽっと",
+    "slug": "あうるすぽっと",
+    "area": "池袋周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 164,
+  "fields": {
+    "name": "アトリエファンファーレ東池袋",
+    "slug": "アトリエファンファーレ東池袋",
+    "area": "池袋周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 165,
+  "fields": {
+    "name": "池袋西口GEKIBA（ゲキバ）",
+    "slug": "池袋西口gekibaゲキバ",
+    "area": "池袋周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 166,
+  "fields": {
+    "name": "兎亭",
+    "slug": "兎亭",
+    "area": "池袋周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 167,
+  "fields": {
+    "name": "大塚ドリームシアター",
+    "slug": "大塚ドリームシアター",
+    "area": "池袋周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 168,
+  "fields": {
+    "name": "北池袋新生館シアター",
+    "slug": "北池袋新生館シアター",
+    "area": "池袋周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 169,
+  "fields": {
+    "name": "サブテレニアン",
+    "slug": "サブテレニアン",
+    "area": "池袋周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 170,
+  "fields": {
+    "name": "シアターKASSAI(シアターカッサイ)",
+    "slug": "シアターkassaiシアターカッサイ",
+    "area": "池袋周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 171,
+  "fields": {
+    "name": "シアターグリーン BIG TREE THEATER（ビッグステージシアター）",
+    "slug": "シアターグリーン-big-tree-theaterビッグステージシアター",
+    "area": "池袋周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 172,
+  "fields": {
+    "name": "シアターグリーン BOX in BOX THEATER（ボックスインボックスシアター）",
+    "slug": "シアターグリーン-box-in-box-theaterボックスインボックスシアター",
+    "area": "池袋周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 173,
+  "fields": {
+    "name": "シアターグリーン BASE THEATER（ベースシアター）",
+    "slug": "シアターグリーン-base-theaterベースシアター",
+    "area": "池袋周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 174,
+  "fields": {
+    "name": "シアター風姿花伝",
+    "slug": "シアター風姿花伝",
+    "area": "池袋周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 175,
+  "fields": {
+    "name": "スタジオ空洞",
+    "slug": "スタジオ空洞",
+    "area": "池袋周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 176,
+  "fields": {
+    "name": "てあとるらぽう",
+    "slug": "てあとるらぽう",
+    "area": "池袋周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 177,
+  "fields": {
+    "name": "東京芸術劇場 シアターイースト",
+    "slug": "東京芸術劇場-シアターイースト",
+    "area": "池袋周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 178,
+  "fields": {
+    "name": "東京芸術劇場 シアターウェスト",
+    "slug": "東京芸術劇場-シアターウェスト",
+    "area": "池袋周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 179,
+  "fields": {
+    "name": "中板橋新生館スタジオ",
+    "slug": "中板橋新生館スタジオ",
+    "area": "池袋周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 180,
+  "fields": {
+    "name": "萬劇場（よろづ劇場）",
+    "slug": "萬劇場よろづ劇場",
+    "area": "池袋周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 181,
+  "fields": {
+    "name": "キーノートシアター",
+    "slug": "キーノートシアター",
+    "area": "上野周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 182,
+  "fields": {
+    "name": "上野ストアハウス",
+    "slug": "上野ストアハウス",
+    "area": "上野周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 183,
+  "fields": {
+    "name": "上野小劇場",
+    "slug": "上野小劇場",
+    "area": "王子周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 184,
+  "fields": {
+    "name": "王子小劇場",
+    "slug": "王子小劇場",
+    "area": "王子周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 185,
+  "fields": {
+    "name": "シアターバビロンの流れのほとりにて",
+    "slug": "シアターバビロンの流れのほとりにて",
+    "area": "王子周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 186,
+  "fields": {
+    "name": "かめありリリオホール",
+    "slug": "かめありリリオホール",
+    "area": "葛飾区周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 187,
+  "fields": {
+    "name": "BUoY（ブイ）",
+    "slug": "buoyブイ",
+    "area": "北千住周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 188,
+  "fields": {
+    "name": "シアター１０１０（シアター千住）",
+    "slug": "シアター1010シアター千住",
+    "area": "北千住周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 189,
+  "fields": {
+    "name": "吉祥寺シアター",
+    "slug": "吉祥寺シアター",
+    "area": "吉祥寺周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 190,
+  "fields": {
+    "name": "SCOOL（スクール）",
+    "slug": "scoolスクール",
+    "area": "吉祥寺周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 191,
+  "fields": {
+    "name": "武蔵野芸能劇場",
+    "slug": "武蔵野芸能劇場",
+    "area": "吉祥寺周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 192,
+  "fields": {
+    "name": "三鷹市芸術文化センター星のホール",
+    "slug": "三鷹市芸術文化センター星のホール",
+    "area": "吉祥寺周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 193,
+  "fields": {
+    "name": "櫂スタジオ",
+    "slug": "櫂スタジオ",
+    "area": "吉祥寺周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 194,
+  "fields": {
+    "name": "すみだパークシアター倉",
+    "slug": "すみだパークシアター倉",
+    "area": "錦糸町周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 195,
+  "fields": {
+    "name": "山王FOREST大森theater",
+    "slug": "山王forest大森theater",
+    "area": "品川周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 196,
+  "fields": {
+    "name": "六行会ホール",
+    "slug": "六行会ホール",
+    "area": "品川周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 197,
+  "fields": {
+    "name": "こまばアゴラ劇場（駒場アゴラ劇場）",
+    "slug": "こまばアゴラ劇場駒場アゴラ劇場",
+    "area": "渋谷周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 198,
+  "fields": {
+    "name": "恵比寿・エコー劇場",
+    "slug": "恵比寿-エコー劇場",
+    "area": "渋谷周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 199,
+  "fields": {
+    "name": "エビスSTARバー",
+    "slug": "エビスstarバー",
+    "area": "渋谷周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 200,
+  "fields": {
+    "name": "参宮橋シアタートランスミッション",
+    "slug": "参宮橋シアタートランスミッション",
+    "area": "渋谷周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 201,
+  "fields": {
+    "name": "シアター・アルファ東京",
+    "slug": "シアター-アルファ東京",
+    "area": "渋谷周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 202,
+  "fields": {
+    "name": "OFFOFFシアター（オフオフシアター）",
+    "slug": "offoffシアターオフオフシアター",
+    "area": "下北沢周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 203,
+  "fields": {
+    "name": "駅前劇場",
+    "slug": "駅前劇場",
+    "area": "下北沢周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 204,
+  "fields": {
+    "name": "劇・小劇場",
+    "slug": "劇-小劇場",
+    "area": "下北沢周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 205,
+  "fields": {
+    "name": "ザ・スズナリ",
+    "slug": "ザ-スズナリ",
+    "area": "下北沢周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 206,
+  "fields": {
+    "name": "北沢タウンホール",
+    "slug": "北沢タウンホール",
+    "area": "下北沢周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 207,
+  "fields": {
+    "name": "小劇場B1",
+    "slug": "小劇場b1",
+    "area": "下北沢周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 208,
+  "fields": {
+    "name": "本多劇場",
+    "slug": "本多劇場",
+    "area": "下北沢周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 209,
+  "fields": {
+    "name": "楽園",
+    "slug": "楽園",
+    "area": "下北沢周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 210,
+  "fields": {
+    "name": "シアター７１１",
+    "slug": "シアター711",
+    "area": "下北沢周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 211,
+  "fields": {
+    "name": "しもきたドーン",
+    "slug": "しもきたドーン",
+    "area": "下北沢周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 212,
+  "fields": {
+    "name": "シアターミネルヴァ",
+    "slug": "シアターミネルヴァ",
+    "area": "下北沢周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 213,
+  "fields": {
+    "name": "サンガイノリバティ",
+    "slug": "サンガイノリバティ",
+    "area": "下北沢周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 214,
+  "fields": {
+    "name": "Reading Cafe ピカイチ",
+    "slug": "reading-cafe-ピカイチ",
+    "area": "下北沢周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 215,
+  "fields": {
+    "name": "ステージカフェ下北沢亭",
+    "slug": "ステージカフェ下北沢亭",
+    "area": "下北沢周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 216,
+  "fields": {
+    "name": "サンモールスタジオ",
+    "slug": "サンモールスタジオ",
+    "area": "新宿周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 217,
+  "fields": {
+    "name": "シアターサンモール",
+    "slug": "シアターサンモール",
+    "area": "新宿周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 218,
+  "fields": {
+    "name": "シアターモリエール",
+    "slug": "シアターモリエール",
+    "area": "新宿周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 219,
+  "fields": {
+    "name": "シアターブラッツ",
+    "slug": "シアターブラッツ",
+    "area": "新宿周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 220,
+  "fields": {
+    "name": "シアタースターフィールド",
+    "slug": "シアタースターフィールド",
+    "area": "新宿周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 221,
+  "fields": {
+    "name": "新宿眼科画廊",
+    "slug": "新宿眼科画廊",
+    "area": "新宿周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 222,
+  "fields": {
+    "name": "アトリエファンファーレ東新宿",
+    "slug": "アトリエファンファーレ東新宿",
+    "area": "新宿周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 223,
+  "fields": {
+    "name": "高田馬場ラビネスト",
+    "slug": "高田馬場ラビネスト",
+    "area": "新宿周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 224,
+  "fields": {
+    "name": "プロト・シアター",
+    "slug": "プロト-シアター",
+    "area": "新宿周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 225,
+  "fields": {
+    "name": "コフレリオ新宿シアター",
+    "slug": "コフレリオ新宿シアター",
+    "area": "新宿周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 226,
+  "fields": {
+    "name": "全労災ホール スペース・ゼロ（こくみん共済coopホール）",
+    "slug": "全労災ホール-スペース-ゼロこくみん共済coopホール",
+    "area": "新宿周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 227,
+  "fields": {
+    "name": "絵空箱",
+    "slug": "絵空箱",
+    "area": "新宿周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 228,
+  "fields": {
+    "name": "エモーシア神楽坂",
+    "slug": "エモーシア神楽坂",
+    "area": "新宿周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 229,
+  "fields": {
+    "name": "セッションハウス",
+    "slug": "セッションハウス",
+    "area": "新宿周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 230,
+  "fields": {
+    "name": "新宿シアタートップス",
+    "slug": "新宿シアタートップス",
+    "area": "新宿周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 231,
+  "fields": {
+    "name": "TACCS1179（タックス1179）",
+    "slug": "taccs1179タックス1179",
+    "area": "新宿周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 232,
+  "fields": {
+    "name": "atTHEATRE（アットシアター）",
+    "slug": "attheatreアットシアター",
+    "area": "新宿周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 233,
+  "fields": {
+    "name": "ブルースクエア四谷（四谷三丁目ドリームシアター）",
+    "slug": "ブルースクエア四谷四谷三丁目ドリームシアター",
+    "area": "新宿周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 234,
+  "fields": {
+    "name": "シアターマーキュリー新宿",
+    "slug": "シアターマーキュリー新宿",
+    "area": "新宿周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 235,
+  "fields": {
+    "name": "新宿村LIVE（新宿村ライブ）",
+    "slug": "新宿村live新宿村ライブ",
+    "area": "新宿周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 236,
+  "fields": {
+    "name": "STUDIO ZAP!",
+    "slug": "studio-zap",
+    "area": "新宿周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 237,
+  "fields": {
+    "name": "こった創作空間",
+    "slug": "こった創作空間",
+    "area": "新宿周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 238,
+  "fields": {
+    "name": "ザムザ阿佐ヶ谷",
+    "slug": "ザムザ阿佐ヶ谷",
+    "area": "杉並周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 239,
+  "fields": {
+    "name": "荻窪小劇場",
+    "slug": "荻窪小劇場",
+    "area": "杉並周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 240,
+  "fields": {
+    "name": "ひつじ座",
+    "slug": "ひつじ座",
+    "area": "杉並周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 241,
+  "fields": {
+    "name": "シアターシャイン",
+    "slug": "シアターシャイン",
+    "area": "杉並周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 242,
+  "fields": {
+    "name": "阿佐ヶ谷アルシェ",
+    "slug": "阿佐ヶ谷アルシェ",
+    "area": "杉並周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 243,
+  "fields": {
+    "name": "遊空間がざびぃ",
+    "slug": "遊空間がざびぃ",
+    "area": "杉並周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 244,
+  "fields": {
+    "name": "オメガ東京",
+    "slug": "オメガ東京",
+    "area": "杉並周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 245,
+  "fields": {
+    "name": "阿佐ヶ谷アートスペースプロット",
+    "slug": "阿佐ヶ谷アートスペースプロット",
+    "area": "杉並周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 246,
+  "fields": {
+    "name": "エリア543",
+    "slug": "エリア543",
+    "area": "杉並周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 247,
+  "fields": {
+    "name": "座・高円寺",
+    "slug": "座-高円寺",
+    "area": "杉並周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 248,
+  "fields": {
+    "name": "APOC Theater（アポックシアター）",
+    "slug": "apoc-theaterアポックシアター",
+    "area": "世田谷周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 249,
+  "fields": {
+    "name": "アトリエ第Q藝術1Fホール",
+    "slug": "アトリエ第q藝術1fホール",
+    "area": "世田谷周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 250,
+  "fields": {
+    "name": "宇宙館",
+    "slug": "宇宙館",
+    "area": "世田谷周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 251,
+  "fields": {
+    "name": "東演パラータ",
+    "slug": "東演パラータ",
+    "area": "世田谷周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 252,
+  "fields": {
+    "name": "中野テルプシコール",
+    "slug": "中野テルプシコール",
+    "area": "中野周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 253,
+  "fields": {
+    "name": "ザ・ポケット",
+    "slug": "ザ-ポケット",
+    "area": "中野周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 254,
+  "fields": {
+    "name": "テアトルBONBON（テアトルボンボン）",
+    "slug": "テアトルbonbonテアトルボンボン",
+    "area": "中野周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 255,
+  "fields": {
+    "name": "劇場HOPE（劇場ホープ）",
+    "slug": "劇場hope劇場ホープ",
+    "area": "中野周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 256,
+  "fields": {
+    "name": "劇場MOMO（劇場モモ）",
+    "slug": "劇場momo劇場モモ",
+    "area": "中野周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 257,
+  "fields": {
+    "name": "中野スタジオあくとれ",
+    "slug": "中野スタジオあくとれ",
+    "area": "中野周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 258,
+  "fields": {
+    "name": "RAFT（ラフト）",
+    "slug": "raftラフト",
+    "area": "中野周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 259,
+  "fields": {
+    "name": "東中野バニラスタジオ",
+    "slug": "東中野バニラスタジオ",
+    "area": "中野周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 260,
+  "fields": {
+    "name": "新中野ワニズホール",
+    "slug": "新中野ワニズホール",
+    "area": "中野周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 261,
+  "fields": {
+    "name": "新中野劇場ビット",
+    "slug": "新中野劇場ビット",
+    "area": "中野周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 262,
+  "fields": {
+    "name": "ウエストエンドスタジオ",
+    "slug": "ウエストエンドスタジオ",
+    "area": "中野周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 263,
+  "fields": {
+    "name": "シアターかざあな",
+    "slug": "シアターかざあな",
+    "area": "中野周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 264,
+  "fields": {
+    "name": "アルネ543",
+    "slug": "アルネ543",
+    "area": "練馬周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 265,
+  "fields": {
+    "name": "千本桜ホール",
+    "slug": "千本桜ホール",
+    "area": "目黒周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 266,
+  "fields": {
+    "name": "ウッディシアター中目黒",
+    "slug": "ウッディシアター中目黒",
+    "area": "目黒周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 267,
+  "fields": {
+    "name": "シアターカイ",
+    "slug": "シアターカイ",
+    "area": "両国周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 268,
+  "fields": {
+    "name": "赤坂レッドシアター",
+    "slug": "赤坂レッドシアター",
+    "area": "六本木・赤坂周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 269,
+  "fields": {
+    "name": "赤坂チャンスシアター",
+    "slug": "赤坂チャンスシアター",
+    "area": "六本木・赤坂周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 270,
+  "fields": {
+    "name": "人形町劇場 rabbit",
+    "slug": "人形町劇場-rabbit",
+    "area": "丸ノ内周辺",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 271,
+  "fields": {
+    "name": "ルネこだいら 中ホール",
+    "slug": "ルネこだいら-中ホール",
+    "area": "多摩北部（国分寺周辺）",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+},
+{
+  "model": "api.theater",
+  "pk": 272,
+  "fields": {
+    "name": "パルテノン多摩 小ホール",
+    "slug": "パルテノン多摩-小ホール",
+    "area": "多摩南部（八王子周辺）",
+    "address": "",
+    "image_url": "",
+    "area_tags": "[]"
+  }
+}
+]

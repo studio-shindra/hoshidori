@@ -7,6 +7,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Work, ViewingLog, Theater, Actor
+from .models import Troupe
 from django.contrib.auth import get_user_model
 from .serializers import (
     WorkListSerializer,
@@ -17,6 +18,7 @@ from .serializers import (
     RegisterSerializer,
     TheaterSerializer,
     ActorSerializer,
+    TroupeSerializer,
 )
 
 
@@ -119,8 +121,8 @@ class ViewingLogViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
 
-class TheaterViewSet(viewsets.ReadOnlyModelViewSet):
-    """劇場一覧・詳細（読み取り専用）"""
+class TheaterViewSet(viewsets.ModelViewSet):
+    """劇場一覧・詳細・作成"""
     queryset = Theater.objects.all()
     serializer_class = TheaterSerializer
     permission_classes = [AllowAny]
@@ -133,6 +135,16 @@ class ActorViewSet(viewsets.ModelViewSet):
     """俳優一覧・作成"""
     queryset = Actor.objects.all()
     serializer_class = ActorSerializer
+
+
+class TroupeViewSet(viewsets.ModelViewSet):
+    """劇団一覧・作成"""
+    queryset = Troupe.objects.all()
+    serializer_class = TroupeSerializer
+    permission_classes = [AllowAny]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name', 'slug']
+    ordering = ['name']
     permission_classes = [AllowAny]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name']

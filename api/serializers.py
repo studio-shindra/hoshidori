@@ -2,7 +2,7 @@
 
 from taggit.models import Tag
 from rest_framework import serializers
-from .models import Theater, Actor, Work, Run, ViewingLog
+from .models import Theater, Actor, Troupe, Work, Run, ViewingLog
 from django.contrib.auth import get_user_model
 from django.utils.text import slugify
 from django.db import IntegrityError, transaction
@@ -20,8 +20,15 @@ class ActorSerializer(serializers.ModelSerializer):
         fields = ['id', 'name']
 
 
+class TroupeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Troupe
+        fields = ['id', 'name', 'slug', 'official_site', 'image_allowed']
+
+
 class WorkListSerializer(serializers.ModelSerializer):
     main_theater = TheaterSerializer(read_only=True)
+    troupe = TroupeSerializer(read_only=True)
     main_image = serializers.ImageField(read_only=True)
     tags = serializers.SlugRelatedField(
         many=True,
@@ -36,6 +43,14 @@ class WorkListSerializer(serializers.ModelSerializer):
         result = ViewingLog.objects.filter(work=obj, rating__isnull=False).aggregate(Avg('rating'))
         avg = result.get('rating__avg')
         return round(avg, 1) if avg else None
+
+    def to_representation(self, instance):
+        """画像許諾が取れていない劇団の場合はmain_imageを返さない"""
+        data = super().to_representation(instance)
+        troupe = instance.troupe
+        if troupe and not troupe.image_allowed:
+            data['main_image'] = None
+        return data
 
     class Meta:
         model = Work
@@ -69,6 +84,7 @@ class RunSerializer(serializers.ModelSerializer):
 
 class WorkDetailSerializer(serializers.ModelSerializer):
     main_theater = TheaterSerializer(read_only=True)
+    troupe = TroupeSerializer(read_only=True)
     actors = ActorSerializer(many=True, read_only=True)
     runs = RunSerializer(many=True, read_only=True)
     main_image = serializers.ImageField(read_only=True)
@@ -85,6 +101,14 @@ class WorkDetailSerializer(serializers.ModelSerializer):
         result = ViewingLog.objects.filter(work=obj, rating__isnull=False).aggregate(Avg('rating'))
         avg = result.get('rating__avg')
         return round(avg, 1) if avg else None
+
+    def to_representation(self, instance):
+        """画像許諾が取れていない劇団の場合はmain_imageを返さない"""
+        data = super().to_representation(instance)
+        troupe = instance.troupe
+        if troupe and not troupe.image_allowed:
+            data['main_image'] = None
+        return data
 
     class Meta:
         model = Work

@@ -36,6 +36,7 @@ class Theater(models.Model):
     def __str__(self) -> str:
         return f'{self.name} ({self.area})' if self.area else self.name
 
+
 class Actor(models.Model):
     name = models.CharField(max_length=100, unique=True)
 
@@ -46,14 +47,39 @@ class Actor(models.Model):
         return self.name
 
 
+class Troupe(models.Model):
+    """
+    劇団 / 制作 / プロデュース単位。
+    - ここに画像許諾フラグを持たせる
+    """
+    name = models.CharField(max_length=200, unique=True)
+    slug = models.SlugField(max_length=200, unique=True)
+    official_site = models.URLField(blank=True)
+    image_allowed = models.BooleanField(
+        default=False,
+        help_text="ポスター等の画像をHOSHIDORI内で表示してよいか（許諾○/×）"
+    )
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class Work(models.Model):
     title = models.CharField(max_length=200)
     slug = models.SlugField(unique=True)
-    troupe = models.CharField(
-        max_length=200,
+    
+    troupe = models.ForeignKey(
+        Troupe,
+        null=True,
         blank=True,
-        help_text='劇団・ユニット名'
+        on_delete=models.SET_NULL,
+        related_name="works",
+        help_text="劇団 / 制作"
     )
+    
     description = models.TextField(blank=True)
     main_image = CloudinaryField('main image', blank=True, null=True)
 
