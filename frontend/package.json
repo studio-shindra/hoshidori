@@ -9,6 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor/cli": "^7.4.4",
+    "@capacitor/core": "^7.4.4",
+    "@capacitor/ios": "^7.4.4",
     "@tabler/icons-vue": "^3.35.0",
     "@vueform/multiselect": "^2.6.11",
     "bootstrap": "^5.3.8",
