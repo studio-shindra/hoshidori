@@ -58,6 +58,9 @@ async function refreshAccessToken() {
 
 export async function request(path, options = {}, _retried = false) {
   const url = `${baseUrl}${path}`
+  
+  console.log('[HOSHIDORI] API request:', url, options)
+  console.log('[HOSHIDORI] baseUrl:', baseUrl)
 
   const headers = new Headers({
     ...(options.headers || {}),
@@ -84,7 +87,12 @@ export async function request(path, options = {}, _retried = false) {
     ...options,
     headers,
     credentials: 'omit', // JWT in header only, no cookies
+  }).catch((e) => {
+    console.error('[HOSHIDORI] Fetch error:', e)
+    throw e
   })
+  
+  console.log('[HOSHIDORI] API response:', url, res.status)
 
   // 期限切れなどで401の場合は1回だけトークン更新してリトライ
   if (res.status === 401 && !_retried) {
@@ -103,6 +111,7 @@ export async function request(path, options = {}, _retried = false) {
 
   if (!res.ok) {
     const text = await res.text().catch(() => '')
+    console.error('[HOSHIDORI] API error body:', text)
     throw new Error(`API error: ${res.status} ${text}`)
   }
 
