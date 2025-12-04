@@ -63,7 +63,7 @@ onUnmounted(() => {
         ※アプリ応援のため広告が表示されることがあります
       </div> -->
     </header>
-    <div>
+    <div :class="{ 'web-extra-margin': !isIOS }">
       <router-view />
     </div>
   </div>
@@ -85,6 +85,10 @@ onUnmounted(() => {
 
 .header.ios-extra-padding{
   padding-top: 3rem !important;
+}
+
+.web-extra-margin{
+  margin-top: 80px !important;
 }
 
 .footer-app-container{

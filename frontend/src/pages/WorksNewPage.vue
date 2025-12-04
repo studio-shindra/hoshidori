@@ -318,7 +318,6 @@ async function handleSubmit(e) {
 
       <!-- 公式URL・SNS セクション -->
       <div class="mb-4 p-3 bg-light rounded">
-        <h5 class="mb-3 fw-bold">公式サイト・SNS（任意）</h5>
         
         <div class="mb-3 row df-center g-1">
           <div class="col-3">
