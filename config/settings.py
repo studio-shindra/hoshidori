@@ -211,3 +211,16 @@ if CLOUDINARY_URL:
         'CLOUDINARY_URL': CLOUDINARY_URL,
     }
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+
+# JWT設定：トークン有効期限を長く設定
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=365),  # アクセストークン: 1年
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=365),  # リフレッシュトークン: 1年
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': False,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+}

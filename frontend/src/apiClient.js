@@ -1,4 +1,6 @@
 // frontend/src/apiClient.js
+import { useRouter } from 'vue-router'
+
 const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '') // 末尾のスラッシュを削除
 
 // ===== キャッシュ機能 =====
@@ -139,8 +141,27 @@ export async function request(path, options = {}, _retried = false) {
       res = await fetch(url, { ...options, headers: newHeaders, credentials: 'omit' })
     } catch (e) {
       clearTokens()
+      // ログイン画面にリダイレクト
+      try {
+        const router = useRouter()
+        router.push('/login')
+      } catch (_) {
+        // router が使えない場合は location.href で遷移
+        window.location.href = '/login'
+      }
       const text = await res.text().catch(() => '')
       throw new Error(`API error: 401 ${text || (e && e.message) || 'Unauthorized'}`)
+    }
+  }
+
+  // 2回目以降も 401 なら確実にログイン画面へ
+  if (res.status === 401) {
+    clearTokens()
+    try {
+      const router = useRouter()
+      router.push('/login')
+    } catch (_) {
+      window.location.href = '/login'
     }
   }
 
