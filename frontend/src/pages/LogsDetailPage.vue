@@ -111,19 +111,34 @@ async function shareLog() {
 
     <div v-else class="wrap">
         <div class="h-100">
-          <img 
-            v-if="log.work?.main_image || log.work?.main_image_url" 
-            :src="log.work?.main_image || log.work?.main_image_url" 
-            class="card-img-top w-100 h-100"
-            :alt="log.work.title"
-          >
-          <div 
-            v-else 
-            class="card-img-top bg-secondary d-flex align-items-center justify-content-center text-white"
-            style="aspect-ratio: 1/1.414; cursor: pointer;">
-            画像なし
+
+          <div class="position-relative">
+            <img
+              v-if="log.work?.main_image || log.work?.main_image_url"
+              :src="log.work?.main_image || log.work?.main_image_url"
+              class="card-img-top w-100 h-100"
+              :alt="log.work.title"
+            >
+            <div
+              v-else
+              class="card-img-top bg-secondary d-flex align-items-center justify-content-center text-white"
+              style="aspect-ratio: 1/1.414; cursor: pointer;">
+              画像なし
+            </div>
+            <!-- 許諾申請中のオーバーレイ -->
+            <div
+              v-if="(log.work?.main_image || log.work?.main_image_url) && log.work?.troupe && !log.work.troupe.image_allowed"
+              class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+              style="background-color: rgba(0, 0, 0, 0.8); z-index: 5;"
+            >
+              <div class="text-center text-white">
+                <div style="font-size: 16px; font-weight: bold;">
+                  {{ log.work.troupe?.name || '劇団' }}様に<br>許諾申請中
+                </div>
+              </div>
+            </div>
           </div>
-          
+        
           <WorksBody :work="log.work" />
           
           <div v-if="log.memo" class="card-text mt-3">

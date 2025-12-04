@@ -97,13 +97,26 @@ async function deleteLog(id) {
               画像なし
             </div>
           </router-link>
-          <div class="poster-body df-center gap-2 bg-light p-1">
-            <div class="star df-center text-muted gap-1">
-              <IconStar :size="16" />
-              <div>{{ log.rating }}</div>
+          
+          <!-- 許諾申請中のオーバーレイ -->
+          <div 
+            v-if="(log.work?.main_image || log.work?.main_image_url) && log.work?.troupe && !log.work.troupe.image_allowed"
+            class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+            style="background-color: rgba(0, 0, 0, 0.8); z-index: 5; pointer-events: none;"
+          >
+            <div class="text-center text-white">
+              <div style="font-size: 12px; font-weight: bold;">
+                {{ log.work.troupe?.name || '劇団' }}様に<br>許諾申請中
+              </div>
             </div>
-            <div class="date df-center"><IconBinoculars :size="20" /><small>{{ formatDate(log.watchedDate) }}</small></div>
           </div>
+        </div>
+        <div class="poster-body df-center gap-2 bg-light p-1">
+          <div class="star df-center text-muted gap-1">
+            <IconStar :size="16" />
+            <div>{{ log.rating }}</div>
+          </div>
+          <div class="date df-center"><IconBinoculars :size="20" /><small>{{ formatDate(log.watchedDate) }}</small></div>
         </div>
       </div>
     </div>
