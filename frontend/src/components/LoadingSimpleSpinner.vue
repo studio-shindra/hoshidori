@@ -25,7 +25,7 @@ watch(() => props.show, (newVal) => {
 <template>
   <div
     v-if="isVisible"
-    class="wrapper pt-5"
+    class="wrapper pt-5 w-100"
     :class="{ 'wrapper--fadeout': !show }"
     style="min-height: 80vh;">
     <div class="loader"></div>
@@ -37,6 +37,10 @@ watch(() => props.show, (newVal) => {
 .wrapper {
   opacity: 1;
   transition: opacity 0.5s ease-out;
+  background-color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .wrapper--fadeout {
