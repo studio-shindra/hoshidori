@@ -149,11 +149,16 @@ class WorkDetailSerializer(serializers.ModelSerializer):
 
 
 class ViewingLogSerializer(serializers.ModelSerializer):
-    tags = serializers.SlugRelatedField(
-        many=True,
-        queryset=Tag.objects.all(),
-        slug_field='name',
+    # 書き込み用：文字列配列で受け取る
+    tags = serializers.ListField(
+        child=serializers.CharField(max_length=50),
+        required=False,
+        allow_empty=True,
+        write_only=True,  # ← write_only を追加！
     )
+    # 読み取り用：タグ名の配列で返す
+    tags_display = serializers.SerializerMethodField()
+    
     # 書き込み用: フロントから数値IDを受け取る
     work_id = serializers.PrimaryKeyRelatedField(
         queryset=Work.objects.all(),
@@ -176,9 +181,14 @@ class ViewingLogSerializer(serializers.ModelSerializer):
             'memo',
             'rating',
             'tags',
+            'tags_display',
             'created_at',
         ]
-        read_only_fields = ['user', 'created_at']
+        read_only_fields = ['user', 'created_at', 'tags_display']
+
+    def get_tags_display(self, obj):
+        """タグ名の配列を返す"""
+        return [tag.name for tag in obj.tags.all()]
 
     def validate(self, attrs):
         # work 必須チェック（新規作成時のみ）
@@ -186,11 +196,40 @@ class ViewingLogSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({'work': '作品は必須です。'})
         return attrs
 
+    def _save_tags(self, log, tag_names):
+        """タグを自動作成・紐付けするヘルパー"""
+        for name in tag_names:
+            cleaned = (name or "").strip()
+            if not cleaned:
+                continue
+            tag, _ = Tag.objects.get_or_create(name=cleaned)
+            log.tags.add(tag)
+
+    def create(self, validated_data):
+        tag_names = validated_data.pop('tags', [])
+        log = ViewingLog.objects.create(**validated_data)
+        self._save_tags(log, tag_names)
+        return log
+
+    def update(self, instance, validated_data):
+        tag_names = validated_data.pop('tags', None)
+        log = super().update(instance, validated_data)
+
+        # tags が送られてきたときだけ更新
+        if tag_names is not None:
+            log.tags.clear()
+            self._save_tags(log, tag_names)
+
+        return log
+
     def to_representation(self, instance):
         ret = super().to_representation(instance)
         # watched_at → watchedDate にキャメルケース化
         if 'watched_at' in ret:
             ret['watchedDate'] = ret.pop('watched_at')
+        # tags_display を tags に変換して返す
+        if 'tags_display' in ret:
+            ret['tags'] = ret.pop('tags_display')
         return ret
 
 

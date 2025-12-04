@@ -111,7 +111,7 @@ onMounted(() => {
               <div 
                 v-if="work.troupe && !work.troupe.image_allowed"
                 class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-                style="background-color: rgba(0, 0, 0, 0.7); z-index: 5;"
+                style="background-color: rgba(0, 0, 0, 0.8); z-index: 5;"
               >
                 <div class="text-center text-white">
                   <div style="font-size: 14px; font-weight: bold;">

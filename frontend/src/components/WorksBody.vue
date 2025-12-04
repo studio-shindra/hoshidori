@@ -87,7 +87,7 @@ const props = defineProps({
           </div>
         </div>
 
-        <div class="border-top d-flex justify-content-around mt-4 pt-3">
+        <div class="border-top d-flex justify-content-around mt-3 pt-3">
           <div class="wrap df-center gap-1 flex-column">
             <h4 class="badge bg-secondary text-light m-0">コメント数</h4>
             <span class="fs-3 fw-bold">{{ work?.comment_count || 0 }}</span>

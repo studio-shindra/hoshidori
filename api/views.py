@@ -7,7 +7,7 @@ from rest_framework import permissions
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Work, ViewingLog, Theater, Actor
+from .models import Work, ViewingLog, Theater, Actor, Tag
 from .models import Troupe
 from django.core.mail import send_mail
 from django.conf import settings
@@ -192,3 +192,14 @@ class ContactView(APIView):
         )
 
         return Response({"detail": "ok"}, status=status.HTTP_201_CREATED)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def tags_list(request):
+    """
+    既存タグ一覧を取得
+    Multiselect のオプションとして使用
+    """
+    tags = Tag.objects.all().values('id', 'name').order_by('name')
+    return Response([{'value': tag['id'], 'label': tag['name']} for tag in tags])

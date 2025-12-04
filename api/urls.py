@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import WorkViewSet, ViewingLogViewSet, TheaterViewSet, ActorViewSet, TroupeViewSet, register, ContactView
+from .views import WorkViewSet, ViewingLogViewSet, TheaterViewSet, ActorViewSet, TroupeViewSet, register, ContactView, tags_list
 
 router = DefaultRouter()
 router.register(r'works', WorkViewSet, basename='work')
@@ -13,4 +13,5 @@ urlpatterns = [
     path('', include(router.urls)),
     path('auth/register/', register),
     path("contact/", ContactView.as_view(), name="api-contact"),
+    path('tags/', tags_list, name='tags-list'),
 ]

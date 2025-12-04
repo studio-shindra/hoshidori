@@ -48,6 +48,55 @@ async function deleteLog() {
 
   router.push('/logs')
 }
+
+const AMAZON_BASE_URL = 'https://www.amazon.co.jp/s'
+
+function openAmazon() {
+  if (!log.value || !log.value.work || !log.value.work.title) return
+
+  const params = new URLSearchParams()
+  params.set('k', log.value.work.title)
+
+  const assocTag = import.meta.env.VITE_AMAZON_ASSOC_TAG
+  if (assocTag) {
+    params.set('tag', assocTag)
+  }
+
+  const url = `${AMAZON_BASE_URL}?${params.toString()}`
+  window.open(url, '_blank')
+}
+
+async function shareLog() {
+  if (!log.value) return
+
+  const url = `${window.location.origin}/logs/${log.value.id}/detail`
+  const title = log.value.work?.title || '観劇ログ'
+  const text = `「${title}」の観劇ログをシェアします。`
+
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: 'HOSHIDORI',
+        text,
+        url,
+      })
+    } catch (e) {
+      console.warn('Share cancelled or failed', e)
+    }
+  } else {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(url)
+        alert('この観劇ログのURLをコピーしました。')
+      } else {
+        alert(url)
+      }
+    } catch (e) {
+      console.error('Failed to copy URL', e)
+      alert('URLのコピーに失敗しました。')
+    }
+  }
+}
 </script>
 
 <template>
@@ -61,16 +110,7 @@ async function deleteLog() {
     <p v-else-if="!log">ログが見つかりません。</p>
 
     <div v-else class="wrap">
-        <div class="h-100 position-relative">
-          <div class="position-absolute end-0 top-0 m-2">
-            <button
-              type="button"
-              class="btn btn-sm"
-              @click="deleteLog"
-            >
-              <IconX />
-            </button>
-          </div>
+        <div class="h-100">
           <img 
             v-if="log.work?.main_image || log.work?.main_image_url" 
             :src="log.work?.main_image || log.work?.main_image_url" 
@@ -87,10 +127,15 @@ async function deleteLog() {
           <WorksBody :work="log.work" />
           
           <div v-if="log.memo" class="card-text mt-3">
-            <div class="d-flex align-items-center mb-1"><IconBinoculars /><small>{{ formatDate(log.watched_at) }}</small></div>
-            <p class="mt-2 pt-2 border-top py-4">
+            <div class="mt-2 pt-2 border-top py-4">
+              <div class="d-flex align-items-center mb-1 text-secondary">
+                <IconBinoculars /><small>{{ formatDate(log.watched_at) }}</small>
+              </div>
+              <p>
               {{ log.memo }}
-            </p>
+              </p>
+
+            </div>
           </div>
 
           <div class="d-flex justify-content-center mt-3">
@@ -104,15 +149,19 @@ async function deleteLog() {
                   <IconEdit />
                 </router-link>
                 <button
-                  class="btn btn-sm">
+                  class="btn btn-sm"
+                  @click="openAmazon"
+                >
                   <IconBrandAmazon />
                 </button>
                 <button
-                  class="btn btn-sm">
+                  class="btn btn-sm"
+                  @click="shareLog"
+                >
                   <IconShare />
                 </button>
               </div>
-            </div>
+          </div>
         </div>
     </div>
   </main>
