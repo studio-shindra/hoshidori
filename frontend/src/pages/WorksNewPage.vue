@@ -21,6 +21,11 @@ const form = ref({
   tags: '',
   actorIds: [],  // 選択された俳優ID配列
   actorNames: [], // 新規入力された俳優名配列
+  // 公式URL・SNS
+  official_site: '',
+  official_x: '',
+  official_instagram: '',
+  official_tiktok: '',
 })
 
 const uploading = ref(false)
@@ -124,14 +129,18 @@ async function handleSubmit(e) {
     const selectedActorIds = form.value.actorIds.filter(id => typeof id === 'number')
     const newActorNames = form.value.actorIds.filter(id => typeof id === 'string')
     
-    // 新規俳優を作成
+    // 新規俳優を作成（重複の場合も既存を返す）
     const createdActors = await Promise.all(
       newActorNames.map(name =>
         request('/api/actors/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name })
-        }).catch(() => null) // 重複エラーは無視
+        }).catch(err => {
+          // エラーログを出すが処理は継続
+          console.warn('Actor creation error:', err)
+          return null
+        })
       )
     )
     
@@ -157,6 +166,10 @@ async function handleSubmit(e) {
       title: form.value.title,
       troupe: troupeName,
       main_theater_id: theaterIdToUse,
+      official_site: form.value.official_site || '',
+      official_x: form.value.official_x || '',
+      official_instagram: form.value.official_instagram || '',
+      official_tiktok: form.value.official_tiktok || '',
     }
 
     const created = await request('/api/works/create_or_get/', {
@@ -165,7 +178,7 @@ async function handleSubmit(e) {
       body: JSON.stringify(payload),
     })
 
-    // 画像と俳優がある場合は別途PATCH
+    // 画像、俳優、タグがある場合は別途PATCH
     if (created?.id) {
       const fd = new FormData()
       if (form.value.imageFile) {
@@ -174,8 +187,15 @@ async function handleSubmit(e) {
       if (allActorIds.length > 0) {
         allActorIds.forEach(id => fd.append('actors', id))
       }
+      // タグを追加
+      if (form.value.tags && form.value.tags.trim()) {
+        const tagsArray = form.value.tags.split(',').map(t => t.trim())
+        tagsArray.forEach(tag => {
+          if (tag) fd.append('tags', tag)
+        })
+      }
       
-      if (form.value.imageFile || allActorIds.length > 0) {
+      if (form.value.imageFile || allActorIds.length > 0 || form.value.tags) {
         await request(`/api/works/${created.id}/`, {
           method: 'PATCH',
           body: fd,
@@ -183,8 +203,9 @@ async function handleSubmit(e) {
       }
     }
 
-    // 作品作成 → ログ新規作成画面へ
+    // 作品作成成功 → アラート表示 → ログ新規作成画面へ
     const workId = created?.id
+    alert('作品登録ができました！観劇ログを追加しましょう')
     if (workId) {
       router.push(`/logs/new?work=${workId}`)
     } else {
@@ -294,6 +315,71 @@ async function handleSubmit(e) {
           style="min-height: 150px;"
         />
       </div>
+
+      <!-- 公式URL・SNS セクション -->
+      <div class="mb-4 p-3 bg-light rounded">
+        <h5 class="mb-3 fw-bold">公式サイト・SNS（任意）</h5>
+        
+        <div class="mb-3 row df-center g-1">
+          <div class="col-3">
+            <label class="form-label small">公式サイト</label>
+          </div>
+          <div class="col-9">
+            <input
+              type="url"
+              class="form-control"
+              v-model="form.official_site"
+              placeholder="https://example.com"
+            />
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-bold">公式SNS</label>
+          <div class="row df-center g-1 mb-2">
+            <div class="col-3">
+              <label class="form-label small">X（旧Twitter）</label>
+            </div>
+            <div class="col-9">
+              <input
+                type="url"
+                class="form-control"
+                v-model="form.official_x"
+                placeholder="https://twitter.com/username"
+              />
+            </div>
+          </div>
+
+          <div class="row df-center g-1 mb-2">
+            <div class="col-3">
+              <label class="form-label small">Instagram</label>
+            </div>
+            <div class="col-9">
+              <input
+                type="url"
+                class="form-control"
+                v-model="form.official_instagram"
+                placeholder="https://instagram.com/username"
+              />
+            </div>
+          </div>
+
+          <div class="row df-center g-1">
+            <div class="col-3">
+              <label class="form-label small">TikTok</label>
+            </div>
+            <div class="col-9">
+              <input
+                type="url"
+                class="form-control"
+                v-model="form.official_tiktok"
+                placeholder="https://tiktok.com/@username"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="mb-5">
         <div class="image">
           <!-- 非表示のファイル入力 -->

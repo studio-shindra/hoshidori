@@ -1,5 +1,5 @@
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework import viewsets, permissions, decorators, response, filters
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import permissions
@@ -32,7 +32,7 @@ class WorkViewSet(viewsets.ModelViewSet):
     ordering_fields = ['created_at', 'title']
     ordering = ['-created_at']
     serializer_class = WorkDetailSerializer
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_queryset(self):
         # APPROVED/PENDINGは公開、DRAFTは作成者本人のみ

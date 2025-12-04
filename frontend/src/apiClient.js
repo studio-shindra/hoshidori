@@ -78,9 +78,11 @@ export async function request(path, options = {}, _retried = false) {
   if (token) {
     headers.set('Authorization', `Bearer ${token}`)
   }
-  // JSON送信がデフォ
-  if (!options.body || typeof options.body === 'string') {
-    headers.set('Content-Type', 'application/json')
+  // JSON送信がデフォ（ただし既に Content-Type が指定されていればそれを尊重）
+  if (!headers.has('Content-Type')) {
+    if (!options.body || typeof options.body === 'string') {
+      headers.set('Content-Type', 'application/json')
+    }
   }
 
   let res = await fetch(url, {

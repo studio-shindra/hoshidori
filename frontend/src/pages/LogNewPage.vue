@@ -25,6 +25,15 @@ const form = ref({
   rating: '',
 })
 
+// スライダー用の一時的な値（JavaScript で管理、v-model は使わない）
+const sliderValue = ref('')
+const sliderInputRef = ref(null)
+
+function onSliderInput(e) {
+  // スライダーの値を表示用に更新（v-model ではなく手動更新）
+  sliderValue.value = e.target.value
+}
+
 // 簡易登録用フォーム
 const showQuickForm = ref(false)
 const quickForm = ref({
@@ -123,6 +132,9 @@ onMounted(fetchWorks)
 async function handleSubmit(e) {
   e.preventDefault()
 
+  // スライダーの値をフォームに反映（送信時のみ）
+  form.value.rating = sliderValue.value
+
   // watched_atを日付+時間で構築
   let watchedAt = null
   if (form.value.watchedDate) {
@@ -163,7 +175,7 @@ async function handleSubmit(e) {
     <p v-if="loading">作品一覧を読み込み中...</p>
     <p v-else-if="error">エラー: {{ error }}</p>
 
-    <form v-else @submit="handleSubmit" class="mb-4">
+    <form v-if="!loading && !error" @submit="handleSubmit" class="mb-4">
       <div class="wrap">
         <label class="form-label"><IconClick/>作品を選択</label>
         <Multiselect
@@ -296,23 +308,25 @@ async function handleSubmit(e) {
         </div>
       </div>
 
-      <div class="row mb-1 df-center g-1 mt-4 border-top pt-2">
+      <!-- スライダーセクション -->
+      <div class="row mb-3 df-center g-1 mt-4 border-bottom pb-2">
         <div class="col-2 df-center">
           <div class="wrap df-center flex-column">
             <IconStar :size="12"/>
             <span class="fs-4">
-              {{ form.rating ? Number(form.rating).toFixed(1) : '-' }}
+              {{ sliderValue ? Number(sliderValue).toFixed(1) : '-' }}
             </span>
           </div>
         </div>
         <div class="col-10">
           <input
+            ref="sliderInputRef"
             type="range"
             min="1"
             max="5"
             step="0.1"
             class="form-range mb-0"
-            v-model="form.rating"
+            @input="onSliderInput"
           />
         </div>
       </div>

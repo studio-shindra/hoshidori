@@ -14,8 +14,10 @@ async function fetchWork() {
   loading.value = true
   try {
     const workId = props.id || route.params.id
-    const works = await request('/api/works/')
-    work.value = works.find(w => w.id === Number(workId))
+    console.log('[HOSHIDORI] Fetching work detail for id:', workId)
+    const workData = await request(`/api/works/${workId}/`)
+    console.log('[HOSHIDORI] Work detail fetched:', workData)
+    work.value = workData
     if (!work.value) {
       error.value = '作品が見つかりません'
     }
@@ -37,19 +39,35 @@ onMounted(fetchWork)
 
     <div v-else class="wrap">
       <div class="h-100">
-        <img 
-          v-if="work.main_image || work.main_image_url" 
-          :src="work.main_image || work.main_image_url" 
-          class="w-100"
-          :alt="work.title"
-          style="object-fit: cover;"
-        >
-        <div 
-          v-else 
-          class="bg-secondary d-flex align-items-center justify-content-center text-white"
-          style="aspect-ratio: 1/1.414;"
-        >
-          画像なし
+        <!-- 画像コンテナ -->
+        <div class="position-relative my-4" style="overflow: hidden;">
+          <img 
+            v-if="work.main_image || work.main_image_url" 
+            :src="work.main_image || work.main_image_url" 
+            class="w-100"
+            :alt="work.title"
+            style="object-fit: cover;"
+          >
+          <div 
+            v-else 
+            class="bg-secondary d-flex align-items-center justify-content-center text-white"
+            style="aspect-ratio: 1/1.414;"
+          >
+            画像なし
+          </div>
+
+          <!-- 許諾申請中のオーバーレイ -->
+          <div 
+            v-if="(work.main_image || work.main_image_url) && work.troupe && !work.troupe.image_allowed"
+            class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+            style="background-color: rgba(0, 0, 0, 0.7); z-index: 5;"
+          >
+            <div class="text-center text-white">
+              <div style="font-size: 16px; font-weight: bold;">
+                {{ work.troupe?.name || '劇団' }}様に<br>許諾申請中
+              </div>
+            </div>
+          </div>
         </div>
         
         <WorksBody :work="work" />

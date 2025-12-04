@@ -110,6 +110,12 @@ class Work(models.Model):
     # Cloudinary URL を直接持ちたい場合に利用（不要なら削除可）
     main_image_url = models.URLField(blank=True)
 
+    # 公式URL・SNS
+    official_site = models.URLField(blank=True, help_text='公式サイト')
+    official_x = models.URLField(blank=True, help_text='公式X（Twitter）')
+    official_instagram = models.URLField(blank=True, help_text='公式Instagram')
+    official_tiktok = models.URLField(blank=True, help_text='公式TikTok')
+
     created_by = models.ForeignKey(
         User, null=True, blank=True,
         on_delete=models.SET_NULL,

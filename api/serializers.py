@@ -9,12 +9,23 @@ from django.db import IntegrityError, transaction
 
 
 class TheaterSerializer(serializers.ModelSerializer):
+    def create(self, validated_data):
+        """POST時にslugがなければ自動生成"""
+        if not validated_data.get('slug'):
+            validated_data['slug'] = slugify(validated_data.get('name', ''))
+        return super().create(validated_data)
+
     class Meta:
         model = Theater
         fields = ['id', 'name', 'slug', 'area', 'address', 'image_url']
 
 
 class ActorSerializer(serializers.ModelSerializer):
+    def create(self, validated_data):
+        """POST時に重複存在すれば既存を返す"""
+        actor, created = Actor.objects.get_or_create(**validated_data)
+        return actor
+
     class Meta:
         model = Actor
         fields = ['id', 'name']
@@ -44,14 +55,6 @@ class WorkListSerializer(serializers.ModelSerializer):
         avg = result.get('rating__avg')
         return round(avg, 1) if avg else None
 
-    def to_representation(self, instance):
-        """画像許諾が取れていない劇団の場合はmain_imageを返さない"""
-        data = super().to_representation(instance)
-        troupe = instance.troupe
-        if troupe and not troupe.image_allowed:
-            data['main_image'] = None
-        return data
-
     class Meta:
         model = Work
         fields = [
@@ -64,6 +67,10 @@ class WorkListSerializer(serializers.ModelSerializer):
             'main_image',
             'tags',
             'avg_rating',
+            'official_site',
+            'official_x',
+            'official_instagram',
+            'official_tiktok',
         ]
 
 
@@ -85,15 +92,21 @@ class RunSerializer(serializers.ModelSerializer):
 class WorkDetailSerializer(serializers.ModelSerializer):
     main_theater = TheaterSerializer(read_only=True)
     troupe = TroupeSerializer(read_only=True)
-    actors = ActorSerializer(many=True, read_only=True)
+    actors = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Actor.objects.all(),
+        required=False,
+    )
     runs = RunSerializer(many=True, read_only=True)
-    main_image = serializers.ImageField(read_only=True)
+    main_image = serializers.ImageField(required=False, allow_null=True)
     tags = serializers.SlugRelatedField(
         many=True,
-        read_only=True,
         slug_field='name',
+        queryset=Tag.objects.all(),
+        required=False,
     )
     avg_rating = serializers.SerializerMethodField()
+    comment_count = serializers.SerializerMethodField()
 
     def get_avg_rating(self, obj):
         """この作品の全ユーザーの評価平均を計算"""
@@ -102,12 +115,14 @@ class WorkDetailSerializer(serializers.ModelSerializer):
         avg = result.get('rating__avg')
         return round(avg, 1) if avg else None
 
+    def get_comment_count(self, obj):
+        """この作品のコメント（メモ）数を計算"""
+        return ViewingLog.objects.filter(work=obj, memo__isnull=False).exclude(memo='').count()
+
     def to_representation(self, instance):
-        """画像許諾が取れていない劇団の場合はmain_imageを返さない"""
+        """読み取り時は ActorSerializer で詳細を返す"""
         data = super().to_representation(instance)
-        troupe = instance.troupe
-        if troupe and not troupe.image_allowed:
-            data['main_image'] = None
+        data['actors'] = ActorSerializer(instance.actors.all(), many=True).data
         return data
 
     class Meta:
@@ -125,6 +140,11 @@ class WorkDetailSerializer(serializers.ModelSerializer):
             'actors',
             'runs',
             'avg_rating',
+            'comment_count',
+            'official_site',
+            'official_x',
+            'official_instagram',
+            'official_tiktok',
         ]
 
 
@@ -159,6 +179,11 @@ class WorkCreateOrGetSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=200)
     troupe = serializers.CharField(max_length=200, required=False, allow_blank=True)
     main_theater_id = serializers.IntegerField(required=False, allow_null=True)
+    # 公式URL・SNS
+    official_site = serializers.URLField(required=False, allow_blank=True)
+    official_x = serializers.URLField(required=False, allow_blank=True)
+    official_instagram = serializers.URLField(required=False, allow_blank=True)
+    official_tiktok = serializers.URLField(required=False, allow_blank=True)
     # 最初のRun情報（任意）
     run_label = serializers.CharField(max_length=200, required=False, allow_blank=True)
     run_area = serializers.CharField(max_length=100, required=False, allow_blank=True)
@@ -169,8 +194,21 @@ class WorkCreateOrGetSerializer(serializers.Serializer):
     def create(self, validated_data):
         user = self.context['request'].user
         title = validated_data['title']
-        troupe = validated_data.get('troupe', '')
+        troupe_name = validated_data.get('troupe', '')
         main_theater_id = validated_data.get('main_theater_id')
+        # 公式URL・SNS
+        official_site = validated_data.get('official_site', '')
+        official_x = validated_data.get('official_x', '')
+        official_instagram = validated_data.get('official_instagram', '')
+        official_tiktok = validated_data.get('official_tiktok', '')
+
+        # troupe_name が指定されていれば Troupe を取得または作成
+        troupe = None
+        if troupe_name:
+            troupe, _ = Troupe.objects.get_or_create(
+                name=troupe_name,
+                defaults={'slug': slugify(troupe_name)}
+            )
 
         # slug生成
         base_slug = slugify(title)
@@ -187,7 +225,11 @@ class WorkCreateOrGetSerializer(serializers.Serializer):
                         slug=slug,
                         troupe=troupe,
                         main_theater_id=main_theater_id,
-                        status='DRAFT',
+                        official_site=official_site,
+                        official_x=official_x,
+                        official_instagram=official_instagram,
+                        official_tiktok=official_tiktok,
+                        status='APPROVED',
                         created_by=user,
                     )
                     break

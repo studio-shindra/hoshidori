@@ -1,5 +1,5 @@
 <script setup>
-import { IconSearch } from '@tabler/icons-vue'
+import { IconCategory } from '@tabler/icons-vue'
 import { onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { AdMob, BannerAdSize, BannerAdPosition } from '@capacitor-community/admob'
@@ -15,45 +15,6 @@ const ADMOB_IDS = {
   production: import.meta.env.VITE_ADMOB_BANNER_PROD_ID || 'ca-app-pub-6836938378520436/7549822530'
 }
 
-// スワイプジェスチャー検知用
-let touchStartX = 0
-let touchStartY = 0
-let touchEndX = 0
-let touchEndY = 0
-
-function handleTouchStart(e) {
-  touchStartX = e.changedTouches[0].screenX
-  touchStartY = e.changedTouches[0].screenY
-}
-
-function handleTouchEnd(e) {
-  touchEndX = e.changedTouches[0].screenX
-  touchEndY = e.changedTouches[0].screenY
-  handleSwipeGesture()
-}
-
-function handleSwipeGesture() {
-  const diffX = touchEndX - touchStartX
-  const diffY = touchEndY - touchStartY
-  const minSwipeDistance = 100
-  
-  // 縦方向の移動が大きい場合はスワイプとみなさない（スクロール優先）
-  if (Math.abs(diffY) > Math.abs(diffX)) {
-    return
-  }
-  
-  // 横スワイプの判定
-  if (Math.abs(diffX) > minSwipeDistance) {
-    if (diffX > 0) {
-      // 右スワイプ → /works へ
-      router.push('/works')
-    } else {
-      // 左スワイプ → /logs へ
-      router.push('/logs')
-    }
-  }
-}
-
 onMounted(async () => {
   try {
     await AdMob.initialize()
@@ -62,21 +23,15 @@ onMounted(async () => {
       adId: USE_TEST_ADS ? ADMOB_IDS.test : ADMOB_IDS.production,
       adSize: BannerAdSize.BANNER,
       position: BannerAdPosition.BOTTOM_CENTER,
-      margin: 0, // 上部に配置（セーフエリアはCSSで確保）
+      margin: 0,
     })
   } catch (error) {
     console.error('AdMob initialization error:', error)
   }
-  
-  // スワイプジェスチャーリスナーを登録
-  document.addEventListener('touchstart', handleTouchStart, false)
-  document.addEventListener('touchend', handleTouchEnd, false)
 })
 
 onUnmounted(() => {
   // クリーンアップ
-  document.removeEventListener('touchstart', handleTouchStart)
-  document.removeEventListener('touchend', handleTouchEnd)
 })
 </script>
 
@@ -90,7 +45,7 @@ onUnmounted(() => {
           <img src="/icon.svg" height="40" alt="">
         </router-link>
         <router-link to="/works" class="btn btn-sm df-center">
-          <IconSearch />
+          <IconCategory :size="32" />
         </router-link>
       </div>
       <!-- <div class="text-center mt-1" style="font-size: 0.65rem; color: #999;">

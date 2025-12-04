@@ -21,7 +21,9 @@ async function search() {
     const params = {}
     if (q.value.trim()) params.search = q.value.trim()
     const data = await fetchWorks(params)
+    console.log('[HOSHIDORI] fetchWorks response:', data)
     works.value = Array.isArray(data) ? data : (data?.results || [])
+    console.log('[HOSHIDORI] works.value after assignment:', works.value)
   } catch (e) {
     error.value = e.message
   } finally {
@@ -76,7 +78,7 @@ onMounted(() => {
     <div v-if="works.length > 0" class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-1">
       <div v-for="work in works" :key="work.id" class="col position-relative">
         <router-link :to="`/works/${work.id}/detail`" class="text-decoration-none">
-          <div class="card h-100 border-0 shadow-sm">
+          <div class="card h-100 border-0 shadow-sm position-relative">
             <!-- 評価バッジ（画像の上に重ねる） -->
             <div class="position-absolute bottom-0 end-0 p-2 bg-white" style="z-index: 10; aspect-ratio: 1/1; border-radius: 10px 0 0 0;">
               <span
@@ -87,19 +89,35 @@ onMounted(() => {
               </span>
             </div>
             
-            <img
-              v-if="work.main_image || work.main_image_url"
-              :src="work.main_image || work.main_image_url"
-              class="card-img-top"
-              :alt="work.title"
-              style="height: 250px; object-fit: cover;"
-            />
-            <div 
-              v-else 
-              class="card-img-top bg-secondary d-flex align-items-center justify-content-center text-white"
-              style="height: 250px;"
-            >
-              画像なし
+            <!-- 画像コンテナ -->
+            <div class="position-relative" style="height: 250px; overflow: hidden;">
+              <img
+                v-if="work.main_image || work.main_image_url"
+                :src="work.main_image || work.main_image_url"
+                class="card-img-top w-100 h-100"
+                :alt="work.title"
+                style="object-fit: contain; object-position: center;"
+              />
+              <div 
+                v-else 
+                class="card-img-top bg-secondary d-flex align-items-center justify-content-center text-white"
+                style="height: 100%;"
+              >
+                画像なし
+              </div>
+
+              <!-- 許諾申請中のオーバーレイ -->
+              <div 
+                v-if="work.troupe && !work.troupe.image_allowed"
+                class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+                style="background-color: rgba(0, 0, 0, 0.7); z-index: 5;"
+              >
+                <div class="text-center text-white">
+                  <div style="font-size: 14px; font-weight: bold;">
+                    {{ work.troupe?.name || '劇団' }}様に<br>許諾申請中
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </router-link>
