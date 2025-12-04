@@ -187,9 +187,10 @@ class ViewingLog(models.Model):
     watched_at = models.DateTimeField(help_text='観劇日時')
     seat = models.CharField(max_length=100, blank=True)
     memo = models.TextField(blank=True)
-    rating = models.IntegerField(
+    rating = models.DecimalField(
+        max_digits=3, decimal_places=1,
         null=True, blank=True,
-        help_text='1〜5の評価'
+        help_text='1.0〜5.0の評価（小数点第一位まで）'
     )
 
     # ログ固有のタグ（感情・状況など）
