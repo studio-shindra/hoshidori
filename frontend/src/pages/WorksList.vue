@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import WorksBody from '@/components/WorksBody.vue'
+import AsyncImage from '@/components/AsyncImage.vue'
 import { IconSearch, IconStarFilled } from '@tabler/icons-vue'
 import { fetchWorks } from '@/apiClient'
 
@@ -57,8 +58,7 @@ onMounted(() => {
       </div>
     </form>
 
-    <p v-if="loading">読み込み中...</p>
-    <p v-else-if="error" class="text-danger">エラー: {{ error }}</p>
+    <p v-if="error" class="text-danger">エラー: {{ error }}</p>
     <div
       v-else-if="works.length === 0"
       class="df-center flex-column">
@@ -91,12 +91,13 @@ onMounted(() => {
             
             <!-- 画像コンテナ -->
             <div class="position-relative" style="height: 250px; overflow: hidden;">
-              <img
+              <AsyncImage
                 v-if="work.main_image || work.main_image_url"
                 :src="work.main_image || work.main_image_url"
-                class="card-img-top w-100 h-100"
                 :alt="work.title"
-                style="object-fit: contain; object-position: center;"
+                aspectRatio="auto"
+                :rounded="false"
+                style="height: 100%;"
               />
               <div 
                 v-else 

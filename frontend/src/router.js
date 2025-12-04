@@ -9,6 +9,7 @@ import WorksDetailPage from '@/pages/WorksDetailPage.vue'
 import WorksNewPage from '@/pages/WorksNewPage.vue'
 import LoginPage from '@/pages/LoginPage.vue'
 import SignUpPage from '@/pages/SignUpPage.vue'
+import LoadingTest from '@/pages/LoadingTest.vue'
 import { currentUser, authReady } from '@/authState'
 import WorksTestPage from '@/pages/WorksTestPage.vue'
 
@@ -49,6 +50,7 @@ const routes = [
     name: 'signup',
     component: SignUpPage,
   },
+  { path: '/loading-test', name: 'loading-test', component: LoadingTest },
   { path: '/works-test', component: WorksTestPage, meta: { requiresAuth: true } },
 ]
 

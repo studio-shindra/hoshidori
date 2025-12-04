@@ -60,9 +60,12 @@ async function deleteLog(id) {
     <p v-if="loading">読み込み中...</p>
     <p v-else-if="error">エラー: {{ error }}</p>
     <div v-else-if="logs.length === 0">
-      <div class="df-center text-center">
+      <div class="df-center text-center flex-column">
         その体験は<br>
-        あなたの人生を豊かにします
+        あなたの人生を豊かにします<br>
+        <router-link to="/logs/new" class="mt-3">
+          観劇を記録する
+        </router-link>
       </div>
       
     </div>

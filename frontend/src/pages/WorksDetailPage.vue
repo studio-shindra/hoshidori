@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import WorksBody from '@/components/WorksBody.vue'
+import AsyncImage from '@/components/AsyncImage.vue'
 import { request } from '@/apiClient'
 
 const props = defineProps(['id'])
@@ -41,13 +42,12 @@ onMounted(fetchWork)
       <div class="h-100">
         <!-- 画像コンテナ -->
         <div class="position-relative my-4" style="overflow: hidden;">
-          <img 
-            v-if="work.main_image || work.main_image_url" 
-            :src="work.main_image || work.main_image_url" 
-            class="w-100"
+          <AsyncImage
+            v-if="work.main_image || work.main_image_url"
+            :src="work.main_image || work.main_image_url"
             :alt="work.title"
-            style="object-fit: cover;"
-          >
+            aspectRatio="1 / 1.414"
+          />
           <div 
             v-else 
             class="bg-secondary d-flex align-items-center justify-content-center text-white"

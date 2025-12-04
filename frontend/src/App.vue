@@ -3,8 +3,10 @@ import { IconCategory } from '@tabler/icons-vue'
 import { onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { AdMob, BannerAdSize, BannerAdPosition } from '@capacitor-community/admob'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const router = useRouter()
+const appLoading = ref(true)
 
 // 環境に応じてテスト/本番を自動切り替え（development: テスト / production: 本番）
 const USE_TEST_ADS = import.meta.env.DEV
@@ -28,6 +30,11 @@ onMounted(async () => {
   } catch (error) {
     console.error('AdMob initialization error:', error)
   }
+
+  // 最低1.5秒は表示（バウンスアニメーションを見せる）
+  setTimeout(() => {
+    appLoading.value = false
+  }, 1500)
 })
 
 onUnmounted(() => {
@@ -36,6 +43,7 @@ onUnmounted(() => {
 </script>
 
 <template>
+  <LoadingSpinner :show="appLoading" />
   <div class="app-container">
     <header
       class="position-fixed top-0 w-100 border-top footer-app-container p-3 pb-0"
