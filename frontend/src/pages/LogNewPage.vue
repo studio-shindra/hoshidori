@@ -24,7 +24,7 @@ const form = ref({
   seat: '',
   memo: '',
   rating: '',
-  tags: [],
+  tagsInput: '',
 })
 
 // 日時選択用
@@ -175,7 +175,9 @@ async function handleSubmit(e) {
       watched_at: watchedAt,
       memo: form.value.memo || null,
       rating: form.value.rating ? Number(form.value.rating) : null,
-      tags: form.value.tags || [],
+      tags: form.value.tagsInput
+        ? form.value.tagsInput.split(',').map(t => t.trim()).filter(t => t)
+        : [],
     }
 
     // seat が空文字列の場合は送らない（null も送らない）
@@ -404,9 +406,8 @@ async function handleSubmit(e) {
         <input
           type="text"
           class="form-control"
+          v-model="form.tagsInput"
           placeholder="会話劇, 一人芝居, SF など"
-          @keydown.enter="form.tags = $event.target.value.split(',').map(t => t.trim()).filter(t => t)"
-          @blur="form.tags = $event.target.value.split(',').map(t => t.trim()).filter(t => t)"
         />
       </div>
 
