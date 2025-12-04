@@ -152,6 +152,12 @@ onMounted(() => {
 async function handleSubmit(e) {
   e.preventDefault()
 
+  // バリデーション: 作品が選択されているか確認
+  if (!form.value.workId) {
+    alert('作品を選択してください')
+    return
+  }
+
   // スライダーの値をフォームに反映（送信時のみ）
   form.value.rating = sliderValue.value
 
@@ -163,7 +169,7 @@ async function handleSubmit(e) {
 
   try {
     const payload = {
-      work: Number(form.value.workId),
+      work_id: Number(form.value.workId),
       run: form.value.runId ? Number(form.value.runId) : null,
       watched_at: watchedAt,
       memo: form.value.memo || null,
@@ -212,7 +218,7 @@ async function handleSubmit(e) {
           :close-on-select="true"
           placeholder="検索 & 選択"
           :no-options-text="'見つかりません'"
-          @select="onWorkChange"
+          @change="onWorkChange"
         />
         
         <!-- 見つからない場合の2つのオプション -->

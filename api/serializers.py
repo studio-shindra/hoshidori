@@ -154,6 +154,13 @@ class ViewingLogSerializer(serializers.ModelSerializer):
         read_only=True,
         slug_field='name',
     )
+    # 書き込み用: フロントから数値IDを受け取る
+    work_id = serializers.PrimaryKeyRelatedField(
+        queryset=Work.objects.all(),
+        source='work',
+        write_only=True,
+    )
+    # 読み取り用: ネストした work オブジェクトを返す
     work = WorkListSerializer(read_only=True)
 
     class Meta:
@@ -162,6 +169,7 @@ class ViewingLogSerializer(serializers.ModelSerializer):
             'id',
             'user',
             'work',
+            'work_id',
             'run',
             'watched_at',
             'seat',
@@ -171,6 +179,12 @@ class ViewingLogSerializer(serializers.ModelSerializer):
             'created_at',
         ]
         read_only_fields = ['user', 'created_at']
+
+    def validate(self, attrs):
+        # work 必須チェック（新規作成時のみ）
+        if not attrs.get('work') and not self.instance:
+            raise serializers.ValidationError({'work': '作品は必須です。'})
+        return attrs
 
     def to_representation(self, instance):
         ret = super().to_representation(instance)
