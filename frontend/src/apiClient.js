@@ -1,6 +1,39 @@
 // frontend/src/apiClient.js
 const baseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '') // 末尾のスラッシュを削除
 
+// ===== キャッシュ機能 =====
+const apiCache = new Map()
+// key: "GET:/api/logs/" みたいな文字列
+// value: { data, time }
+
+function makeCacheKey(path, options = {}) {
+  const method = (options.method || 'GET').toUpperCase()
+  return `${method}:${path}`
+}
+
+/**
+ * 一定時間だけキャッシュする版の request
+ * @param {string} path - "/api/logs/" みたいなパス
+ * @param {object} options - fetch のオプション
+ * @param {object} cacheOptions - { ttlMs: number, force: boolean }
+ */
+export async function requestWithCache(path, options = {}, cacheOptions = {}) {
+  const { ttlMs = 60_000, force = false } = cacheOptions
+  const key = makeCacheKey(path, options)
+
+  if (!force) {
+    const cached = apiCache.get(key)
+    if (cached && Date.now() - cached.time < ttlMs) {
+      console.log('[HOSHIDORI] cache hit:', key)
+      return cached.data
+    }
+  }
+
+  const data = await request(path, options)
+  apiCache.set(key, { data, time: Date.now() })
+  return data
+}
+
 function getAccessToken() {
   // ログイン時に localStorage.setItem('hoshidori_token', access) してある想定
   const t = localStorage.getItem('hoshidori_token') || ''
@@ -127,15 +160,18 @@ export async function request(path, options = {}, _retried = false) {
 export function fetchWorks(params = {}) {
   const query = new URLSearchParams(params)
   const qs = query.toString() ? `?${query.toString()}` : ''
-  return request(`/api/works/${qs}`)
+  return requestWithCache(`/api/works/${qs}`, {}, { ttlMs: 5 * 60_000 }) // 5分キャッシュ
 }
 
 export function fetchWorkSchedule(workId) {
-  return request(`/api/works/${workId}/schedule/`)
+  return requestWithCache(`/api/works/${workId}/schedule/`, {}, { ttlMs: 60_000 })
 }
 
-export function fetchMyLogs() {
-  return request('/api/logs/')
+export function fetchMyLogs({ force = false } = {}) {
+  return requestWithCache('/api/logs/', {}, {
+    ttlMs: 60_000,  // 1分以内ならキャッシュを返す
+    force,
+  })
 }
 
 export function createLog(payload) {

@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import WorksBody from '@/components/WorksBody.vue'
 import AsyncImage from '@/components/AsyncImage.vue'
 import { request } from '@/apiClient'
+import SimpleSpinner from '@/components/LoadingSimpleSpinner.vue'
 
 const props = defineProps(['id'])
 const work = ref(null)
@@ -34,7 +35,11 @@ onMounted(fetchWork)
 
 <template>
   <main class="container py-4">
-    <p v-if="loading">読み込み中...</p>
+    <p v-if="loading">
+      <div class="df-center mt-5">
+        <SimpleSpinner />
+      </div>
+    </p>
     <p v-else-if="error">エラー: {{ error }}</p>
     <p v-else-if="!work">作品が見つかりません。</p>
 

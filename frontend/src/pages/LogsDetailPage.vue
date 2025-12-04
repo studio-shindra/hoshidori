@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { IconX, IconEdit, IconShare, IconBrandAmazon, IconBinoculars } from '@tabler/icons-vue'
 import WorksBody from '@/components/WorksBody.vue'
 import { request } from '@/apiClient'
+import SimpleSpinner from '@/components/LoadingSimpleSpinner.vue'
 
 const props = defineProps(['id'])
 const log = ref(null)
@@ -51,7 +52,11 @@ async function deleteLog() {
 
 <template>
   <main class="container py-4">
-    <p v-if="loading">読み込み中...</p>
+    <p v-if="loading">
+      <div class="df-center">
+        <SimpleSpinner />
+      </div>      
+    </p>
     <p v-else-if="error">エラー: {{ error }}</p>
     <p v-else-if="!log">ログが見つかりません。</p>
 

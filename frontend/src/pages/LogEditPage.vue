@@ -4,6 +4,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { request } from '@/apiClient'
 import { onLogSaveSuccess } from '@/lib/admobHelpers'
+import SimpleSpinner from '@/components/LoadingSimpleSpinner.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -116,7 +117,11 @@ async function handleSubmit(e) {
   <main class="container py-4">
     <h1 class="mb-3">観劇ログを編集（Vue版）</h1>
 
-    <p v-if="loading">読み込み中...</p>
+    <p v-if="loading">
+      <div class="df-center">
+        <SimpleSpinner />
+      </div>
+    </p>
     <p v-else-if="error">エラー: {{ error }}</p>
 
     <form v-else @submit="handleSubmit" class="mb-4">

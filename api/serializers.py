@@ -220,6 +220,9 @@ class WorkCreateOrGetSerializer(serializers.Serializer):
 
         # slug生成
         base_slug = slugify(title)
+        # slugがから空になる場合のフォールバック（記号だけのタイトル等）
+        if not base_slug:
+            base_slug = f"work-{user.id}"
         slug = base_slug
         counter = 1
 

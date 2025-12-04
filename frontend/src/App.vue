@@ -88,7 +88,7 @@ onUnmounted(() => {
 }
 
 .web-extra-margin{
-  margin-top: 80px !important;
+  margin-top: 64px !important;
 }
 
 .footer-app-container{

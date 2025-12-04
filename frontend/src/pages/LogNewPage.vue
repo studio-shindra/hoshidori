@@ -2,10 +2,11 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { request } from '@/apiClient'
+import { request, fetchWorks as apiFetchWorks } from '@/apiClient'
 import { onLogSaveSuccess } from '@/lib/admobHelpers'
 import Multiselect from '@vueform/multiselect'
 import { IconClick, IconBinoculars, IconArmchair, IconStar, IconPencil } from '@tabler/icons-vue'
+import SimpleSpinner from '@/components/LoadingSimpleSpinner.vue'
 
 const router = useRouter()
 
@@ -25,9 +26,21 @@ const form = ref({
   rating: '',
 })
 
+// 日時選択用
+const selectedDate = ref('')
+const selectedHour = ref('13')
+const selectedMinute = ref('00')
+
 // スライダー用の一時的な値（JavaScript で管理、v-model は使わない）
 const sliderValue = ref('')
 const sliderInputRef = ref(null)
+
+// 時間の選択肢（0-23時）
+const hourOptions = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
+
+function setMinute(minute) {
+  selectedMinute.value = minute
+}
 
 function onSliderInput(e) {
   // スライダーの値を表示用に更新（v-model ではなく手動更新）
@@ -45,7 +58,7 @@ const quickForm = ref({
 async function fetchWorks() {
   loading.value = true
   try {
-    const data = await request('/api/works/')
+    const data = await apiFetchWorks()
     works.value = data
     // 初期選択はしない
   } catch (e) {
@@ -127,7 +140,14 @@ function setTimeCandidate(time) {
   form.value.watchedDate = `${today}T${time}`
 }
 
-onMounted(fetchWorks)
+onMounted(() => {
+  fetchWorks()
+  // 初期値: 今日の日付と13:00
+  const today = new Date().toISOString().split('T')[0]
+  selectedDate.value = today
+  selectedHour.value = '13'
+  selectedMinute.value = '00'
+})
 
 async function handleSubmit(e) {
   e.preventDefault()
@@ -137,9 +157,8 @@ async function handleSubmit(e) {
 
   // watched_atを日付+時間で構築
   let watchedAt = null
-  if (form.value.watchedDate) {
-    // datetime-localの形式はすでに "YYYY-MM-DDTHH:mm" なので秒を追加するだけ
-    watchedAt = `${form.value.watchedDate}:00`
+  if (selectedDate.value) {
+    watchedAt = `${selectedDate.value}T${selectedHour.value}:${selectedMinute.value}:00`
   }
 
   try {
@@ -172,14 +191,16 @@ async function handleSubmit(e) {
     alert('ログの保存に失敗しました。もう一度お試しください。')
   }
 }
+
 </script>
 
 <template>
   <main class="container py-4">
     <h1 class="mb-3 fw-bold text-center fs-3">観劇ログを追加</h1>
 
-    <p v-if="loading">作品一覧を読み込み中...</p>
-    <p v-else-if="error">エラー: {{ error }}</p>
+    <SimpleSpinner :show="loading" />
+    
+    <p v-if="error">エラー: {{ error }}</p>
 
     <form v-if="!loading && !error" @submit="handleSubmit" class="mb-4">
       <div class="wrap">
@@ -286,16 +307,50 @@ async function handleSubmit(e) {
             </button>
           </div>
         </div>
+
+        <!-- 日付選択 -->
         <div class="mb-3 row df-center g-1">
           <div class="col-3">
             <label class="form-label small"><IconBinoculars/>観劇日</label>
           </div>
           <div class="col-9">
             <input
-              type="datetime-local"
+              type="date"
               class="form-control"
-              v-model="form.watchedDate"
+              v-model="selectedDate"
             />
+          </div>
+        </div>
+
+        <!-- 時刻選択 -->
+        <div class="mb-3 row df-center g-1">
+          <div class="col-3">
+            <label class="form-label small">時刻</label>
+          </div>
+          <div class="col-9">
+            <div class="d-flex align-items-center gap-2">
+              <select class="form-select" v-model="selectedHour" style="width: 80px;">
+                <option v-for="hour in hourOptions" :key="hour" :value="hour">
+                  {{ hour }}時
+                </option>
+              </select>
+              <button
+                type="button"
+                class="btn btn-sm"
+                :class="selectedMinute === '00' ? 'btn-primary' : 'btn-outline-secondary'"
+                @click="setMinute('00')"
+              >
+                00分
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm"
+                :class="selectedMinute === '30' ? 'btn-primary' : 'btn-outline-secondary'"
+                @click="setMinute('30')"
+              >
+                30分
+              </button>
+            </div>
           </div>
         </div>
       </div>

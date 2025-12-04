@@ -2,49 +2,15 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { IconCirclePlus, IconStar, IconBinoculars } from '@tabler/icons-vue'
-import { request, deleteLog as apiDeleteLog } from '@/apiClient'
+import { fetchMyLogs, deleteLog as apiDeleteLog } from '@/apiClient'
+import SimpleSpinner from '@/components/LoadingSimpleSpinner.vue'
 
 const logs = ref([])
 const loading = ref(true)
 const error = ref(null)
 const router = useRouter()
 
-// 🔑 キャッシュ用キーとTTL（必要なら調整）
-const CACHE_KEY = 'hoshidori_logs_cache_v1'
-const CACHE_TTL = 1000 * 60 * 5 // 5分
-
-function loadCache() {
-  try {
-    const raw = localStorage.getItem(CACHE_KEY)
-    if (!raw) return null
-    const parsed = JSON.parse(raw)
-    if (!Array.isArray(parsed.logs)) return null
-
-    // TTLチェック（古すぎたら捨てる）
-    if (Date.now() - (parsed.timestamp || 0) > CACHE_TTL) {
-      return null
-    }
-    return parsed.logs
-  } catch {
-    return null
-  }
-}
-
-function saveCache(data) {
-  try {
-    localStorage.setItem(
-      CACHE_KEY,
-      JSON.stringify({
-        logs: data,
-        timestamp: Date.now(),
-      })
-    )
-  } catch {
-    // localStorage いっぱいとかは無視
-  }
-}
-
-async function fetchLogs() {
+async function fetchLogs({ force = false } = {}) {
   // キャッシュ表示がある場合は「読み込み中…」は出さない
   if (!logs.value.length) {
     loading.value = true
@@ -52,9 +18,8 @@ async function fetchLogs() {
   error.value = null
 
   try {
-    const data = await request('/api/logs/')
+    const data = await fetchMyLogs({ force })
     logs.value = data
-    saveCache(data)
   } catch (e) {
     error.value = e.message
   } finally {
@@ -62,17 +27,7 @@ async function fetchLogs() {
   }
 }
 
-onMounted(async () => {
-  // ① まずキャッシュを読んで即表示
-  const cached = loadCache()
-  if (cached) {
-    logs.value = cached
-    loading.value = false
-  }
-
-  // ② 裏で最新データを取りに行く
-  await fetchLogs()
-})
+onMounted(() => fetchLogs({ force: false }))  // 初回はキャッシュ使ってOK
 
 function formatDate(val) {
   if (!val) return ''
@@ -88,11 +43,8 @@ async function deleteLog(id) {
   try {
     await apiDeleteLog(id)
 
-    // ローカルの配列を先に更新
-    logs.value = logs.value.filter((log) => log.id !== id)
-
-    // キャッシュも更新
-    saveCache(logs.value)
+    // 強制で取り直す（キャッシュ無視）
+    await fetchLogs({ force: true })
   } catch (e) {
     alert('削除に失敗しました。もう一度お試しください。')
   }
@@ -112,9 +64,10 @@ async function deleteLog(id) {
       <IconCirclePlus :size="40"/>
     </router-link>
 
-    <p v-if="loading && logs.length === 0">読み込み中...</p>
-    <p v-else-if="error">エラー: {{ error }}</p>
-    <div v-else-if="logs.length === 0">
+    <SimpleSpinner :show="loading && logs.length === 0" />
+    
+    <p v-if="error">エラー: {{ error }}</p>
+    <div v-else-if="!loading && logs.length === 0">
       <div class="df-center text-center flex-column">
         その体験は<br>
         あなたの人生を豊かにします<br>
