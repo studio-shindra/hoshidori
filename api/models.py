@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from cloudinary.models import CloudinaryField
-from taggit.managers import TaggableManager
 from django.contrib.postgres.fields import ArrayField
 from django.utils import timezone 
 
@@ -12,6 +11,20 @@ class WorkStatus(models.TextChoices):
     DRAFT = 'DRAFT', '仮作品（作成者のみ）'
     PENDING = 'PENDING', '審査中'
     APPROVED = 'APPROVED', '公開'
+
+
+class Tag(models.Model):
+    """
+    タグモデル（作品とログで共用）
+    """
+    name = models.CharField(max_length=100, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self) -> str:
+        return self.name
 
 
 class Theater(models.Model):
@@ -89,9 +102,11 @@ class Work(models.Model):
     )
 
     # 作品の性質タグ（ジャンルなど）
-    tags = TaggableManager(
+    tags = models.ManyToManyField(
+        Tag,
         blank=True,
-        help_text='作品タグ（会話劇、一人芝居、SF など）※カンマ区切り'
+        related_name='works',
+        help_text='作品タグ（会話劇、一人芝居、SF など）'
     )
 
     actors = models.ManyToManyField(
@@ -178,9 +193,11 @@ class ViewingLog(models.Model):
     )
 
     # ログ固有のタグ（感情・状況など）
-    tags = TaggableManager(
+    tags = models.ManyToManyField(
+        Tag,
         blank=True,
-        help_text='ログ用タグ（泣いた、初見、千秋楽など）※カンマ区切り'
+        related_name='logs',
+        help_text='ログ用タグ（泣いた、初見、千秋楽など）'
     )
 
     created_at = models.DateTimeField(auto_now_add=True)

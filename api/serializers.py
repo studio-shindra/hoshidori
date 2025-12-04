@@ -1,8 +1,7 @@
 # api/serializers.py（一部）
 
-from taggit.models import Tag
 from rest_framework import serializers
-from .models import Theater, Actor, Troupe, Work, Run, ViewingLog
+from .models import Theater, Actor, Troupe, Work, Run, ViewingLog, Tag
 from django.contrib.auth import get_user_model
 from django.utils.text import slugify
 from django.db import IntegrityError, transaction
@@ -150,10 +149,10 @@ class WorkDetailSerializer(serializers.ModelSerializer):
 
 
 class ViewingLogSerializer(serializers.ModelSerializer):
-    tags = serializers.ListField(
-        child=serializers.CharField(),
-        required=False,
-        allow_empty=True,
+    tags = serializers.SlugRelatedField(
+        many=True,
+        queryset=Tag.objects.all(),
+        slug_field='name',
     )
     # 書き込み用: フロントから数値IDを受け取る
     work_id = serializers.PrimaryKeyRelatedField(
@@ -186,20 +185,6 @@ class ViewingLogSerializer(serializers.ModelSerializer):
         if not attrs.get('work') and not self.instance:
             raise serializers.ValidationError({'work': '作品は必須です。'})
         return attrs
-
-    def create(self, validated_data):
-        # タグを一旦取り出す（many=True の場合、pop できない）
-        tags_data = validated_data.pop('tags', [])
-        
-        # ViewingLog を作成
-        instance = ViewingLog.objects.create(**validated_data)
-        
-        # タグを設定（自動作成対応）
-        for tag_name in tags_data:
-            tag, _ = Tag.objects.get_or_create(name=tag_name)
-            instance.tags.add(tag)
-        
-        return instance
 
     def to_representation(self, instance):
         ret = super().to_representation(instance)
