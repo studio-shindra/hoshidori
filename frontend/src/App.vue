@@ -48,7 +48,8 @@ onUnmounted(() => {
   <LoadingSpinner :show="appLoading" />
   <div class="app-container" :class="{ 'ios-extra-padding': isIOS }">
     <header
-      class="position-fixed top-0 w-100 border-top footer-app-container p-3 pb-0"
+      class="header position-fixed top-0 w-100 border-top footer-app-container p-3 pb-0"
+      :class="{ 'ios-extra-padding': isIOS }"
       style="z-index: 999;">
       <div class="d-flex justify-content-between p-2">
         <router-link to="/logs" class="btn btn-sm">
@@ -80,6 +81,10 @@ onUnmounted(() => {
 /* iOSの場合のみ追加の余白 */
 .app-container.ios-extra-padding {
   padding-top: calc(env(safe-area-inset-top) + 3rem);
+}
+
+.header.ios-extra-padding{
+  padding-top: 3rem !important;
 }
 
 .footer-app-container{
