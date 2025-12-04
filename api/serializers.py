@@ -154,6 +154,7 @@ class ViewingLogSerializer(serializers.ModelSerializer):
         read_only=True,
         slug_field='name',
     )
+    work = WorkListSerializer(read_only=True)
 
     class Meta:
         model = ViewingLog
@@ -170,6 +171,13 @@ class ViewingLogSerializer(serializers.ModelSerializer):
             'created_at',
         ]
         read_only_fields = ['user', 'created_at']
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        # watched_at → watchedDate にキャメルケース化
+        if 'watched_at' in ret:
+            ret['watchedDate'] = ret.pop('watched_at')
+        return ret
 
 
 class WorkCreateOrGetSerializer(serializers.Serializer):

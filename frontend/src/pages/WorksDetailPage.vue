@@ -41,7 +41,7 @@ onMounted(fetchWork)
     <div v-else class="wrap">
       <div class="h-100">
         <!-- 画像コンテナ -->
-        <div class="position-relative my-4" style="overflow: hidden;">
+        <div class="position-relative my-5" style="overflow: hidden;">
           <AsyncImage
             v-if="work.main_image || work.main_image_url"
             :src="work.main_image || work.main_image_url"

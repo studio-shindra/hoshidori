@@ -3,10 +3,12 @@ import { IconCategory } from '@tabler/icons-vue'
 import { onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { AdMob, BannerAdSize, BannerAdPosition } from '@capacitor-community/admob'
+import { Capacitor } from '@capacitor/core'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const router = useRouter()
 const appLoading = ref(true)
+const isIOS = Capacitor.getPlatform() === 'ios'
 
 // 環境に応じてテスト/本番を自動切り替え（development: テスト / production: 本番）
 const USE_TEST_ADS = import.meta.env.DEV
@@ -44,7 +46,7 @@ onUnmounted(() => {
 
 <template>
   <LoadingSpinner :show="appLoading" />
-  <div class="app-container">
+  <div class="app-container" :class="{ 'ios-extra-padding': isIOS }">
     <header
       class="position-fixed top-0 w-100 border-top footer-app-container p-3 pb-0"
       style="z-index: 999;">
@@ -69,11 +71,17 @@ onUnmounted(() => {
 <style>
 .app-container {
   /* ヘッダーにバナーを置くため、セーフエリア + ヘッダー相当の余白 */
-  padding-top: calc(env(safe-area-inset-top) + 24px);
+  padding-top: env(safe-area-inset-top);
   padding-bottom: calc(env(safe-area-inset-bottom) + 24px);
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
 }
+
+/* iOSの場合のみ追加の余白 */
+.app-container.ios-extra-padding {
+  padding-top: calc(env(safe-area-inset-top) + 3rem);
+}
+
 .footer-app-container{
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);

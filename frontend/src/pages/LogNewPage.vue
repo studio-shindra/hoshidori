@@ -143,18 +143,24 @@ async function handleSubmit(e) {
   }
 
   try {
+    const payload = {
+      work: Number(form.value.workId),
+      run: form.value.runId ? Number(form.value.runId) : null,
+      watched_at: watchedAt,
+      memo: form.value.memo || null,
+      rating: form.value.rating ? Number(form.value.rating) : null,
+      tags: [],
+    }
+
+    // seat が空文字列の場合は送らない（null も送らない）
+    if (form.value.seat) {
+      payload.seat = form.value.seat
+    }
+
     await request('/api/logs/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        work: Number(form.value.workId),
-        run: form.value.runId ? Number(form.value.runId) : null,
-        watched_at: watchedAt,
-        seat: form.value.seat || null,
-        memo: form.value.memo || null,
-        rating: form.value.rating ? Number(form.value.rating) : null,
-        tags: [],
-      }),
+      body: JSON.stringify(payload),
     })
 
     // 保存成功：インタースティシャル広告を表示（3回に1回）
