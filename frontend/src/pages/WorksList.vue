@@ -1,11 +1,12 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import WorksBody from '@/components/WorksBody.vue'
 import { IconSearch, IconStarFilled } from '@tabler/icons-vue'
 import { fetchWorks } from '@/apiClient'
 
 const route = useRoute()
+const router = useRouter()
 const q = ref(route.query.q || '')
 const works = ref([])
 const loading = ref(false)
@@ -36,7 +37,7 @@ onMounted(() => {
 
 <template>
   <main class="container py-4">
-    <h1 class="mb-3 fs-3 fw-bold text-center">作品一覧</h1>
+    <h1 class="mb-3 fs-3 fw-bold text-center">登録作品一覧</h1>
     <form class="position-relative mb-5" @submit.prevent="search">
       <div class="input">
         <input
@@ -44,9 +45,10 @@ onMounted(() => {
           type="search"
           class="form-control"
           placeholder="タイトル・劇場名・俳優名などで検索"
+          style="padding-left: 36px;"
         />
       </div>
-      <div class="position-absolute end-0 top-0 bottom-0 d-flex align-items-center me-2">
+      <div class="position-absolute start-0 top-0 bottom-0 d-flex align-items-center me-2">
         <button type="submit" class="btn btn-sm" style="z-index: 999;">
           <IconSearch :size="20"/> 
         </button>
@@ -55,7 +57,21 @@ onMounted(() => {
 
     <p v-if="loading">読み込み中...</p>
     <p v-else-if="error" class="text-danger">エラー: {{ error }}</p>
-    <p v-else-if="works.length === 0">作品がありません。</p>
+    <div
+      v-else-if="works.length === 0"
+      class="df-center flex-column">
+        <div class="text-center mb-2">
+          まだ作品が登録されていません。<br>
+          登録してみませんか？
+        </div>
+        <button
+          type="button"
+          class="btn btn-sm btn-link"
+          @click="router.push('/works/new')"
+        >
+          作品登録ページ
+        </button>
+    </div>
 
     <div v-if="works.length > 0" class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-1">
       <div v-for="work in works" :key="work.id" class="col position-relative">

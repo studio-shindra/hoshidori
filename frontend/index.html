@@ -1,10 +1,54 @@
 <!doctype html>
-<html lang="en">
+<html lang="ja">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <title>【観劇ログアプリ】HOSHIDORI</title>
+
+    <!-- スマホ向け基本 -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=5, viewport-fit=cover"
+    />
+    <meta
+      name="description"
+      content="観劇ログアプリ HOSHIDORI は、観た舞台の感想・評価・劇場情報をかんたんに記録できる観劇専用メモアプリです。"
+    />
+    <meta name="keywords" content="観劇ログ, 観劇メモ, 舞台, 小劇場, 演劇, ホシドリ, HOSHIDORI" />
+
+    <!-- テーマカラー（Safariのタブ色とか）-->
+    <meta name="theme-color" content="#111827" />
+
+    <!-- PWA / アイコン系（ファイルがあれば） -->
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- iOS ホーム画面追加したとき用 -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="HOSHIDORI" />
+
+    <!-- OGP（共有用）-->
+    <meta property="og:site_name" content="HOSHIDORI" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="【観劇ログアプリ】HOSHIDORI" />
+    <meta
+      property="og:description"
+      content="観た舞台を忘れない。感想・評価・劇場情報をストックできる観劇ログアプリ HOSHIDORI。"
+    />
+    <meta property="og:url" content="https://hoshidori.netlify.app/" />
+    <!-- OGP用の画像を置いたらパス差し替え -->
+    <meta property="og:image" content="https://hoshidori.netlify.app/ogp.webp" />
+
+    <!-- Twitterカード -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="【観劇ログアプリ】HOSHIDORI" />
+    <meta
+      name="twitter:description"
+      content="観た舞台を忘れない。観劇ログアプリ HOSHIDORI。"
+    />
+    <meta name="twitter:image" content="https://hoshidori.netlify.app/ogp.webp" />
   </head>
   <body>
     <div id="app"></div>

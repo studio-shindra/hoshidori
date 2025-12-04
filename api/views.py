@@ -26,7 +26,9 @@ class WorkViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['status', 'main_theater']
-    search_fields = ['title', 'troupe', 'tags__name', 'actors__name']
+    # ForeignKey（troupe）は search_fields に含めない（SearchFilter は ForeignKey をサポートしない）
+    # 代わりに troupe__name で検索可能にする
+    search_fields = ['title', 'troupe__name', 'tags__name', 'actors__name']
     ordering_fields = ['created_at', 'title']
     ordering = ['-created_at']
     serializer_class = WorkDetailSerializer

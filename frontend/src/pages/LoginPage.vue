@@ -22,7 +22,13 @@ async function handleLogin(e) {
 
   try {
     const baseUrl = import.meta.env.VITE_API_BASE_URL || ''
-    const res = await fetch(`${baseUrl}/api/auth/token/`, {
+    const url = `${baseUrl}/api/auth/token/`
+    
+    console.log('[HOSHIDORI LOGIN] baseUrl:', baseUrl)
+    console.log('[HOSHIDORI LOGIN] URL:', url)
+    console.log('[HOSHIDORI LOGIN] username:', username.value)
+    
+    const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -31,10 +37,23 @@ async function handleLogin(e) {
         password: password.value,
       }),
     })
+    
+    console.log('[HOSHIDORI LOGIN] Response status:', res.status)
 
     if (!res.ok) {
       const text = await res.text()
-      throw new Error(text || `Login failed: ${res.status}`)
+      console.error('[HOSHIDORI LOGIN] Error response:', text)
+      
+      // エラーメッセージを日本語化
+      let errorMessage = 'ログインに失敗しました'
+      if (res.status === 401) {
+        errorMessage = 'ユーザー名またはパスワードが違います'
+      } else if (res.status === 400) {
+        errorMessage = '入力内容に誤りがあります'
+      } else if (res.status >= 500) {
+        errorMessage = 'サーバーエラーが発生しました。しばらくしてから再度お試しください'
+      }
+      throw new Error(errorMessage)
     }
 
     const data = await res.json()
@@ -58,28 +77,30 @@ async function handleLogin(e) {
 </script>
 
 <template>
-  <main class="container py-5" style="max-width: 480px">
-    <h1 class="mb-4">HOSHIDORI ログイン</h1>
+  <main class="container" style="max-width: 480px; padding-top: 6rem;">
+    <h1 class="mb-4 d-flex flex-column align-items-center">
+      <img src="/icon.svg" width="40" alt="">
+    </h1>
 
     <form @submit="handleLogin" class="mb-3">
       <div class="mb-3">
-        <label class="form-label">ユーザー名</label>
         <input
           v-model="username"
           type="text"
           class="form-control"
           autocomplete="username"
+          placeholder="ユーザー名"
           required
         />
       </div>
 
       <div class="mb-3">
-        <label class="form-label">パスワード</label>
         <input
           v-model="password"
           type="password"
           class="form-control"
           autocomplete="current-password"
+          placeholder="パスワード"
           required
         />
       </div>
@@ -90,11 +111,11 @@ async function handleLogin(e) {
     </form>
 
     <router-link
-      class="btn btn-outline-secondary w-100 mb-2"
+      class="btn btn-link w-100 mb-2"
       :class="{ disabled: loading }"
       to="/signup"
     >
-      初めての方はこちら（サインアップ）
+      初めての方
     </router-link>
 
     <p v-if="error" class="text-danger mt-2">{{ error }}</p>

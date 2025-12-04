@@ -3,6 +3,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { request } from '@/apiClient'
+import { onLogSaveSuccess } from '@/lib/admobHelpers'
 import Multiselect from '@vueform/multiselect'
 import { IconClick, IconBinoculars, IconArmchair, IconStar, IconPencil } from '@tabler/icons-vue'
 
@@ -129,27 +130,35 @@ async function handleSubmit(e) {
     watchedAt = `${form.value.watchedDate}:00`
   }
 
-  await request('/api/logs/', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      work: Number(form.value.workId),
-      run: form.value.runId ? Number(form.value.runId) : null,
-      watched_at: watchedAt,
-      seat: form.value.seat || null,
-      memo: form.value.memo || null,
-      rating: form.value.rating ? Number(form.value.rating) : null,
-      tags: [],
-    }),
-  })
+  try {
+    await request('/api/logs/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        work: Number(form.value.workId),
+        run: form.value.runId ? Number(form.value.runId) : null,
+        watched_at: watchedAt,
+        seat: form.value.seat || null,
+        memo: form.value.memo || null,
+        rating: form.value.rating ? Number(form.value.rating) : null,
+        tags: [],
+      }),
+    })
 
-  router.push('/logs')
+    // 保存成功：インタースティシャル広告を表示（3回に1回）
+    await onLogSaveSuccess()
+
+    router.push('/logs')
+  } catch (error) {
+    console.error('ログの保存に失敗しました:', error)
+    alert('ログの保存に失敗しました。もう一度お試しください。')
+  }
 }
 </script>
 
 <template>
   <main class="container py-4">
-    <h1 class="mb-3 fw-bold text-center">観劇ログを追加</h1>
+    <h1 class="mb-3 fw-bold text-center fs-3">観劇ログを追加</h1>
 
     <p v-if="loading">作品一覧を読み込み中...</p>
     <p v-else-if="error">エラー: {{ error }}</p>
@@ -177,7 +186,7 @@ async function handleSubmit(e) {
               <label class="form-label small">タイトル *</label>
               <input
                 type="text"
-                class="form-control form-control-sm"
+                class="form-control"
                 v-model="quickForm.title"
                 placeholder="作品名"
               />
@@ -186,7 +195,7 @@ async function handleSubmit(e) {
               <label class="form-label small">団体名</label>
               <input
                 type="text"
-                class="form-control form-control-sm"
+                class="form-control"
                 v-model="quickForm.troupe"
                 placeholder="団体名"
               />
@@ -195,7 +204,7 @@ async function handleSubmit(e) {
               <label class="form-label small">劇場</label>
               <input
                 type="text"
-                class="form-control form-control-sm"
+                class="form-control"
                 v-model="quickForm.theater"
                 placeholder="劇場名"
               />

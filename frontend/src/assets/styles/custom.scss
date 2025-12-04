@@ -10,6 +10,16 @@ p{
     white-space: pre-wrap;
 }
 
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
+main{
+    margin-top: 24px; //ヘッダーに移動した結果
+}
+
 .form-label{
     display: flex;
     align-items: center;

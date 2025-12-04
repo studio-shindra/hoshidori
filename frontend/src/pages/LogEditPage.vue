@@ -3,6 +3,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { request } from '@/apiClient'
+import { onLogSaveSuccess } from '@/lib/admobHelpers'
 
 const route = useRoute()
 const router = useRouter()
@@ -85,21 +86,29 @@ async function handleSubmit(e) {
     watchedAt = `${form.value.watchedDate}T${time}:00`
   }
 
-  await request(`/api/logs/${id.value}/`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      work: Number(form.value.workId),
-      run: form.value.runId ? Number(form.value.runId) : null,
-      watched_at: watchedAt,
-      seat: form.value.seat || null,
-      memo: form.value.memo || null,
-      rating: form.value.rating ? Number(form.value.rating) : null,
-      tags: [],
-    }),
-  })
+  try {
+    await request(`/api/logs/${id.value}/`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        work: Number(form.value.workId),
+        run: form.value.runId ? Number(form.value.runId) : null,
+        watched_at: watchedAt,
+        seat: form.value.seat || null,
+        memo: form.value.memo || null,
+        rating: form.value.rating ? Number(form.value.rating) : null,
+        tags: [],
+      }),
+    })
 
-  router.push('/logs')
+    // 更新成功：インタースティシャル広告を表示（3回に1回）
+    await onLogSaveSuccess()
+
+    router.push('/logs')
+  } catch (error) {
+    console.error('ログの更新に失敗しました:', error)
+    alert('ログの更新に失敗しました。もう一度お試しください。')
+  }
 }
 </script>
 

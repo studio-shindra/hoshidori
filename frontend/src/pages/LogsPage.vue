@@ -46,12 +46,12 @@ async function deleteLog(id) {
 
 <template>
   <main class="container py-4">
-    <h1 class="mb-3 df-center">
+    <!-- <h1 class="mb-3 df-center">
       <img 
         src="/icon.svg"
         style="width: 80px;"
         alt="">
-    </h1>
+    </h1> -->
 
     <router-link to="/logs/new" class="btn text-dark df-center my-5">
       <IconCirclePlus :size="40"/>
@@ -59,7 +59,13 @@ async function deleteLog(id) {
 
     <p v-if="loading">読み込み中...</p>
     <p v-else-if="error">エラー: {{ error }}</p>
-    <p v-else-if="logs.length === 0">まだ観劇ログがありません。</p>
+    <div v-else-if="logs.length === 0">
+      <div class="df-center text-center">
+        その体験は<br>
+        あなたの人生を豊かにします
+      </div>
+      
+    </div>
 
     <div v-else class="row g-1">
       <div v-for="log in logs" :key="log.id" class="col-6 col-md-3 col-lg-2">
