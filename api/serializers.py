@@ -6,6 +6,7 @@ from .models import Theater, Actor, Troupe, Work, Run, ViewingLog
 from django.contrib.auth import get_user_model
 from django.utils.text import slugify
 from django.db import IntegrityError, transaction
+import uuid
 
 
 class TheaterSerializer(serializers.ModelSerializer):
@@ -151,7 +152,7 @@ class WorkDetailSerializer(serializers.ModelSerializer):
 class ViewingLogSerializer(serializers.ModelSerializer):
     tags = serializers.SlugRelatedField(
         many=True,
-        read_only=True,
+        queryset=Tag.objects.all(),
         slug_field='name',
     )
     # 書き込み用: フロントから数値IDを受け取る
@@ -237,7 +238,8 @@ class WorkCreateOrGetSerializer(serializers.Serializer):
         # slugがから空になる場合のフォールバック（記号だけのタイトル等）
         if not base_slug:
             base_slug = f"work-{user.id}"
-        slug = base_slug
+        # slug生成：UUIDで完全に一意性を保証
+        slug = str(uuid.uuid4())
         counter = 1
 
         # Work作成または取得
@@ -264,8 +266,8 @@ class WorkCreateOrGetSerializer(serializers.Serializer):
                     if existing:
                         work = existing
                         break
-                    # 万が一の場合はカウンタを付けて再試行
-                    slug = f"{base_slug}-{counter}"
+                    # 万が一の場合は別のUUIDで再試行
+                    slug = str(uuid.uuid4())
                     counter += 1
 
         # Run情報があれば作成
