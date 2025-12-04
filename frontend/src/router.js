@@ -12,6 +12,8 @@ import SignUpPage from '@/pages/SignUpPage.vue'
 import LoadingTest from '@/pages/LoadingTest.vue'
 import { currentUser, authReady } from '@/authState'
 import WorksTestPage from '@/pages/WorksTestPage.vue'
+import ContactPage from '@/pages/ContactPage.vue'
+import AboutContentsPage from '@/pages/AboutContentsPage.vue'
 
 const routes = [
   { path: '/', redirect: '/logs' },
@@ -52,6 +54,8 @@ const routes = [
   },
   { path: '/loading-test', name: 'loading-test', component: LoadingTest },
   { path: '/works-test', component: WorksTestPage, meta: { requiresAuth: true } },
+  { path: '/contact', component: ContactPage },
+  { path: '/about-contents', component: AboutContentsPage },
 ]
 
 const router = createRouter({

@@ -224,3 +224,7 @@ SIMPLE_JWT = {
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,
 }
+
+# メール設定（コンタクトフォーム用）
+DEFAULT_FROM_EMAIL = "shin@studio-shindra.com"
+CONTACT_EMAIL = "shin@studio-shindra.com"

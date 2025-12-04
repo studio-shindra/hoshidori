@@ -1,6 +1,7 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework import viewsets, permissions, decorators, response, filters
+from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import permissions
 from rest_framework.permissions import AllowAny
@@ -8,6 +9,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Work, ViewingLog, Theater, Actor
 from .models import Troupe
+from django.core.mail import send_mail
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from .serializers import (
     WorkListSerializer,
@@ -19,7 +22,9 @@ from .serializers import (
     TheaterSerializer,
     ActorSerializer,
     TroupeSerializer,
+    ContactSerializer,
 )
+
 
 
 class WorkViewSet(viewsets.ModelViewSet):
@@ -147,10 +152,6 @@ class TroupeViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'slug']
     ordering = ['name']
-    permission_classes = [AllowAny]
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['name']
-    ordering = ['name']
 
 
 User = get_user_model()
@@ -166,3 +167,28 @@ def register(request):
         ser.save()
         return Response(ser.data, status=status.HTTP_201_CREATED)
     return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ContactView(APIView):
+    permission_classes = [permissions.AllowAny]  # 誰でも送れる問い合わせフォーム想定
+
+    def post(self, request, *args, **kwargs):
+        serializer = ContactSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        subject = f"[HOSHIDORI] お問い合わせ: {data['name']}"
+        body = (
+            f"お名前: {data['name']}\n"
+            f"メール: {data['email']}\n\n"
+            f"本文:\n{data['message']}"
+        )
+
+        send_mail(
+            subject=subject,
+            message=body,
+            from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
+            recipient_list=[getattr(settings, "CONTACT_EMAIL", settings.DEFAULT_FROM_EMAIL)],
+        )
+
+        return Response({"detail": "ok"}, status=status.HTTP_201_CREATED)

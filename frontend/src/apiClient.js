@@ -207,3 +207,10 @@ export function deleteLog(id) {
     method: 'DELETE',
   })
 }
+
+export function sendContact(payload) {
+  return request('/api/contact/', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
