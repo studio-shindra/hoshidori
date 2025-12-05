@@ -3,16 +3,20 @@ runtime: python311
 
 build:
   commands:
+    # ここは「ビルドしましたよ」という印だけつける（実質何もしない）
     build:
-      - pip3 install --upgrade pip
-      - pip3 install -r requirements.txt
+      - echo "build step (no-op)"
 
 run:
+  # Python 3.11 を指定
   runtime-version: 3.11
+
+  # コンテナ起動前にライブラリを入れる（ここで requirements.txt を入れる）
   pre-run:
-    - pip3 install --upgrade pip
-    - pip3 install gunicorn
     - pip3 install -r requirements.txt
+
+  # Django を gunicorn で起動
   command: gunicorn config.wsgi:application --bind 0.0.0.0:8000
+
   network:
     port: 8000
