@@ -3,10 +3,9 @@ from django.contrib import admin
 from import_export import resources, fields
 from import_export.admin import ImportExportModelAdmin
 from import_export.widgets import ManyToManyWidget, ForeignKeyWidget
-from taggit.models import Tag
 from django.utils.text import slugify
 
-from .models import Theater, Actor, Troupe, Work, Run, ViewingLog
+from .models import Theater, Actor, Troupe, Work, Run, ViewingLog, Tag
 
 
 # ===== カスタム Widget =====
@@ -76,6 +75,14 @@ class TheaterAdmin(ImportExportModelAdmin):
         if not obj.area_tags:
             return ''
         return ', '.join(obj.area_tags)
+
+
+# ===== Tag =====
+
+@admin.register(Tag)
+class TagAdmin(admin.ModelAdmin):
+    list_display = ('name',)
+    search_fields = ('name',)
 
 
 # ===== Actor =====
