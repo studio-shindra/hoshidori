@@ -303,7 +303,7 @@ onBeforeUnmount(() => {
             </ul>
           </nav>
           <div class="wrap d-flex flex-column px-2">
-            <div class="small">
+            <div class="small mb-4">
               <router-link to="/about-contents" @click="closeMenu">コンテンツについて</router-link>
             </div>
             <div class="d-flex justify-content-end">
@@ -383,6 +383,8 @@ onBeforeUnmount(() => {
     transform: translateX(100%); /* 初期状態：画面外 */
     .ios-extra-padding {
       padding-top: calc(env(safe-area-inset-top) + 1rem);
+      padding-bottom: calc(env(safe-area-inset-bottom) + 1rem);
+      padding-left: env(safe-area-inset-left);
     }
   }
 }
