@@ -160,7 +160,7 @@ class WorkAdmin(ImportExportModelAdmin):
     list_display = ('title', 'troupe', 'main_theater', 'status', 'is_quick_created', 'created_at')
     list_filter = ('status', 'is_quick_created', 'main_theater', 'troupe')
     search_fields = ('title', 'troupe__name', 'tags__name')
-    filter_horizontal = ('actors',)
+    filter_horizontal = ('actors', 'tags')
     inlines = [RunInline]
 
 
