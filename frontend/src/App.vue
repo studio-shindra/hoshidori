@@ -286,11 +286,13 @@ onBeforeUnmount(() => {
       <div
         ref="sideMenu"
         class="menu-content side-menu"
-        :class="{ 'ios-extra-padding': isIOS }"
         :style="sideMenuStyle"
         @click.stop
       >
-        <div class="py-4 d-flex flex-column justify-content-between" style="height: 100vh;">
+        <div
+        class="d-flex flex-column justify-content-between"
+        :class="{ 'ios-extra-padding': isIOS }"
+        style="height: 100vh;">
           <nav class="menu-nav px-2">
             <ul>
               <li class="border-bottom"><router-link to="/logs" @click="closeMenu">ホーム</router-link></li>
@@ -368,21 +370,21 @@ onBeforeUnmount(() => {
 }
 
 /* メニュー本体 */
-.menu-content.side-menu {
-  position: fixed;
-  inset: 0 0 0 auto;
-  width: 70vw;
-  max-width: 320px;
-  background: #fff;
-  display: flex;
-  flex-direction: column;
-  z-index: 30;
-  transform: translateX(100%); /* 初期状態：画面外 */
-}
-
-/* .is-open での transform はやめて、JS 側で一括管理 */
-.menu-content.side-menu.ios-extra-padding {
-  padding-top: calc(env(safe-area-inset-top) + 2rem);
+.menu-content{
+  &.side-menu {
+    position: fixed;
+    inset: 0 0 0 auto;
+    width: 70vw;
+    max-width: 320px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    z-index: 30;
+    transform: translateX(100%); /* 初期状態：画面外 */
+    .ios-extra-padding {
+      padding-top: calc(env(safe-area-inset-top) + 1rem);
+    }
+  }
 }
 
 /* メニューナビゲーション */
