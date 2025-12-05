@@ -40,20 +40,27 @@ class WorkViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_queryset(self):
-        # APPROVED/PENDINGは公開、DRAFTは作成者本人のみ
         qs = Work.objects.select_related('main_theater').prefetch_related(
             'tags', 'runs__theater'
         )
         user = self.request.user
-        if user.is_authenticated:
-            # ログイン済み: APPROVED/PENDING + 自分のDRAFT
-            from django.db.models import Q
+
+        # 一覧検索は公開作品のみ（クイック作成を除外）
+        if self.action in ['list']:
             return qs.filter(
-                Q(status__in=['APPROVED', 'PENDING']) | Q(status='DRAFT', created_by=user)
+                status='APPROVED',
+                is_quick_created=False,
             )
-        else:
-            # 未ログイン: APPROVED/PENDINGのみ
-            return qs.filter(status__in=['APPROVED', 'PENDING'])
+
+        # それ以外（詳細など）はログイン状態に応じて公開＋自分の下書き・クイック作品を許可
+        from django.db.models import Q
+        if user.is_authenticated:
+            return qs.filter(
+                Q(is_quick_created=False, status__in=['APPROVED', 'PENDING']) |
+                Q(created_by=user)
+            )
+
+        return qs.filter(is_quick_created=False, status__in=['APPROVED', 'PENDING'])
 
     def get_serializer_class(self):  # type: ignore[override]
         if self.action in ['list']:

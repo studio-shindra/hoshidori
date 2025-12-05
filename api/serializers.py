@@ -294,7 +294,8 @@ class WorkCreateOrGetSerializer(serializers.Serializer):
                         official_x=official_x,
                         official_instagram=official_instagram,
                         official_tiktok=official_tiktok,
-                        status='APPROVED',
+                        status='DRAFT',
+                        is_quick_created=True,
                         created_by=user,
                     )
                     break

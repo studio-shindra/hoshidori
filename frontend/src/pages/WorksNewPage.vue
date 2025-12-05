@@ -12,6 +12,7 @@ const theaters = ref([])
 const troupes = ref([])
 const actors = ref([])
 const loading = ref(true)
+const tags = ref([])
 
 const form = ref({
   title: '',
@@ -19,7 +20,7 @@ const form = ref({
   troupe: '',
   description: '',
   imageFile: null,
-  tags: '',
+  selectedTags: [],
   actorIds: [],  // 選択された俳優ID配列
   actorNames: [], // 新規入力された俳優名配列
   // 公式URL・SNS
@@ -58,6 +59,9 @@ const actorOptions = computed(() =>
   }))
 )
 
+// 既存タグオプション
+const tagOptions = computed(() => tags.value)
+
 async function fetchData() {
   loading.value = true
   try {
@@ -73,6 +77,14 @@ async function fetchData() {
       troupes.value = Array.isArray(troupesData) ? troupesData : []
     } catch (err) {
       troupes.value = []
+    }
+
+    // タグ取得（失敗しても続行）
+    try {
+      const tagsData = await request('/api/tags/')
+      tags.value = Array.isArray(tagsData) ? tagsData : []
+    } catch (err) {
+      tags.value = []
     }
   } catch (e) {
     console.error('Failed to fetch data:', e)
@@ -188,15 +200,14 @@ async function handleSubmit(e) {
       if (allActorIds.length > 0) {
         allActorIds.forEach(id => fd.append('actors', id))
       }
-      // タグを追加
-      if (form.value.tags && form.value.tags.trim()) {
-        const tagsArray = form.value.tags.split(',').map(t => t.trim())
-        tagsArray.forEach(tag => {
+      // タグを追加（Multiselectの文字列配列）
+      if (form.value.selectedTags && form.value.selectedTags.length > 0) {
+        form.value.selectedTags.forEach(tag => {
           if (tag) fd.append('tags', tag)
         })
       }
       
-      if (form.value.imageFile || allActorIds.length > 0 || form.value.tags) {
+      if (form.value.imageFile || allActorIds.length > 0 || form.value.selectedTags.length > 0) {
         await request(`/api/works/${created.id}/`, {
           method: 'PATCH',
           body: fd,
@@ -302,12 +313,15 @@ async function handleSubmit(e) {
           <label class="form-label small"><IconTags />タグ</label>
         </div>
         <div class="col-9">
-          <input
-            type="text"
-            class="form-control"
-            v-model="form.tags"
-            placeholder="例: 会話劇, コメディ, 一人芝居"
-          />
+            <Multiselect
+              v-model="form.selectedTags"
+              :options="tagOptions"
+              mode="tags"
+              :searchable="true"
+              :create-option="true"
+              placeholder="タグを選択または入力して登録..."
+              :no-options-text="'見つかりません'"
+            />
         </div>
       </div>
 

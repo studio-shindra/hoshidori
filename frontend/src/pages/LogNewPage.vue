@@ -21,7 +21,11 @@ async function handleCreate(payload) {
     // 保存成功：インタースティシャル広告を表示（3回に1回）
     await onLogSaveSuccess()
 
-    router.push('/logs')
+    alert('保存しました！')
+
+    // 一度リロードして最新ログを確実に反映
+    window.location.href = '/logs'
+
   } catch (error) {
     console.error('ログの保存に失敗しました:', error)
     alert('ログの保存に失敗しました。もう一度お試しください。')

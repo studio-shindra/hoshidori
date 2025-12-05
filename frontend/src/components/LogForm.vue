@@ -1,6 +1,7 @@
 <!-- src/components/LogForm.vue -->
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { request, fetchWorks as apiFetchWorks } from '@/apiClient'
 import Multiselect from '@vueform/multiselect'
 import { IconClick, IconBinoculars, IconArmchair, IconStar, IconClock, IconTag } from '@tabler/icons-vue'
@@ -23,6 +24,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['submit', 'delete'])
+
+const router = useRouter()
 
 const works = ref([])
 const runs = ref([])
@@ -115,31 +118,38 @@ async function onWorkChange() {
 
 // 簡易登録
 async function handleQuickCreate() {
-  if (!quickForm.value.title) {
+  const title = quickForm.value.title.trim()
+
+  if (!title) {
     alert('タイトルは必須です')
-    return
+    return null
   }
-  
+
   try {
     const newWork = await request('/api/works/create_or_get/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        title: quickForm.value.title,
+        title,
         troupe_name: quickForm.value.troupe || null,
         theater_name: quickForm.value.theater || null,
         status: 'DRAFT'
       })
     })
-    
+
+    // 一覧に追加して選択状態にする
     works.value.push(newWork)
     form.value.workId = newWork.id
     await fetchRunsAndTimes(newWork.id)
-    
+
+    // かんたんフォームをリセット＆閉じる
     showQuickForm.value = false
     quickForm.value = { title: '', troupe: '', theater: '' }
+
+    return newWork
   } catch (e) {
-    alert('作品の登録に失敗しました: ' + e.message)
+    alert('作品の登録に失敗しました: ' + (e.message || '不明なエラー'))
+    return null
   }
 }
 
@@ -209,14 +219,27 @@ watch(() => props.initialValue, () => {
   initializeForm()
 }, { deep: true })
 
-function handleSubmit(e) {
+async function handleSubmit(e) {
   e.preventDefault()
 
+  // 1) 作品IDが無いときの特別処理（かんたん登録と共存させる）
   if (!form.value.workId) {
-    alert('作品を選択してください')
-    return
+    const hasQuickTitle = quickForm.value.title && quickForm.value.title.trim().length > 0
+
+    if (showQuickForm.value && hasQuickTitle) {
+      // かんたん登録タイトルが入っていれば、先に作品を自動作成
+      const created = await handleQuickCreate()
+      if (!created) {
+        // 作成に失敗したらログ保存に進まない
+        return
+      }
+    } else {
+      alert('作品を選択するか、かんたん登録でタイトルを入力してください')
+      return
+    }
   }
 
+  // 2) ここまで来たら workId は必ずある前提
   form.value.rating = sliderValue.value
 
   let watchedAt = null
@@ -294,13 +317,22 @@ function handleDelete() {
             />
           </div>
         </div>
-        <div class="wrap df-center">
+        <div class="wrap df-center ">
           <button
             type="button"
             class="btn btn-sm btn-outline-secondary mb-1"
             @click="showQuickForm = !showQuickForm"
           >
             {{ showQuickForm ? '閉じる' : '作品が見つからない場合' }}
+          </button>
+        </div>
+        <div class="df-center">
+          <button
+            type="button"
+            class="btn btn-sm btn-link"
+            @click="router.push('/works/new')"
+          >
+            作品登録ページ
           </button>
         </div>
       </div>
@@ -398,14 +430,14 @@ function handleDelete() {
           mode="tags"
           :searchable="true"
           :create-option="true"
-          placeholder="タグを選択または入力して登録..."
+          placeholder="選択 or 入力..."
           :no-options-text="'見つかりません'"
         />
       </div>
     </div>
 
     <div class="row mb-3 df-center g-1 mt-3 pb-2">
-      <div class="col-2 df-center">
+      <div class="col-3 d-flex align-items-center justify-content-start ps-4">
         <div class="wrap df-center flex-column">
           <IconStar :size="12"/>
           <span class="fs-4">
@@ -413,7 +445,9 @@ function handleDelete() {
           </span>
         </div>
       </div>
-      <div class="col-10">
+      <div
+       class="col-9"
+       style="padding-right: 40px !important;">
         <input
           ref="sliderInputRef"
           type="range"

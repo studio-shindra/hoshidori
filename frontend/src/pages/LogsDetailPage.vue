@@ -129,7 +129,7 @@ async function shareLog() {
             <div
               v-if="(log.work?.main_image || log.work?.main_image_url) && log.work?.troupe && !log.work.troupe.image_allowed"
               class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-              style="background-color: rgba(0, 0, 0, 0.8); z-index: 5;"
+              style="background-color: rgba(0, 0, 0, 0.7); z-index: 5;"
             >
               <div class="text-center text-white">
                 <div style="font-size: 16px; font-weight: bold;">

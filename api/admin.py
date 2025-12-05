@@ -157,8 +157,8 @@ class RunInline(admin.TabularInline):
 @admin.register(Work)
 class WorkAdmin(ImportExportModelAdmin):
     resource_class = WorkResource
-    list_display = ('title', 'troupe', 'main_theater', 'status', 'created_at')
-    list_filter = ('status', 'main_theater', 'troupe')
+    list_display = ('title', 'troupe', 'main_theater', 'status', 'is_quick_created', 'created_at')
+    list_filter = ('status', 'is_quick_created', 'main_theater', 'troupe')
     search_fields = ('title', 'troupe__name', 'tags__name')
     filter_horizontal = ('actors',)
     inlines = [RunInline]
