@@ -1,11 +1,13 @@
 # api/serializers.py（一部）
 
 from rest_framework import serializers
-from .models import Theater, Actor, Troupe, Work, Run, ViewingLog, Tag
+from .models import Theater, Actor, Troupe, Work, Run, ViewingLog, Tag, UserProfile
 from django.contrib.auth import get_user_model
 from django.utils.text import slugify
 from django.db import IntegrityError, transaction
 import uuid
+
+User = get_user_model()
 
 
 class TheaterSerializer(serializers.ModelSerializer):
@@ -341,7 +343,42 @@ class RegisterSerializer(serializers.ModelSerializer):
         user = User(**validated_data)
         user.set_password(password)
         user.save()
+        # UserProfile も自動作成
+        UserProfile.objects.get_or_create(user=user)
         return user
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    """プロフィール画像用シリアライザ"""
+    class Meta:
+        model = UserProfile
+        fields = ['profile_image']
+
+
+class UserSerializer(serializers.ModelSerializer):
+    """ユーザー情報・プロフィール結合シリアライザ"""
+    profile_image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'profile_image']
+        read_only_fields = ['id']
+
+    def get_profile_image(self, obj):
+        """profile_image URL を取得"""
+        try:
+            return obj.profile.profile_image.url if obj.profile.profile_image else None
+        except UserProfile.DoesNotExist:
+            return None
+
+    def update(self, instance, validated_data):
+        """ユーザー情報を更新（profile_image は別途処理）"""
+        instance.username = validated_data.get('username', instance.username)
+        instance.first_name = validated_data.get('first_name', instance.first_name)
+        instance.last_name = validated_data.get('last_name', instance.last_name)
+        instance.email = validated_data.get('email', instance.email)
+        instance.save()
+        return instance
 
 
 # メールフォーム用簡易シリアライザ

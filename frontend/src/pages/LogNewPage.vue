@@ -1,30 +1,39 @@
 <!-- src/pages/LogNewPage.vue -->
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { request } from '@/apiClient'
 import { onLogSaveSuccess } from '@/lib/admobHelpers'
+import { currentUser } from '@/authState'
+import { createLocalLog, isGuestUser } from '@/lib/localLogs'
 import LogForm from '@/components/LogForm.vue'
 
 const router = useRouter()
 const saving = ref(false)
+const isGuest = computed(() => isGuestUser() || !currentUser.value)
 
 async function handleCreate(payload) {
   saving.value = true
   try {
-    await request('/api/logs/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
+    if (isGuest.value) {
+      createLocalLog(payload)
+      alert('保存しました！（この端末に保存されます）')
+      router.push('/logs')
+    } else {
+      await request('/api/logs/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
 
-    // 保存成功：インタースティシャル広告を表示（3回に1回）
-    await onLogSaveSuccess()
+      // 保存成功：インタースティシャル広告を表示（3回に1回）
+      await onLogSaveSuccess()
 
-    alert('保存しました！')
+      alert('保存しました！')
 
-    // 一度リロードして最新ログを確実に反映
-    window.location.href = '/logs'
+      // 一度リロードして最新ログを確実に反映
+      window.location.href = '/logs'
+    }
 
   } catch (error) {
     console.error('ログの保存に失敗しました:', error)

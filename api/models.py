@@ -7,6 +7,19 @@ from django.utils import timezone
 User = get_user_model()
 
 
+class UserProfile(models.Model):
+    """
+    ユーザープロフィール（デフォルト User モデルの拡張）
+    """
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    profile_image = CloudinaryField('profile image', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self) -> str:
+        return f'{self.user.username} Profile'
+
+
 class WorkStatus(models.TextChoices):
     DRAFT = 'DRAFT', '仮作品（作成者のみ）'
     PENDING = 'PENDING', '審査中'

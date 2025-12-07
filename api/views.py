@@ -1,13 +1,11 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
-from rest_framework import viewsets, permissions, decorators, response, filters
+from rest_framework import viewsets, permissions, decorators, response, filters, status
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework import permissions
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import status
-from .models import Work, ViewingLog, Theater, Actor, Tag
+from .models import Work, ViewingLog, Theater, Actor, Tag, UserProfile
 from .models import Troupe
 from django.core.mail import send_mail
 from django.conf import settings
@@ -23,7 +21,10 @@ from .serializers import (
     ActorSerializer,
     TroupeSerializer,
     ContactSerializer,
+    UserSerializer,
 )
+
+User = get_user_model()
 
 
 
@@ -210,3 +211,42 @@ def tags_list(request):
     """
     tags = Tag.objects.all().values('id', 'name').order_by('name')
     return Response([{'value': tag['id'], 'label': tag['name']} for tag in tags])
+
+
+class UserView(APIView):
+    """
+    ユーザープロフィール管理
+    GET: ユーザー情報を取得
+    PATCH: ユーザー情報（プロフィール画像含む）を更新
+    DELETE: アカウント削除
+    """
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    def get(self, request):
+        """GET /api/auth/user/ - ユーザープロフィール取得"""
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data)
+
+    def patch(self, request):
+        """PATCH /api/auth/user/ - ユーザープロフィール更新"""
+        serializer = UserSerializer(request.user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+
+            # プロフィール画像を処理
+            if 'profile_image' in request.FILES:
+                profile, _ = UserProfile.objects.get_or_create(user=request.user)
+                profile.profile_image = request.FILES['profile_image']
+                profile.save()
+
+            # 更新後のデータを返す
+            return Response(UserSerializer(request.user).data)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request):
+        """DELETE /api/auth/user/ - アカウント削除"""
+        user = request.user
+        user.delete()
+        return Response({'detail': 'Account deleted'}, status=status.HTTP_204_NO_CONTENT)

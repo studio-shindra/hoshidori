@@ -1,14 +1,17 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { IconCirclePlus, IconStar, IconBinoculars } from '@tabler/icons-vue'
 import { fetchMyLogs, deleteLog as apiDeleteLog } from '@/apiClient'
+import { currentUser } from '@/authState'
+import { listLocalLogs, deleteLocalLog, isGuestUser } from '@/lib/localLogs'
 import SimpleSpinner from '@/components/LoadingSimpleSpinner.vue'
 
 const logs = ref([])
 const loading = ref(true)
 const error = ref(null)
 const router = useRouter()
+const isGuest = computed(() => isGuestUser() || !currentUser.value)
 
 async function fetchLogs({ force = false } = {}) {
   // キャッシュ表示がある場合は「読み込み中…」は出さない
@@ -18,8 +21,12 @@ async function fetchLogs({ force = false } = {}) {
   error.value = null
 
   try {
-    const data = await fetchMyLogs({ force })
-    logs.value = data
+    if (isGuest.value) {
+      logs.value = listLocalLogs()
+    } else {
+      const data = await fetchMyLogs({ force })
+      logs.value = data
+    }
   } catch (e) {
     error.value = e.message
   } finally {
@@ -41,10 +48,14 @@ async function deleteLog(id) {
   if (!ok) return
 
   try {
-    await apiDeleteLog(id)
-
-    // 強制で取り直す（キャッシュ無視）
-    await fetchLogs({ force: true })
+    if (isGuest.value) {
+      deleteLocalLog(id)
+      logs.value = listLocalLogs()
+    } else {
+      await apiDeleteLog(id)
+      // 強制で取り直す（キャッシュ無視）
+      await fetchLogs({ force: true })
+    }
   } catch (e) {
     alert('削除に失敗しました。もう一度お試しください。')
   }
@@ -60,14 +71,18 @@ async function deleteLog(id) {
         alt="">
     </h1> -->
 
-    <router-link to="/logs/new" class="btn text-dark df-center my-5">
+    
+    <!-- <router-link to="/logs/new" class="btn text-dark df-center my-5">
       <IconCirclePlus :size="40"/>
-    </router-link>
+    </router-link> -->
 
     <SimpleSpinner :show="loading && logs.length === 0" />
     
     <p v-if="error">エラー: {{ error }}</p>
-    <div v-else-if="!loading && logs.length === 0">
+    <div
+      v-else-if="!loading && logs.length === 0"
+      class="df-center"
+      style="height: calc(100vh - 80px - 80px);"><!-- ヘッダーとフッターの高さを引く --> 
       <div class="df-center text-center flex-column">
         その体験は<br>
         あなたの人生を豊かにします<br>
@@ -79,6 +94,17 @@ async function deleteLog(id) {
     </div>
 
     <div v-else class="row g-1">
+      <div class="col-6 col-md-3 col-lg-2 df-center mb-2">
+        <router-link 
+          to="/logs/new" 
+          class="poster position-relative d-flex align-items-center justify-content-center bg-light h-100 w-100"
+          style="border: 2px dashed #ccc; cursor: pointer;"
+        >
+          <div class="text-center text-muted">
+            <IconCirclePlus :size="40" />
+          </div>
+        </router-link>
+      </div>
       <div v-for="log in logs" :key="log.id" class="col-6 col-md-3 col-lg-2">
         <div class="poster position-relative">
           <router-link :to="`/logs/${log.id}/detail`">

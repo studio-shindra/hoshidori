@@ -251,6 +251,7 @@ async function handleSubmit(e) {
     work_id: Number(form.value.workId),
     run: form.value.runId ? Number(form.value.runId) : null,
     watched_at: watchedAt,
+    watchedDate: watchedAt,
     memo: form.value.memo || null,
     rating: form.value.rating ? Number(form.value.rating) : null,
     tags: form.value.selectedTags || [],
@@ -258,6 +259,12 @@ async function handleSubmit(e) {
 
   if (form.value.seat) {
     payload.seat = form.value.seat
+  }
+
+  // 画面で選択している作品情報をそのままローカル保存に渡す
+  const selectedWork = works.value.find((w) => w.id === Number(form.value.workId)) || null
+  if (selectedWork) {
+    payload.work = selectedWork
   }
 
   emit('submit', payload)

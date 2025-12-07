@@ -1,18 +1,40 @@
 <script setup>
-import { IconCategory } from '@tabler/icons-vue'
+import { IconCategory, IconUser, IconLogin, IconLogout } from '@tabler/icons-vue'
 import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { AdMob, BannerAdSize, BannerAdPosition } from '@capacitor-community/admob'
 import { Capacitor } from '@capacitor/core'
 import PullToRefresh from 'pulltorefreshjs'
+import { currentUser, getProfileInitial } from '@/authState'
+import { isGuestUser } from '@/lib/localLogs'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const router = useRouter()
 
+// プラットフォーム検出
+const isIOS = Capacitor.getPlatform() === 'ios'
+
 // メニュー表示フラグ（開いているかどうか）
 const showMenu = ref(false)
 const appLoading = ref(true)
-const isIOS = Capacitor.getPlatform() === 'ios'
+
+const isGuest = computed(() => isGuestUser() || !currentUser.value)
+const userDisplayName = computed(() => {
+  if (currentUser.value && currentUser.value.user) {
+    return currentUser.value.user.username || 'User'
+  }
+  return null
+})
+const profileImageUrl = computed(() => currentUser.value?.profile_image)
+const profileInitial = computed(() => getProfileInitial())
+
+function logout() {
+  localStorage.removeItem('hoshidori_token')
+  localStorage.removeItem('hoshidori_refresh')
+  currentUser.value = null
+  closeMenu()
+  location.href = '/'
+}
 
 // スワイプで操作する要素参照
 const shell = ref(null)
@@ -49,8 +71,8 @@ const sideMenuStyle = computed(() => {
 const USE_TEST_ADS = import.meta.env.DEV
 
 const ADMOB_IDS = {
-  test: import.meta.env.VITE_ADMOB_BANNER_TEST_ID || 'ca-app-pub-3940256099942544/2934735716',
-  production: import.meta.env.VITE_ADMOB_BANNER_PROD_ID || 'ca-app-pub-6836938378520436/7549822530'
+  test: import.meta.env.VITE_ADMOB_BANNER_TEST_ID || 'ca-app-pub-3940256099942544/9214589741',
+  production: import.meta.env.VITE_ADMOB_BANNER_PROD_ID || 'ca-app-pub-3940256099942544/1033173712'
 }
 
 function openMenu() {
@@ -264,7 +286,7 @@ onBeforeUnmount(() => {
     <LoadingSpinner :show="appLoading" />
 
     <div class="app-container" :class="{ 'ios-extra-padding': isIOS }">
-      <header
+      <!-- <header
         class="header position-fixed top-0 w-100 border-top footer-app-container p-3 pb-0"
         :class="{ 'ios-extra-padding': isIOS }"
         style="z-index: 30;"
@@ -273,11 +295,30 @@ onBeforeUnmount(() => {
           <router-link to="/logs" class="btn btn-sm df-center">
             <img src="/icon.svg" height="40" alt="">
           </router-link>
-          <router-link to="/works" class="btn btn-sm df-center">
-            <IconCategory :size="32" />
-          </router-link>
+          <div class="d-flex gap-2">
+            <router-link to="/works" class="btn btn-sm df-center">
+              <IconCategory :size="32" />
+            </router-link>
+            <router-link 
+              v-if="isGuest"
+              to="/login"
+              class="btn btn-sm df-center"
+              title="ログイン"
+            >
+              <IconLogin :size="28" />
+            </router-link>
+            <button
+              v-else
+              type="button"
+              class="btn btn-sm df-center position-relative"
+              @click="openMenu"
+              :title="userDisplayName"
+            >
+              <IconUser :size="28" />
+            </button>
+          </div>
         </div>
-      </header>
+      </header> -->
 
       <div :class="{ 'web-extra-margin': !isIOS }">
         <router-view />
@@ -285,7 +326,7 @@ onBeforeUnmount(() => {
 
       <div
         ref="sideMenu"
-        class="menu-content side-menu"
+        class="menu-content side-menu py-3"
         :style="sideMenuStyle"
         @click.stop
       >
@@ -299,21 +340,83 @@ onBeforeUnmount(() => {
               <li class="border-bottom"><router-link to="/logs/new" @click="closeMenu">観劇を記録する</router-link></li>
               <li class="border-bottom"><router-link to="/works" @click="closeMenu">作品一覧</router-link></li>
               <li class="border-bottom"><router-link to="/works/new" @click="closeMenu">作品を登録する</router-link></li>
+              <li class="border-bottom"><router-link to="/settings" @click="closeMenu">設定</router-link></li>
               <li class="border-bottom"><router-link to="/contact" @click="closeMenu">お問い合わせ</router-link></li>
             </ul>
           </nav>
           <div class="wrap d-flex flex-column px-2">
-            <div class="small mb-4">
-              <router-link to="/about-contents" @click="closeMenu">コンテンツについて</router-link>
+            <div v-if="!isGuest" class="mb-3">
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-danger w-100 text-danger"
+                style="color: #333;"
+                @click="logout"
+              >
+                ログアウト
+              </button>
             </div>
-            <div class="d-flex justify-content-end">
-              <a class="ms-0" href="https://studio-shindra.com" target="_blank">
-                <img src="/shindra-icon-bk.svg" width="24" alt="studio-shindra">
-              </a>
+            <div v-else class="mb-3">
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-primary w-100 text-primary"
+                style="color: #333;"
+                @click="$router.push('/login')"
+              >
+                ログイン
+              </button>
             </div>
+            <div class="d-flex justify-content-between align-items-end">
+              <div class="small">
+                <router-link to="/about-contents" @click="closeMenu">コンテンツについて</router-link>
+              </div>
+              <div class="d-flex justify-content-end">
+                <a class="ms-0" href="https://studio-shindra.com" target="_blank">
+                  <img src="/shindra-icon-bk.svg" width="24" alt="studio-shindra">
+                </a>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
+
+      <footer
+        class="header position-fixed bottom-0 w-100 border-top footer-app-container p-3 pt-0"
+        :class="{ 'ios-extra-padding': isIOS }"
+        style="z-index: 19;"
+      >
+        <div class="d-flex align-items-center justify-content-between p-2">
+          <router-link 
+            to="/logs"
+            class="btn btn-sm df-center position-relative"
+            :title="currentUser?.username"
+            style="width: 48px; height: 48px; border-radius: 50%; overflow: hidden; padding: 0; border: none; background: transparent;"
+          >
+            <img
+              v-if="profileImageUrl"
+              :src="profileImageUrl"
+              alt="profile"
+              style="width: 100%; height: 100%; object-fit: cover;"
+            />
+            <div
+              v-else
+              class="df-center fw-bold w-100 h-100 bg-light fs-5"
+              style="color: #666;"
+            >
+              {{ profileInitial }}
+            </div>
+          </router-link>
+
+          <div class="df-center gap-2">
+            <router-link to="/works" class="btn btn-sm df-center">
+              <IconCategory :size="32" />
+            </router-link>
+            <button @click="openMenu" class="btn btn-sm df-center">
+              <img src="/icon.svg" height="40" alt="">
+            </button>
+          </div>
+        </div>
+      </footer>
     </div>
   </div>
 </template>
@@ -346,7 +449,7 @@ onBeforeUnmount(() => {
   position: relative;
   // z-index: 1;
   padding-top: env(safe-area-inset-top);
-  padding-bottom: calc(env(safe-area-inset-bottom) + 24px);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 24px + 50px); // 50px for AdMob footer
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
 }
@@ -360,7 +463,7 @@ onBeforeUnmount(() => {
 }
 
 .web-extra-margin {
-  margin-top: 64px !important;
+  margin-bottom: 80px; // Space for AdMob footer
 }
 
 .footer-app-container {
@@ -379,7 +482,7 @@ onBeforeUnmount(() => {
     background: #fff;
     display: flex;
     flex-direction: column;
-    z-index: 30;
+    z-index: 31;
     transform: translateX(100%); /* 初期状態：画面外 */
     .ios-extra-padding {
       padding-top: calc(env(safe-area-inset-top) + 1rem);

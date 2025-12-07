@@ -1,9 +1,11 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { IconX, IconEdit, IconShare, IconBrandAmazon, IconBinoculars } from '@tabler/icons-vue'
 import WorksBody from '@/components/WorksBody.vue'
 import { request } from '@/apiClient'
+import { currentUser } from '@/authState'
+import { getLocalLog, deleteLocalLog, isGuestUser } from '@/lib/localLogs'
 import SimpleSpinner from '@/components/LoadingSimpleSpinner.vue'
 
 const props = defineProps(['id'])
@@ -12,15 +14,26 @@ const loading = ref(true)
 const error = ref(null)
 const router = useRouter()
 const route = useRoute()
+const isGuest = computed(() => isGuestUser() || !currentUser.value)
 
 async function fetchLog() {
   loading.value = true
   try {
     const logId = props.id || route.params.id
-    const logs = await request('/api/logs/')
-    log.value = logs.find(l => l.id === Number(logId))
-    if (!log.value) {
-      error.value = 'ログが見つかりません'
+    
+    if (isGuest.value) {
+      const data = getLocalLog(logId)
+      if (!data) {
+        error.value = 'ログが見つかりません'
+      } else {
+        log.value = data
+      }
+    } else {
+      const logs = await request('/api/logs/')
+      log.value = logs.find(l => l.id === Number(logId))
+      if (!log.value) {
+        error.value = 'ログが見つかりません'
+      }
     }
   } catch (e) {
     error.value = e.message
@@ -42,11 +55,19 @@ async function deleteLog() {
   const ok = window.confirm('この観劇ログを削除しますか？')
   if (!ok) return
 
-  await request(`/api/logs/${log.value.id}/`, {
-    method: 'DELETE',
-  })
-
-  router.push('/logs')
+  try {
+    if (isGuest.value) {
+      deleteLocalLog(log.value.id)
+    } else {
+      await request(`/api/logs/${log.value.id}/`, {
+        method: 'DELETE',
+      })
+    }
+    router.push('/logs')
+  } catch (error) {
+    console.error('削除に失敗:', error)
+    alert('削除に失敗しました。もう一度お試しください。')
+  }
 }
 
 const AMAZON_BASE_URL = 'https://www.amazon.co.jp/s'
@@ -101,11 +122,9 @@ async function shareLog() {
 
 <template>
   <main class="container py-4">
-    <p v-if="loading">
-      <div class="df-center">
-        <SimpleSpinner />
-      </div>      
-    </p>
+    <div v-if="loading" class="df-center">
+      <SimpleSpinner />
+    </div>
     <p v-else-if="error">エラー: {{ error }}</p>
     <p v-else-if="!log">ログが見つかりません。</p>
 

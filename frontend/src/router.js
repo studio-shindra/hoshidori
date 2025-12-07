@@ -14,34 +14,32 @@ import { currentUser, authReady } from '@/authState'
 import WorksTestPage from '@/pages/WorksTestPage.vue'
 import ContactPage from '@/pages/ContactPage.vue'
 import AboutContentsPage from '@/pages/AboutContentsPage.vue'
+import Settings from '@/pages/Settings.vue'
 
 const routes = [
   { path: '/', redirect: '/logs' },
-  { path: '/logs', name: 'logs', component: LogsPage, meta: { requiresAuth: true } },
-  { path: '/logs/new', name: 'log-new', component: LogNewPage, meta: { requiresAuth: true } },
+  { path: '/logs', name: 'logs', component: LogsPage },
+  { path: '/logs/new', name: 'log-new', component: LogNewPage },
   {
     path: '/logs/:id/detail',
     name: 'log-detail',
     component: LogsDetailPage,
     props: true,
-    meta: { requiresAuth: true },
   },
   {
     path: '/logs/:id/edit',
     name: 'log-edit',
     component: LogEditPage,
     props: true,
-    meta: { requiresAuth: true },
   },
-  { path: '/works', name: 'works', component: WorksList, meta: { requiresAuth: true } },
+  { path: '/works', name: 'works', component: WorksList },
   {
     path: '/works/:id/detail',
     name: 'work-detail',
     component: WorksDetailPage,
     props: true,
-    meta: { requiresAuth: true },
   },
-  { path: '/works/new', name: 'work-new', component: WorksNewPage, meta: { requiresAuth: true } },
+  { path: '/works/new', name: 'work-new', component: WorksNewPage },
   {
     path: '/login',
     name: 'login',
@@ -53,9 +51,10 @@ const routes = [
     component: SignUpPage,
   },
   { path: '/loading-test', name: 'loading-test', component: LoadingTest },
-  { path: '/works-test', component: WorksTestPage, meta: { requiresAuth: true } },
+  { path: '/works-test', component: WorksTestPage },
   { path: '/contact', component: ContactPage },
   { path: '/about-contents', component: AboutContentsPage },
+  { path: '/settings', component: Settings, meta: { requiresAuth: true } },
 ]
 
 const router = createRouter({
@@ -63,19 +62,19 @@ const router = createRouter({
   routes,
 })
 
-// グローバルガード：ログイン必須ページは currentUser が必要
+// グローバルガード：必須ページのみログインを要求。それ以外はゲスト利用を許可。
 router.beforeEach((to, _from, next) => {
+  // 認証状態を待たずに通すことでゲスト利用を許可
   if (!authReady.value) {
-    // initAuth が終わってない間は一旦待つ
-    return next(false)
+    return next()
   }
 
   if (to.meta.requiresAuth && !currentUser.value) {
     return next({ name: 'login', query: { redirect: to.fullPath } })
   }
 
-  if (to.name === 'login' && currentUser.value) {
-    // ログイン済みで /login に来たら /logs に飛ばす
+  if ((to.name === 'login' || to.name === 'signup') && currentUser.value) {
+    // ログイン済みでログイン/サインアップへ来た場合はトップへ
     return next({ name: 'logs' })
   }
 

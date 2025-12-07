@@ -61,8 +61,14 @@ async function handleLogin(e) {
     localStorage.setItem('hoshidori_token', data.access)
     localStorage.setItem('hoshidori_refresh', data.refresh)
 
-    // 簡易的に currentUser をtruthyにする
-    currentUser.value = { token: data.access }
+    // ユーザープロフィール取得
+    const userRes = await fetch(`${baseUrl}/api/auth/user/`, {
+      headers: { Authorization: `Bearer ${data.access}` },
+    })
+    const userProfile = userRes.ok ? await userRes.json() : {}
+
+    // currentUser にプロフィール情報を保存
+    currentUser.value = { token: data.access, ...userProfile }
     message.value = 'ログインしました'
     router.push(redirectTo)
   } catch (e) {
