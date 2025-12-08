@@ -5,6 +5,7 @@ import { request } from '@/apiClient'
 import Multiselect from '@vueform/multiselect'
 import { IconMovie, IconMapPin, IconUsers, IconPhoto, IconTags, IconUserStar } from '@tabler/icons-vue'
 import SimpleSpinner from '@/components/LoadingSimpleSpinner.vue'
+import { pickImageFromLibrary, isNativePlatform } from '@/lib/photoPicker'
 
 const router = useRouter()
 
@@ -34,6 +35,7 @@ const uploading = ref(false)
 const error = ref(null)
 const fileInputRef = ref(null)
 const imagePreview = ref(null)
+const isNative = isNativePlatform()
 
 // 劇場オプション
 const theaterOptions = computed(() =>
@@ -96,23 +98,53 @@ async function fetchData() {
 onMounted(fetchData)
 
 function triggerFileInput() {
-  fileInputRef.value?.click()
+  if (fileInputRef.value) {
+    fileInputRef.value.value = ''
+    fileInputRef.value.click()
+  }
+}
+
+function setImageFile(file, previewOverride = null) {
+  form.value.imageFile = file
+
+  if (!file) {
+    imagePreview.value = null
+    return
+  }
+
+  if (previewOverride) {
+    imagePreview.value = previewOverride
+    return
+  }
+
+  const reader = new FileReader()
+  reader.onload = (event) => {
+    imagePreview.value = event.target?.result
+  }
+  reader.readAsDataURL(file)
+}
+
+async function startImageSelection() {
+  if (isNative) {
+    try {
+      const { file, previewUrl } = await pickImageFromLibrary({
+        fileName: 'work-main.jpg',
+        quality: 85,
+      })
+      setImageFile(file, previewUrl)
+    } catch (err) {
+      console.error('Photo pick failed:', err)
+      alert('写真の取得に失敗しました。フォトライブラリのアクセス権限を確認してください。')
+    }
+    return
+  }
+
+  triggerFileInput()
 }
 
 function onFileChange(e) {
   const file = e.target.files?.[0] || null
-  form.value.imageFile = file
-  
-  // プレビュー作成
-  if (file) {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      imagePreview.value = e.target?.result
-    }
-    reader.readAsDataURL(file)
-  } else {
-    imagePreview.value = null
-  }
+  setImageFile(file)
 }
 
 async function handleSubmit(e) {
@@ -414,7 +446,7 @@ async function handleSubmit(e) {
             <div 
               class="image-preview-container"
               style="width: 100%; height: 100%; border: 2px dashed #ccc; border-radius: 8px; overflow: hidden; background: #f8f9fa; cursor: pointer;"
-              @click="triggerFileInput"
+              @click="startImageSelection"
             >
               <img 
                 v-if="imagePreview"
@@ -427,7 +459,7 @@ async function handleSubmit(e) {
                 class="df-center flex-column h-100 text-muted py-5"
               >
                 <IconPhoto :size="48" />
-                <div class="mt-2 small">クリックして画像を選択</div>
+                <div class="mt-2 small">フォトライブラリから選択（撮影不可）</div>
               </div>
             </div>
           </div>

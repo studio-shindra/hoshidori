@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { currentUser } from '@/authState'
+import { pickImageFromLibrary, isNativePlatform } from '@/lib/photoPicker'
 
 const saving = ref(false)
 const error = ref(null)
@@ -16,6 +17,8 @@ const form = ref({
 
 const selectedFile = ref(null)
 const previewUrl = ref(null)
+const fileInputRef = ref(null)
+const isNative = isNativePlatform()
 
 onMounted(() => {
   if (currentUser.value) {
@@ -33,14 +36,48 @@ function handleFileSelect(e) {
   const file = e.target.files?.[0]
   if (!file) return
 
+  setSelectedFile(file)
+}
+
+function setSelectedFile(file, previewOverride = null) {
   selectedFile.value = file
 
-  // プレビュー表示
+  if (!file) {
+    previewUrl.value = null
+    return
+  }
+
+  if (previewOverride) {
+    previewUrl.value = previewOverride
+    return
+  }
+
   const reader = new FileReader()
   reader.onload = (event) => {
     previewUrl.value = event.target?.result
   }
   reader.readAsDataURL(file)
+}
+
+async function startImageSelection() {
+  if (isNative) {
+    try {
+      const { file, previewUrl: dataUrl } = await pickImageFromLibrary({
+        fileName: 'profile.jpg',
+        quality: 80,
+      })
+      setSelectedFile(file, dataUrl)
+    } catch (err) {
+      console.error('Photo pick failed:', err)
+      alert('写真の取得に失敗しました。フォトライブラリのアクセス権限を確認してください。')
+    }
+    return
+  }
+
+  if (fileInputRef.value) {
+    fileInputRef.value.value = ''
+    fileInputRef.value.click()
+  }
 }
 
 async function handleSave(e) {
@@ -157,12 +194,23 @@ async function handleDeleteAccount() {
               {{ currentUser?.username?.charAt(0).toUpperCase() || '?' }}
             </div>
           </div>
-          <input
-            type="file"
-            accept="image/*"
-            class="form-control"
-            @change="handleFileSelect"
-          />
+          <div class="d-flex flex-column flex-grow-1 gap-2">
+            <input
+              ref="fileInputRef"
+              type="file"
+              accept="image/*"
+              class="d-none"
+              @change="handleFileSelect"
+            />
+            <button
+              type="button"
+              class="btn btn-outline-secondary"
+              @click="startImageSelection"
+            >
+              フォトライブラリから選択
+            </button>
+            <div class="small text-muted">カメラ撮影は今回のバージョンでは無効化しています。</div>
+          </div>
         </div>
       </div>
 
