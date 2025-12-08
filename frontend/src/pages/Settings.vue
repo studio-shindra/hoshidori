@@ -1,9 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { currentUser } from '@/authState'
-import SimpleSpinner from '@/components/LoadingSimpleSpinner.vue'
 
-const loading = ref(false)
 const saving = ref(false)
 const error = ref(null)
 const successMessage = ref(null)
@@ -129,8 +127,6 @@ async function handleDeleteAccount() {
 <template>
   <main class="container py-4" style="max-width: 480px; margin-bottom: 100px;">
     <h1 class="mb-4 fw-bold text-center">設定</h1>
-
-    <SimpleSpinner :show="loading" />
 
     <div v-if="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
       {{ successMessage }}

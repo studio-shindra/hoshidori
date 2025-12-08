@@ -105,7 +105,7 @@ onMounted(async () => {
       adId: USE_TEST_ADS ? ADMOB_IDS.test : ADMOB_IDS.production,
       adSize: BannerAdSize.BANNER,
       position: BannerAdPosition.BOTTOM_CENTER,
-      margin: 0,
+      margin: 80,
     })
   } catch (error) {
     console.error('AdMob initialization error:', error)
@@ -381,7 +381,7 @@ onBeforeUnmount(() => {
       </div>
 
       <footer
-        class="header position-fixed bottom-0 w-100 border-top footer-app-container p-3 pt-0"
+        class="footer bg-white position-fixed bottom-0 w-100 border-top footer-app-container p-3 pt-0"
         :class="{ 'ios-extra-padding': isIOS }"
         style="z-index: 19;"
       >
@@ -455,7 +455,7 @@ onBeforeUnmount(() => {
 }
 
 .app-container.ios-extra-padding {
-  padding-top: calc(env(safe-area-inset-top) + 3rem);
+  padding-top: calc(env(safe-area-inset-top) + 1rem);
 }
 
 .header.ios-extra-padding {
