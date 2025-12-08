@@ -360,26 +360,6 @@ onBeforeUnmount(() => {
             </ul>
           </nav>
           <div class="wrap d-flex flex-column px-2">
-            <div v-if="!isGuest" class="mb-3">
-              <button
-                type="button"
-                class="btn btn-sm btn-outline-danger w-100 text-danger"
-                style="color: #333;"
-                @click="logout"
-              >
-                ログアウト
-              </button>
-            </div>
-            <div v-else class="mb-3">
-              <button
-                type="button"
-                class="btn btn-sm btn-outline-primary w-100 text-primary"
-                style="color: #333;"
-                @click="$router.push('/login')"
-              >
-                ログイン
-              </button>
-            </div>
             <div class="d-flex justify-content-between align-items-end">
               <div class="small">
                 <router-link to="/about-contents" @click="closeMenu">コンテンツについて</router-link>
