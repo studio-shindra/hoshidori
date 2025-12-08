@@ -105,7 +105,7 @@ onMounted(async () => {
       adId: USE_TEST_ADS ? ADMOB_IDS.test : ADMOB_IDS.production,
       adSize: BannerAdSize.BANNER,
       position: BannerAdPosition.BOTTOM_CENTER,
-      margin: 80,
+      margin: 64,
     })
   } catch (error) {
     console.error('AdMob initialization error:', error)
@@ -342,6 +342,21 @@ onBeforeUnmount(() => {
               <li class="border-bottom"><router-link to="/works/new" @click="closeMenu">作品を登録する</router-link></li>
               <li class="border-bottom"><router-link to="/settings" @click="closeMenu">設定</router-link></li>
               <li class="border-bottom"><router-link to="/contact" @click="closeMenu">お問い合わせ</router-link></li>
+              <li class="border-bottom">
+                <router-link v-if="isGuest" to="/login" @click="closeMenu">ログイン</router-link>
+                <button
+                  v-else
+                  type="button"
+                  class="btn btn-link text-decoration-none w-100 text-start"
+                  style="color: #333;"
+                  @click="logout"
+                >
+                  ログアウト
+                </button>
+              </li>
+              <li>
+
+              </li>
             </ul>
           </nav>
           <div class="wrap d-flex flex-column px-2">
