@@ -17,7 +17,7 @@ async function handleCreate(payload) {
   try {
     if (isGuest.value) {
       createLocalLog(payload)
-      alert('保存しました！（この端末に保存されます）')
+      alert('保存しました！')
       router.push('/logs')
     } else {
       await request('/api/logs/', {

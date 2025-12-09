@@ -43,7 +43,15 @@ async function handleRegister(e) {
 
 <template>
 	<main class="container py-5" style="max-width: 480px">
-		<h1 class="mb-4">新規登録</h1>
+		<h1 class="mb-4 fw-bold text-center">新規登録</h1>
+
+		<!-- サインアップオプション説明 -->
+		<div class="alert alert-light text-center mb-4" style="font-size: 14px; border: 1px solid #ddd;">
+			<p class="mb-0">
+				<strong>アカウント登録は任意です</strong><br>
+				<small class="text-muted">データのバックアップ・複数端末での同期に便利です</small>
+			</p>
+		</div>
 
 		<form @submit="handleRegister" class="mb-3">
 			<div class="mb-3">

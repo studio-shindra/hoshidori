@@ -20,25 +20,34 @@ export async function pickImageFromLibrary(options = {}) {
     throw new Error('not-native')
   }
 
-  const photo = await Camera.getPhoto({
-    source: CameraSource.Photos,
-    resultType: CameraResultType.DataUrl,
-    quality: options.quality ?? 85,
-    presentationStyle: 'popover',
-    correctOrientation: true,
-    saveToGallery: false,
-    ...options,
-  })
+  try {
+    const photo = await Camera.getPhoto({
+      source: CameraSource.Photos,
+      resultType: CameraResultType.DataUrl,
+      quality: options.quality ?? 85,
+      correctOrientation: true,
+      saveToGallery: false,
+      // presentationStyleはiPhoneで問題を起こすため削除
+      ...options,
+    })
 
-  if (!photo?.dataUrl) {
-    throw new Error('写真を取得できませんでした')
-  }
+    if (!photo?.dataUrl) {
+      throw new Error('写真を取得できませんでした')
+    }
 
-  const fileName = options.fileName || `photo-${Date.now()}.jpg`
-  const file = dataUrlToFile(photo.dataUrl, fileName)
+    const fileName = options.fileName || `photo-${Date.now()}.jpg`
+    const file = dataUrlToFile(photo.dataUrl, fileName)
 
-  return {
-    file,
-    previewUrl: photo.dataUrl,
+    return {
+      file,
+      previewUrl: photo.dataUrl,
+    }
+  } catch (err) {
+    console.error('Camera.getPhoto error:', err)
+    // より詳細なエラー情報を提供
+    if (err.message && err.message.includes('User cancelled')) {
+      throw new Error('キャンセルされました')
+    }
+    throw new Error(`写真の取得に失敗しました: ${err.message || '不明なエラー'}`)
   }
 }

@@ -54,7 +54,7 @@ const routes = [
   { path: '/works-test', component: WorksTestPage },
   { path: '/contact', component: ContactPage },
   { path: '/about-contents', component: AboutContentsPage },
-  { path: '/settings', component: Settings, meta: { requiresAuth: true } },
+  { path: '/settings', component: Settings }, // ゲストでもアクセス可能
 ]
 
 const router = createRouter({

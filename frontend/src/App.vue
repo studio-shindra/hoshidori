@@ -5,7 +5,7 @@ import { useRouter } from 'vue-router'
 import { AdMob, BannerAdSize, BannerAdPosition } from '@capacitor-community/admob'
 import { Capacitor } from '@capacitor/core'
 import PullToRefresh from 'pulltorefreshjs'
-import { currentUser, getProfileInitial } from '@/authState'
+import { currentUser, getProfileInitial, getDisplayName, getProfileImageUrl } from '@/authState'
 import { isGuestUser } from '@/lib/localLogs'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
@@ -19,13 +19,8 @@ const showMenu = ref(false)
 const appLoading = ref(true)
 
 const isGuest = computed(() => isGuestUser() || !currentUser.value)
-const userDisplayName = computed(() => {
-  if (currentUser.value && currentUser.value.user) {
-    return currentUser.value.user.username || 'User'
-  }
-  return null
-})
-const profileImageUrl = computed(() => currentUser.value?.profile_image)
+const userDisplayName = computed(() => getDisplayName())
+const profileImageUrl = computed(() => getProfileImageUrl())
 const profileInitial = computed(() => getProfileInitial())
 
 function logout() {
@@ -340,12 +335,10 @@ onBeforeUnmount(() => {
               <li class="border-bottom"><router-link to="/logs/new" @click="closeMenu">観劇を記録する</router-link></li>
               <li class="border-bottom"><router-link to="/works" @click="closeMenu">作品一覧</router-link></li>
               <li class="border-bottom"><router-link to="/works/new" @click="closeMenu">作品を登録する</router-link></li>
-              <li class="border-bottom"><router-link to="/settings" @click="closeMenu">設定</router-link></li>
+              <li class="border-bottom"><router-link to="/settings" @click="closeMenu">アカウント設定</router-link></li>
               <li class="border-bottom"><router-link to="/contact" @click="closeMenu">お問い合わせ</router-link></li>
-              <li class="border-bottom">
-                <router-link v-if="isGuest" to="/login" @click="closeMenu">ログイン</router-link>
+              <li v-if="!isGuest" class="border-bottom">
                 <button
-                  v-else
                   type="button"
                   class="btn btn-link text-decoration-none w-100 text-start"
                   style="color: #333;"
@@ -354,12 +347,21 @@ onBeforeUnmount(() => {
                   ログアウト
                 </button>
               </li>
-              <li>
-
-              </li>
             </ul>
           </nav>
           <div class="wrap d-flex flex-column px-2">
+            <!-- ゲスト時のバックアップ案内バナー -->
+            <div v-if="isGuest"
+              class="bg-light p-3 df-center flex-column"
+              style="font-size: 14px; margin-bottom: 7rem;">
+              <strong class="text-center">データをバックアップ</strong>
+              <p class="mb-2 mt-1" style="font-size: 12px;">
+                ログインすると、観劇記録をクラウドに保存でき、機種変更時も安心です。
+              </p>
+              <router-link to="/login" @click="closeMenu" class="btn btn-sm btn-primary w-100">
+                ログイン / 新規登録
+              </router-link>
+            </div>
             <div class="d-flex justify-content-between align-items-end">
               <div class="small">
                 <router-link to="/about-contents" @click="closeMenu">コンテンツについて</router-link>

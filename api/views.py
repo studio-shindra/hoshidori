@@ -150,6 +150,10 @@ class ActorViewSet(viewsets.ModelViewSet):
     """俳優一覧・作成"""
     queryset = Actor.objects.all()
     serializer_class = ActorSerializer
+    permission_classes = [AllowAny]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name']
+    ordering = ['name']
 
 
 class TroupeViewSet(viewsets.ModelViewSet):

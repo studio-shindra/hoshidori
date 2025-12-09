@@ -2,8 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>観劇ログやユーザー画像を保存するために、フォトライブラリに写真を書き込みます。</string>
+	<key>NSCameraUsageDescription</key>
+	<string>プロフィール画像を撮影するためにカメラへアクセスします。</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>観劇ログやユーザ画像を設定するために、フォトライブラリの写真へアクセスします。</string>
+	<string>観劇ログやユーザー画像を設定するために、フォトライブラリの写真へアクセスします。</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>ja</string>
 	<key>CFBundleDisplayName</key>

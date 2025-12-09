@@ -132,7 +132,8 @@ export async function request(path, options = {}, _retried = false) {
   console.log('[HOSHIDORI] API response:', url, res.status)
 
   // 期限切れなどで401の場合は1回だけトークン更新してリトライ
-  if (res.status === 401 && !_retried) {
+  // ただし、トークンがない状態（ゲストユーザー）での401は正常なので無視
+  if (res.status === 401 && !_retried && getRefreshToken()) {
     try {
       await refreshAccessToken()
       // 更新後にAuthorizationヘッダーを差し替えて再実行
@@ -154,8 +155,9 @@ export async function request(path, options = {}, _retried = false) {
     }
   }
 
-  // 2回目以降も 401 なら確実にログイン画面へ
-  if (res.status === 401) {
+  // 2回目以降も 401 かつリフレッシュトークンがある場合のみログイン画面へ
+  // ゲストユーザー（トークンなし）の401はエラーとして返す
+  if (res.status === 401 && getRefreshToken()) {
     clearTokens()
     try {
       const router = useRouter()

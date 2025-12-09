@@ -267,11 +267,11 @@ async function handleSubmit(e) {
 <template>
   <main class="container py-4 work-new-page">
     <h1 class="fw-bold text-center fs-5">作品を登録</h1>
-    <p v-if="loading">
+    <div v-if="loading">
       <div class="df-center mt-5">
         <SimpleSpinner />
       </div>      
-    </p>
+    </div>
 
     <form v-else @submit="handleSubmit" class="mb-4">
       <div class="mb-3 row df-center g-1">

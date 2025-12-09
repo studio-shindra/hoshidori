@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { currentUser } from '@/authState'
+import { syncLocalDataToServer } from '@/lib/syncData'
 
 const router = useRouter()
 const route = useRoute()
@@ -69,8 +70,20 @@ async function handleLogin(e) {
 
     // currentUser にプロフィール情報を保存
     currentUser.value = { token: data.access, ...userProfile }
-    message.value = 'ログインしました'
-    router.push(redirectTo)
+    
+    // ローカルデータをサーバーに同期
+    message.value = 'ログインしました。ローカルデータを同期中...'
+    const synced = await syncLocalDataToServer()
+    if (synced) {
+      message.value = 'ログインしました。データを同期しました！'
+    } else {
+      message.value = 'ログインしました'
+    }
+    
+    // 同期完了後にリダイレクト
+    setTimeout(() => {
+      router.push(redirectTo)
+    }, 1500)
   } catch (e) {
     console.error(e)
     error.value = e.message || 'ログインに失敗しました'
@@ -87,6 +100,14 @@ async function handleLogin(e) {
     <h1 class="mb-4 d-flex flex-column align-items-center">
       <img src="/icon.svg" width="40" alt="">
     </h1>
+
+    <!-- ログインオプション説明 -->
+    <div class="alert alert-light text-center mb-4" style="font-size: 14px; border: 1px solid #ddd;">
+      <p class="mb-0">
+        <strong>ログインは不要でも使えます</strong><br>
+        <small class="text-muted">データのバックアップ・複数端末での同期に便利です</small>
+      </p>
+    </div>
 
     <form @submit="handleLogin" class="mb-3">
       <div class="mb-3">

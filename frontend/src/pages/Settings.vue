@@ -1,12 +1,27 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { currentUser } from '@/authState'
 import { pickImageFromLibrary, isNativePlatform } from '@/lib/photoPicker'
+import { isGuestUser } from '@/lib/localLogs'
+import { getLocalDisplayName, setLocalDisplayName, getLocalProfileImageUrl, setLocalProfileImageUrl } from '@/lib/localSettings'
+import { uploadImage } from '@/cloudinaryClient'
+
+const isGuest = computed(() => isGuestUser() || !currentUser.value)
+const isNative = isNativePlatform()
+const fileInputRef = ref(null)
 
 const saving = ref(false)
 const error = ref(null)
 const successMessage = ref(null)
 
+// ゲスト用のローカル設定
+const guestForm = ref({
+  displayName: '',
+})
+const guestImageFile = ref(null)
+const guestPreviewUrl = ref(null)
+
+// ログインユーザー用のフォーム
 const form = ref({
   username: '',
   first_name: '',
@@ -17,11 +32,17 @@ const form = ref({
 
 const selectedFile = ref(null)
 const previewUrl = ref(null)
-const fileInputRef = ref(null)
-const isNative = isNativePlatform()
 
 onMounted(() => {
-  if (currentUser.value) {
+  if (isGuest.value) {
+    // ゲストユーザー：ローカル設定を読み込み
+    guestForm.value.displayName = getLocalDisplayName()
+    const localImageUrl = getLocalProfileImageUrl()
+    if (localImageUrl) {
+      guestPreviewUrl.value = localImageUrl
+    }
+  } else if (currentUser.value) {
+    // ログインユーザー：サーバーから取得
     form.value.username = currentUser.value.username || ''
     form.value.first_name = currentUser.value.first_name || ''
     form.value.last_name = currentUser.value.last_name || ''
@@ -31,6 +52,42 @@ onMounted(() => {
     }
   }
 })
+
+function handleGuestFileSelect(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+
+  guestImageFile.value = file
+
+  // プレビュー表示
+  const reader = new FileReader()
+  reader.onload = (event) => {
+    guestPreviewUrl.value = event.target?.result
+  }
+  reader.readAsDataURL(file)
+}
+
+async function startGuestImageSelection() {
+  if (isNative) {
+    try {
+      const { file, previewUrl: dataUrl } = await pickImageFromLibrary({
+        fileName: 'guest-profile.jpg',
+        quality: 80,
+      })
+      guestImageFile.value = file
+      guestPreviewUrl.value = dataUrl
+    } catch (err) {
+      console.error('Photo pick failed:', err)
+      alert('写真の取得に失敗しました。フォトライブラリのアクセス権限を確認してください。')
+    }
+    return
+  }
+
+  if (fileInputRef.value) {
+    fileInputRef.value.value = ''
+    fileInputRef.value.click()
+  }
+}
 
 function handleFileSelect(e) {
   const file = e.target.files?.[0]
@@ -87,6 +144,36 @@ async function handleSave(e) {
   successMessage.value = null
 
   try {
+    if (isGuest.value) {
+      // ゲストユーザー：ローカルに保存
+      setLocalDisplayName(guestForm.value.displayName)
+      
+      // 画像があればCloudinaryにアップロード
+      if (guestImageFile.value) {
+        try {
+          const imageUrl = await uploadImage(guestImageFile.value)
+          setLocalProfileImageUrl(imageUrl)
+          successMessage.value = '表示名と画像を保存しました'
+        } catch (err) {
+          console.error('Image upload failed:', err)
+          error.value = '画像のアップロードに失敗しました'
+          saving.value = false
+          return
+        }
+      } else {
+        successMessage.value = '表示名を保存しました'
+      }
+      
+      saving.value = false
+      
+      // 1秒後にリロードして変更を反映
+      setTimeout(() => {
+        window.location.reload()
+      }, 1000)
+      return
+    }
+
+    // ログインユーザー：サーバーに送信
     // FormData でファイルを含める
     const formData = new FormData()
     formData.append('username', form.value.username)
@@ -120,7 +207,12 @@ async function handleSave(e) {
     form.value.profile_image = updated.profile_image
     selectedFile.value = null
 
-    successMessage.value = 'プロフィールを更新しました'
+    successMessage.value = 'プロフィールを更新しました（画面を更新します）'
+    
+    // 1秒後にリロードして変更を反映
+    setTimeout(() => {
+      window.location.reload()
+    }, 1000)
   } catch (e) {
     error.value = e.message || 'エラーが発生しました'
   } finally {
@@ -175,7 +267,78 @@ async function handleDeleteAccount() {
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 
-    <form @submit="handleSave" class="mb-4">
+    <!-- ゲストユーザー用のシンプルフォーム -->
+    <form v-if="isGuest" @submit="handleSave">
+      <div class="df-center mb-4 p-3 bg-light">
+        <div class="text-center">
+          この端末内でのみ有効です。<br>
+          ログインすると、サーバーに同期されます。
+        </div>
+      </div>
+
+      <!-- プロフィール画像 -->
+      <div class="wrap mb-4">
+        <label class="form-label fw-bold">プロフィール画像</label>
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div
+            class="profile-preview d-flex align-items-center justify-content-center"
+            style="width: 80px; height: 80px; background: #f0f0f0; border-radius: 50%; flex-shrink: 0;"
+          >
+            <img
+              v-if="guestPreviewUrl"
+              :src="guestPreviewUrl"
+              alt="preview"
+              style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;"
+            />
+            <div v-else style="font-size: 32px; font-weight: bold; color: #999;">
+              {{ guestForm.displayName?.charAt(0).toUpperCase() || 'G' }}
+            </div>
+          </div>
+          <div class="d-flex flex-column flex-grow-1 gap-2">
+            <input
+              ref="fileInputRef"
+              type="file"
+              accept="image/*"
+              class="d-none"
+              @change="handleGuestFileSelect"
+            />
+            <button
+              type="button"
+              class="btn btn-outline-secondary"
+              @click="startGuestImageSelection"
+            >
+              画像を選択
+            </button>
+            <!-- <div class="small text-muted">カメラ撮影は今回のバージョンでは無効化しています。</div> -->
+          </div>
+        </div>
+      </div>
+
+      <div class="wrap mb-4">
+        <label class="form-label fw-bold">表示名</label>
+        <input
+          v-model="guestForm.displayName"
+          type="text"
+          class="form-control"
+          placeholder="あなたの名前を入力"
+        />
+        <small class="text-muted">プロフィールに表示される名前です</small>
+      </div>
+      <div class="wrap">
+        <button type="submit" class="btn btn-primary w-100" :disabled="saving">
+          保存
+        </button>
+      </div>
+
+      <div class="mt-4 text-center">
+        <router-link to="/login" class="btn btn-link">
+          ログインしてバックアップする
+        </router-link>
+      </div>
+    </form>
+
+    <!-- ログインユーザー用の完全なフォーム -->
+    <form v-else @submit="handleSave" class="mb-4">
       <!-- プロフィール画像 -->
       <div class="wrap mb-4">
         <label class="form-label fw-bold">プロフィール画像</label>
@@ -207,9 +370,9 @@ async function handleDeleteAccount() {
               class="btn btn-outline-secondary"
               @click="startImageSelection"
             >
-              フォトライブラリから選択
+              画像を選択
             </button>
-            <div class="small text-muted">カメラ撮影は今回のバージョンでは無効化しています。</div>
+            <!-- <div class="small text-muted">カメラ撮影は今回のバージョンでは無効化しています。</div> -->
           </div>
         </div>
       </div>
@@ -258,7 +421,7 @@ async function handleDeleteAccount() {
         />
       </div>
 
-      <div class="d-flex gap-2">
+      <div class="wrap d-flex gap-2">
         <button type="submit" class="btn btn-primary flex-grow-1" :disabled="saving">
           変更を保存
         </button>

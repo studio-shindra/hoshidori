@@ -35,11 +35,11 @@ onMounted(fetchWork)
 
 <template>
   <main class="container py-4">
-    <p v-if="loading">
+    <div v-if="loading">
       <div class="df-center mt-5">
         <SimpleSpinner />
       </div>
-    </p>
+    </div>
     <p v-else-if="error">エラー: {{ error }}</p>
     <p v-else-if="!work">作品が見つかりません。</p>
 
