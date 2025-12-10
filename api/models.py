@@ -222,3 +222,18 @@ class ViewingLog(models.Model):
 
     def __str__(self) -> str:
         return f'{self.user} - {self.work} ({self.watched_at.date()})'
+
+
+class WorkRating(models.Model):
+    """ログを保存しないゲスト等からの評価専用テーブル"""
+    work = models.ForeignKey(Work, on_delete=models.CASCADE, related_name='ratings')
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
+    rating = models.DecimalField(max_digits=3, decimal_places=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self) -> str:
+        who = self.user.username if self.user else 'guest'
+        return f'{who} → {self.work} : {self.rating}'

@@ -2,6 +2,7 @@
 
 from rest_framework import serializers
 from .models import Theater, Actor, Troupe, Work, Run, ViewingLog, Tag, UserProfile
+from .rating_utils import calculate_avg_rating
 from django.contrib.auth import get_user_model
 from django.utils.text import slugify
 from django.db import IntegrityError, transaction
@@ -48,14 +49,11 @@ class WorkListSerializer(serializers.ModelSerializer):
         read_only=True,
         slug_field='name',
     )
+    actors = ActorSerializer(read_only=True, many=True)
     avg_rating = serializers.SerializerMethodField()
 
     def get_avg_rating(self, obj):
-        """この作品の全ユーザーの評価平均を計算"""
-        from django.db.models import Avg
-        result = ViewingLog.objects.filter(work=obj, rating__isnull=False).aggregate(Avg('rating'))
-        avg = result.get('rating__avg')
-        return round(avg, 1) if avg else None
+        return calculate_avg_rating(obj)
 
     class Meta:
         model = Work
@@ -68,6 +66,7 @@ class WorkListSerializer(serializers.ModelSerializer):
             'status',
             'main_image',
             'tags',
+            'actors',
             'avg_rating',
             'official_site',
             'official_x',
@@ -111,11 +110,7 @@ class WorkDetailSerializer(serializers.ModelSerializer):
     comment_count = serializers.SerializerMethodField()
 
     def get_avg_rating(self, obj):
-        """この作品の全ユーザーの評価平均を計算"""
-        from django.db.models import Avg
-        result = ViewingLog.objects.filter(work=obj, rating__isnull=False).aggregate(Avg('rating'))
-        avg = result.get('rating__avg')
-        return round(avg, 1) if avg else None
+        return calculate_avg_rating(obj)
 
     def get_comment_count(self, obj):
         """この作品のコメント（メモ）数を計算"""

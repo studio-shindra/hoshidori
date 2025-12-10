@@ -281,45 +281,12 @@ onBeforeUnmount(() => {
     <LoadingSpinner :show="appLoading" />
 
     <div class="app-container" :class="{ 'ios-extra-padding': isIOS }">
-      <!-- <header
-        class="header position-fixed top-0 w-100 border-top footer-app-container p-3 pb-0"
-        :class="{ 'ios-extra-padding': isIOS }"
-        style="z-index: 30;"
-      >
-        <div class="d-flex justify-content-between p-2">
-          <router-link to="/logs" class="btn btn-sm df-center">
-            <img src="/icon.svg" height="40" alt="">
-          </router-link>
-          <div class="d-flex gap-2">
-            <router-link to="/works" class="btn btn-sm df-center">
-              <IconCategory :size="32" />
-            </router-link>
-            <router-link 
-              v-if="isGuest"
-              to="/login"
-              class="btn btn-sm df-center"
-              title="ログイン"
-            >
-              <IconLogin :size="28" />
-            </router-link>
-            <button
-              v-else
-              type="button"
-              class="btn btn-sm df-center position-relative"
-              @click="openMenu"
-              :title="userDisplayName"
-            >
-              <IconUser :size="28" />
-            </button>
-          </div>
-        </div>
-      </header> -->
 
       <div :class="{ 'web-extra-margin': !isIOS }">
         <router-view />
       </div>
 
-      <div
+      <aside
         ref="sideMenu"
         class="menu-content side-menu py-3"
         :style="sideMenuStyle"
@@ -375,10 +342,10 @@ onBeforeUnmount(() => {
 
           </div>
         </div>
-      </div>
+      </aside>
 
       <footer
-        class="footer bg-white position-fixed bottom-0 w-100 border-top footer-app-container p-3 pt-0"
+        class="footer bg-white position-fixed bottom-0 w-100 border-top footer-app-container p-2 pt-0"
         :class="{ 'ios-extra-padding': isIOS }"
         style="z-index: 19;"
       >
@@ -387,7 +354,7 @@ onBeforeUnmount(() => {
             to="/logs"
             class="btn btn-sm df-center position-relative"
             :title="currentUser?.username"
-            style="width: 48px; height: 48px; border-radius: 50%; overflow: hidden; padding: 0; border: none; background: transparent;"
+            style="width: 32px; height: 32px; border-radius: 50%; overflow: hidden; padding: 0; border: none; background: transparent;"
           >
             <img
               v-if="profileImageUrl"
@@ -409,7 +376,7 @@ onBeforeUnmount(() => {
               <IconCategory :size="32" />
             </router-link>
             <button @click="openMenu" class="btn btn-sm df-center">
-              <img src="/icon.svg" height="40" alt="">
+              <img src="/icon.svg" height="32" alt="">
             </button>
           </div>
         </div>

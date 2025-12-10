@@ -19,15 +19,24 @@ function normalizePayload(payload) {
   const now = new Date().toISOString()
   const watchedAt = payload.watched_at || payload.watchedDate || null
 
+  // work オブジェクトを保持（actors, tags 含む）
+  let work = payload.work || null
+  
+  // payload.tags がなく、work に tags があれば、work.tags から文字列配列を抽出
+  let tags = payload.tags || []
+  if (!tags.length && work && Array.isArray(work.tags)) {
+    tags = work.tags.map(t => typeof t === 'string' ? t : (t.name || ''))
+  }
+
   return {
     id: payload.id || Date.now(),
     work_id: payload.work_id || payload.workId || null,
-    work: payload.work || null,
+    work: work,
     run: payload.run || null,
     seat: payload.seat || '',
     memo: payload.memo || '',
     rating: payload.rating ?? null,
-    tags: payload.tags || [],
+    tags: tags,
     watched_at: watchedAt,
     watchedDate: watchedAt,
     created_at: payload.created_at || now,
@@ -61,9 +70,18 @@ export function updateLocalLog(id, payload) {
   const idx = logs.findIndex((log) => String(log.id) === String(id))
   if (idx === -1) return null
 
+  // 既存の work オブジェクトを保持しつつ、新しいペイロードで更新
+  const existing = logs[idx]
+  const merged = {
+    ...existing,
+    ...payload,
+    // work が新たに渡された場合はそれを使う、なければ既存を保持
+    work: payload.work || existing.work,
+    id: existing.id
+  }
+
   const updated = {
-    ...logs[idx],
-    ...normalizePayload({ ...logs[idx], ...payload, id: logs[idx].id }),
+    ...normalizePayload(merged),
     updated_at: new Date().toISOString(),
   }
   logs[idx] = updated

@@ -2,7 +2,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { request } from '@/apiClient'
+import { request, rateWork } from '@/apiClient'
 import { currentUser } from '@/authState'
 import { getLocalLog, updateLocalLog, deleteLocalLog, isGuestUser } from '@/lib/localLogs'
 import LogForm from '@/components/LogForm.vue'
@@ -44,6 +44,14 @@ async function handleUpdate(payload) {
   try {
     if (isGuest.value) {
       updateLocalLog(route.params.id, payload)
+      // rating が入っている場合のみサーバに送信して平均を更新
+      if (payload.work_id && payload.rating) {
+        try {
+          await rateWork(payload.work_id, payload.rating)
+        } catch (err) {
+          console.warn('rating送信に失敗しましたがローカル更新は完了:', err)
+        }
+      }
       router.push(`/logs/${route.params.id}/detail`)
     } else {
       await request(`/api/logs/${route.params.id}/`, {

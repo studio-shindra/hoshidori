@@ -2,7 +2,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { request } from '@/apiClient'
+import { request, rateWork } from '@/apiClient'
 import { onLogSaveSuccess } from '@/lib/admobHelpers'
 import { currentUser } from '@/authState'
 import { createLocalLog, isGuestUser } from '@/lib/localLogs'
@@ -17,6 +17,15 @@ async function handleCreate(payload) {
   try {
     if (isGuest.value) {
       createLocalLog(payload)
+      // rating だけサーバへ送信して平均を更新
+      if (payload.work_id && payload.rating) {
+        try {
+          await rateWork(payload.work_id, payload.rating)
+        } catch (err) {
+          console.warn('rating送信に失敗しましたがローカル保存は完了:', err)
+        }
+      }
+
       alert('保存しました！')
       router.push('/logs')
     } else {

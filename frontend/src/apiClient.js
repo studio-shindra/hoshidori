@@ -210,6 +210,15 @@ export function deleteLog(id) {
   })
 }
 
+// ゲスト/ログイン共通で作品評価のみを送信する
+export function rateWork(workId, rating) {
+  return request(`/api/works/${workId}/rate/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ rating }),
+  })
+}
+
 export function sendContact(payload) {
   return request('/api/contact/', {
     method: 'POST',

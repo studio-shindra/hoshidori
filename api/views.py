@@ -7,6 +7,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from .models import Work, ViewingLog, Theater, Actor, Tag, UserProfile
 from .models import Troupe
+from .rating_utils import add_rating_entry, calculate_avg_rating
 from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -69,8 +70,8 @@ class WorkViewSet(viewsets.ModelViewSet):
         return WorkDetailSerializer
 
     def get_permissions(self):
-        # 一覧・詳細・スケジュールは公開、それ以外（作成・更新・削除）は要ログイン
-        if self.action in ['list', 'retrieve', 'schedule']:
+        # 一覧・詳細・スケジュール・本日の時間候補・評価付与は公開、それ以外（作成・更新・削除）は要ログイン
+        if self.action in ['list', 'retrieve', 'schedule', 'today_times', 'rate']:
             return [AllowAny()]
         return [permissions.IsAuthenticated()]
 
@@ -118,6 +119,23 @@ class WorkViewSet(viewsets.ModelViewSet):
         times = sorted(set(dt.strftime('%H:%M') for dt in logs))
         return response.Response({'times': times})
 
+    @decorators.action(detail=True, methods=['post'], permission_classes=[AllowAny], authentication_classes=[])
+    def rate(self, request, pk=None):
+        """ゲストでも利用可能な作品への評価付与エンドポイント"""
+        work = self.get_object()
+        rating_val = request.data.get('rating')
+
+        try:
+            rating = float(rating_val)
+        except (TypeError, ValueError):
+            return response.Response({'detail': 'rating は数値で指定してください'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if rating < 1 or rating > 5:
+            return response.Response({'detail': 'rating は1.0〜5.0の範囲で指定してください'}, status=status.HTTP_400_BAD_REQUEST)
+
+        avg = add_rating_entry(work, rating, request.user if request.user.is_authenticated else None)
+        return response.Response({'avg_rating': avg}, status=status.HTTP_201_CREATED)
+
 
 class ViewingLogViewSet(viewsets.ModelViewSet):
     serializer_class = ViewingLogSerializer
@@ -134,6 +152,9 @@ class ViewingLogViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+        # rating ありの場合は平均計算を更新しておく（結果はレスポンスには含めない）
+        if serializer.instance.rating:
+            calculate_avg_rating(serializer.instance.work)
 
 
 class TheaterViewSet(viewsets.ModelViewSet):

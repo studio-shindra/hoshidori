@@ -27,12 +27,28 @@ async function fetchLog() {
         error.value = 'ログが見つかりません'
       } else {
         log.value = data
+        if (log.value?.work?.id) {
+          try {
+            // 最新の作品情報で俳優などを補完
+            const workDetail = await request(`/api/works/${log.value.work.id}/`)
+            log.value.work = workDetail
+          } catch (e) {
+            console.warn('作品情報の取得に失敗しました', e)
+          }
+        }
       }
     } else {
       const logs = await request('/api/logs/')
       log.value = logs.find(l => l.id === Number(logId))
       if (!log.value) {
         error.value = 'ログが見つかりません'
+      } else if (log.value?.work?.id && (!log.value.work.actors || log.value.work.actors.length === 0)) {
+        try {
+          const workDetail = await request(`/api/works/${log.value.work.id}/`)
+          log.value.work = workDetail
+        } catch (e) {
+          console.warn('作品情報の取得に失敗しました', e)
+        }
       }
     }
   } catch (e) {
