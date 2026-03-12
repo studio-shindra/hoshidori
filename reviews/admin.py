@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Review, ViewingLog
+from .models import Like, Review, ViewingLog
 
 
 @admin.register(Review)
@@ -12,5 +12,11 @@ class ReviewAdmin(admin.ModelAdmin):
 
 @admin.register(ViewingLog)
 class ViewingLogAdmin(admin.ModelAdmin):
-    list_display = ['user', 'performance', 'watched_on', 'created_at']
-    list_filter = ['watched_on']
+    list_display = ['user', 'performance', 'status', 'watched_on', 'created_at']
+    list_filter = ['status', 'watched_on']
+
+
+@admin.register(Like)
+class LikeAdmin(admin.ModelAdmin):
+    list_display = ['user', 'review', 'created_at']
+    list_filter = ['created_at']

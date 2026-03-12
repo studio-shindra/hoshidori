@@ -12,3 +12,17 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
             return True
         owner = getattr(obj, 'user', None) or getattr(obj, 'created_by', None)
         return owner == request.user
+
+
+class IsShopUser(permissions.BasePermission):
+    """
+    店舗ユーザーのみアクセス可能。
+    Phase2 の店舗ダッシュボード等で使用。
+    """
+
+    def has_permission(self, request, view):
+        return (
+            request.user
+            and request.user.is_authenticated
+            and request.user.role in ('shop', 'admin')
+        )
