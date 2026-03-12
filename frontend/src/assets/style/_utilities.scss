@@ -1,0 +1,99 @@
+@use 'variables' as *;
+
+// ---- Color helpers ----
+.color-amber { color: $c-amber; }
+.color-green { color: $c-green; }
+.color-rose  { color: $c-rose; }
+
+// ---- Badges ----
+.badge-amber {
+  background: rgba($c-amber, 0.15);
+  color: $c-amber;
+  font-weight: 500;
+  font-size: 0.65rem;
+}
+
+.badge-green {
+  background: rgba($c-green, 0.15);
+  color: $c-green;
+  font-weight: 500;
+  font-size: 0.65rem;
+}
+
+.badge-featured {
+  background: $c-amber;
+  color: #000;
+  font-weight: 600;
+  font-size: 0.65rem;
+}
+
+// ---- Buttons ----
+.btn-primary-rose {
+  background: $c-rose-dark;
+  color: #fff;
+  border: none;
+
+  &:hover {
+    background: $c-rose-darker;
+    color: #fff;
+  }
+}
+
+.btn-status-amber {
+  background: rgba($c-amber, 0.15);
+  color: $c-amber;
+  border: 1px solid rgba($c-amber, 0.3);
+}
+
+.btn-status-green {
+  background: rgba($c-green, 0.15);
+  color: $c-green;
+  border: 1px solid rgba($c-green, 0.3);
+}
+
+.btn-coupon {
+  background: rgba($c-rose-dark, 0.15);
+  color: $c-rose;
+  border: none;
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+
+// ---- Typography ----
+.tiny {
+  font-size: 0.7rem;
+}
+
+// ---- Poster / image placeholders ----
+.poster-gradient {
+  background: linear-gradient(135deg, $c-purple, $c-fuchsia, $c-rose-dark);
+}
+
+.poster-empty {
+  background: $c-bg-card;
+  border: 1px dashed $c-border-dashed;
+}
+
+// ---- Avatar ----
+.avatar-sm {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: $c-border;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+// ---- Scrollbar ----
+.scroll-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

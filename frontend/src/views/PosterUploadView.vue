@@ -4,6 +4,10 @@ import { useRoute, useRouter } from 'vue-router'
 import { api } from '@/lib/api'
 import { IconArrowLeft, IconCamera, IconMask, IconCheck } from '@tabler/icons-vue'
 
+const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
+const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+
 const route = useRoute()
 const router = useRouter()
 const work = ref(null)
@@ -15,6 +19,7 @@ const preview = ref(null)
 const uploading = ref(false)
 const uploadError = ref('')
 const uploadSuccess = ref(false)
+const uploadProgress = ref('')
 
 const fileInput = ref(null)
 
@@ -43,6 +48,16 @@ function openFilePicker() {
 function onFileChange(e) {
   const file = e.target.files[0]
   if (!file) return
+
+  if (!file.type.startsWith('image/')) {
+    uploadError.value = '画像ファイルを選択してください'
+    return
+  }
+  if (file.size > MAX_FILE_SIZE) {
+    uploadError.value = 'ファイルサイズは10MB以下にしてください'
+    return
+  }
+
   selectedFile.value = file
   preview.value = URL.createObjectURL(file)
   uploadSuccess.value = false
@@ -53,21 +68,51 @@ async function submitPoster() {
   if (!selectedFile.value) return
   uploading.value = true
   uploadError.value = ''
+  uploadProgress.value = 'Cloudinaryにアップロード中...'
+
   try {
+    // Step 1: Upload to Cloudinary
     const fd = new FormData()
-    fd.append('image', selectedFile.value)
-    fd.append('caption', caption.value)
-    const result = await api.upload(`/api/works/${route.params.slug}/posters/`, fd)
+    fd.append('file', selectedFile.value)
+    fd.append('upload_preset', UPLOAD_PRESET)
+
+    const cloudRes = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+      { method: 'POST', body: fd }
+    )
+    if (!cloudRes.ok) {
+      throw new Error('Cloudinaryへのアップロードに失敗しました')
+    }
+    const cloudData = await cloudRes.json()
+
+    // Step 2: Save to backend
+    uploadProgress.value = 'サーバーに保存中...'
+    const result = await api.post(`/api/works/${route.params.slug}/posters/`, {
+      image_url: cloudData.secure_url,
+      image_public_id: cloudData.public_id,
+      image_width: cloudData.width,
+      image_height: cloudData.height,
+      image_format: cloudData.format,
+      caption: caption.value,
+    })
+
     posters.value.unshift(result)
     uploadSuccess.value = true
     selectedFile.value = null
     preview.value = null
     caption.value = ''
   } catch (e) {
-    uploadError.value = e.data ? Object.values(e.data).flat().join(' ') : 'アップロードに失敗しました'
+    uploadError.value = e.data
+      ? Object.values(e.data).flat().join(' ')
+      : e.message || 'アップロードに失敗しました'
   } finally {
     uploading.value = false
+    uploadProgress.value = ''
   }
+}
+
+function posterImageSrc(p) {
+  return p.image_url || p.image || ''
 }
 
 const selectedPoster = () => posters.value.find((p) => p.is_selected)
@@ -97,7 +142,7 @@ const selectedPoster = () => posters.value.find((p) => p.is_selected)
         <label class="form-label tiny text-secondary">現在のトップ画像</label>
         <template v-if="selectedPoster()">
           <div class="poster-current overflow-hidden rounded-3">
-            <img :src="selectedPoster().image" class="w-100 h-100 object-fit-cover" />
+            <img :src="posterImageSrc(selectedPoster())" class="w-100 h-100 object-fit-cover" />
           </div>
           <div class="tiny text-secondary mt-1">
             by {{ selectedPoster().user_display_name }}
@@ -128,11 +173,13 @@ const selectedPoster = () => posters.value.find((p) => p.is_selected)
         </div>
 
         <div class="tiny text-secondary mt-2 lh-base">
-          この画像は作品ページのトップ画像候補になります。投稿者名も表示されます。
+          この画像は作品ページのトップ画像候補になります。投稿者名も表示されます。<br />
+          対応形式: JPG, PNG, WebP（10MB以下）
         </div>
       </div>
 
       <!-- 結果メッセージ -->
+      <div v-if="uploading" class="small text-secondary">{{ uploadProgress }}</div>
       <div v-if="uploadSuccess" class="d-flex align-items-center gap-2 color-green small">
         <IconCheck :size="16" />投稿しました！
       </div>
@@ -154,7 +201,7 @@ const selectedPoster = () => posters.value.find((p) => p.is_selected)
         <h3 class="small fw-semibold text-secondary mb-3">投稿済みポスター</h3>
         <div class="d-flex flex-column gap-3">
           <div v-for="p in posters" :key="p.id" class="card bg-dark border-0 overflow-hidden">
-            <img :src="p.image" class="w-100" style="max-height: 200px; object-fit: cover" />
+            <img :src="posterImageSrc(p)" class="w-100" style="max-height: 200px; object-fit: cover" />
             <div class="p-2">
               <div class="d-flex justify-content-between align-items-center">
                 <span class="tiny text-secondary">by {{ p.user_display_name }}</span>

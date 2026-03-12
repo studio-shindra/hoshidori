@@ -36,6 +36,16 @@ onMounted(() => auth.fetchMe())
       <RouterView />
     </main>
 
+    <footer class="site-footer">
+      <div class="footer-links">
+        <RouterLink to="/terms">利用規約</RouterLink>
+        <RouterLink to="/privacy">プライバシーポリシー</RouterLink>
+        <RouterLink to="/guidelines">投稿ガイドライン</RouterLink>
+        <RouterLink to="/contact">お問い合わせ</RouterLink>
+      </div>
+      <p class="footer-copy">&copy; 2026 HOSHIDORI</p>
+    </footer>
+
     <nav class="bottom-nav">
       <RouterLink to="/" class="nav-item" :class="{ active: route.path === '/' }">
         <IconHome :size="22" />
@@ -55,7 +65,11 @@ onMounted(() => auth.fetchMe())
       </RouterLink>
       <RouterLink v-if="auth.isAuthenticated" to="/mypage" class="nav-item" :class="{ active: route.path === '/mypage' }">
         <IconUser :size="22" />
-        <span>マイページ</span>
+        <span>観劇棚</span>
+      </RouterLink>
+      <RouterLink v-else to="/login" class="nav-item" :class="{ active: route.path === '/login' }">
+        <IconUser :size="22" />
+        <span>ログイン</span>
       </RouterLink>
     </nav>
   </div>
@@ -102,6 +116,9 @@ onMounted(() => auth.fetchMe())
   flex: 1;
   padding: 0;
   padding-bottom: 5rem;
+  max-width: 768px;
+  width: 100%;
+  margin: 0 auto;
 }
 .bottom-nav {
   position: fixed;
@@ -109,7 +126,7 @@ onMounted(() => auth.fetchMe())
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
-  max-width: 480px;
+  max-width: 768px;
   display: flex;
   justify-content: space-around;
   background: rgba(10, 10, 11, 0.95);
@@ -130,5 +147,31 @@ onMounted(() => auth.fetchMe())
 }
 .nav-item.active {
   color: #f43f5e;
+}
+.site-footer {
+  text-align: center;
+  padding: 2rem 1rem 6rem;
+  border-top: 1px solid #27272a;
+  margin-top: 2rem;
+}
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.75rem;
+}
+.footer-links a {
+  font-size: 0.75rem;
+  color: #71717a;
+  text-decoration: none;
+}
+.footer-links a:hover {
+  color: #a1a1aa;
+}
+.footer-copy {
+  font-size: 0.65rem;
+  color: #52525b;
+  margin: 0;
 }
 </style>

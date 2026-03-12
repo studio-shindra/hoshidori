@@ -34,6 +34,7 @@ class PerformanceAdmin(admin.ModelAdmin):
 
 @admin.register(PosterSubmission)
 class PosterSubmissionAdmin(admin.ModelAdmin):
-    list_display = ['work', 'user', 'is_selected', 'created_at']
+    list_display = ['work', 'user', 'is_selected', 'image_url', 'created_at']
     list_filter = ['is_selected']
     search_fields = ['work__title', 'user__username']
+    readonly_fields = ['image_url', 'image_public_id', 'image_width', 'image_height', 'image_format']

@@ -66,6 +66,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/mypage/edit',
+      name: 'profile-edit',
+      component: () => import('../views/ProfileEditView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/dashboard',
       name: 'dashboard',
       component: () => import('../views/DashboardView.vue'),
@@ -75,6 +81,26 @@ const router = createRouter({
       path: '/mock',
       name: 'mock',
       component: () => import('../views/MockView.vue'),
+    },
+    {
+      path: '/terms',
+      name: 'terms',
+      component: () => import('../views/TermsView.vue'),
+    },
+    {
+      path: '/privacy',
+      name: 'privacy',
+      component: () => import('../views/PrivacyView.vue'),
+    },
+    {
+      path: '/guidelines',
+      name: 'guidelines',
+      component: () => import('../views/GuidelinesView.vue'),
+    },
+    {
+      path: '/contact',
+      name: 'contact',
+      component: () => import('../views/ContactView.vue'),
     },
   ],
 })

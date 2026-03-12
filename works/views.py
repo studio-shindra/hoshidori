@@ -1,5 +1,5 @@
 from rest_framework.decorators import action
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -28,7 +28,7 @@ class WorkViewSet(ModelViewSet):
         serializer.save(created_by=self.request.user)
 
     @action(detail=True, methods=['get', 'post'], url_path='posters',
-            parser_classes=[MultiPartParser, FormParser])
+            parser_classes=[JSONParser, MultiPartParser, FormParser])
     def posters(self, request, slug=None):
         work = self.get_object()
         if request.method == 'GET':

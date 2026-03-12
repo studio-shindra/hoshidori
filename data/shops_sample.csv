@@ -1,0 +1,6 @@
+name,slug,category,description,address,nearest_station,distance_note,website_url,opening_hours_text,benefit_text,is_active,theater_slug,sort_order,is_featured
+Village Vanguard 下北沢店,village-vanguard-shimokita,雑貨,遊べる本屋。観劇前後のブラウジングに最適。,東京都世田谷区北沢2-10-15,下北沢駅,本多劇場から徒歩1分,,11:00〜21:00,,true,honda-gekijo,1,false
+珈琲の街,coffee-no-machi,カフェ,下北沢の老舗喫茶店。静かな空間で観劇の余韻を楽しめる。,東京都世田谷区北沢2-25-8,下北沢駅,駅前劇場から徒歩3分,,10:00〜22:00,チケット半券提示でコーヒー50円引き,true,ekimae-gekijo,1,true
+BOOKOFF 下北沢駅南口店,bookoff-shimokita,書店,戯曲や演劇関連書籍も見つかる。,東京都世田谷区北沢2-30-1,下北沢駅,スズナリから徒歩2分,,10:00〜21:00,,true,the-suzunari,1,false
+古着屋 flamingo,flamingo-shimokita,古着,下北沢らしい古着屋。観劇帰りの散策に。,東京都世田谷区北沢2-25-12,下北沢駅,駅南口から徒歩2分,,12:00〜20:00,,true,,0,false
+カレーの惑星,curry-no-wakusei,飲食,スパイスカレーの人気店。観劇前のランチにおすすめ。,東京都世田谷区北沢2-14-3,下北沢駅,OFF OFFシアターから徒歩1分,,11:30〜15:00 / 17:30〜21:00,星ドリ会員はトッピング1品サービス,true,off-off-theater,1,true

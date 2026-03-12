@@ -1,0 +1,32 @@
+@use 'variables' as *;
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+body {
+  min-height: 100vh;
+  font-family: $font-stack;
+  font-size: 15px;
+  line-height: 1.6;
+  color: $c-text;
+  background: $c-bg;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+#app {
+  max-width: 768px;
+  margin: 0 auto;
+  background: $c-bg-app;
+  min-height: 100vh;
+}
+
+a {
+  color: $c-rose;
+  text-decoration: none;
+}

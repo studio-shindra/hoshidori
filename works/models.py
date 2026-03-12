@@ -114,7 +114,13 @@ class PosterSubmission(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
         related_name='poster_submissions',
     )
-    image = models.ImageField(upload_to='posters/')
+    image = models.ImageField(upload_to='posters/', blank=True, default='')
+    # Cloudinary fields
+    image_url = models.URLField(max_length=500, blank=True, default='')
+    image_public_id = models.CharField(max_length=300, blank=True, default='')
+    image_width = models.IntegerField(null=True, blank=True)
+    image_height = models.IntegerField(null=True, blank=True)
+    image_format = models.CharField(max_length=20, blank=True, default='')
     caption = models.CharField(max_length=500, blank=True, default='')
     is_selected = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

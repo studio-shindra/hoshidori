@@ -23,11 +23,14 @@ class WorkSerializer(serializers.ModelSerializer):
         poster = getattr(obj, '_selected_poster', None)
         if poster is None:
             poster = obj.poster_submissions.filter(is_selected=True).first()
-        if poster and poster.image:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(poster.image.url)
-            return poster.image.url
+        if poster:
+            if poster.image_url:
+                return poster.image_url
+            if poster.image:
+                request = self.context.get('request')
+                if request:
+                    return request.build_absolute_uri(poster.image.url)
+                return poster.image.url
         return None
 
     def get_selected_poster_user_display_name(self, obj):
@@ -82,8 +85,27 @@ class PosterSubmissionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PosterSubmission
-        fields = ['id', 'work', 'user', 'user_display_name', 'image', 'caption', 'is_selected', 'created_at']
+        fields = [
+            'id', 'work', 'user', 'user_display_name',
+            'image', 'image_url', 'image_public_id',
+            'image_width', 'image_height', 'image_format',
+            'caption', 'is_selected', 'created_at',
+        ]
         read_only_fields = ['id', 'user', 'is_selected', 'created_at']
 
     def get_user_display_name(self, obj):
         return obj.user.display_name or obj.user.username
+
+    def validate_image_url(self, value):
+        if value and 'res.cloudinary.com' not in value:
+            raise serializers.ValidationError('Cloudinary以外の画像URLは使用できません')
+        return value
+
+    def validate(self, data):
+        has_image = data.get('image')
+        has_url = data.get('image_url')
+        if not has_image and not has_url:
+            raise serializers.ValidationError('image または image_url が必要です')
+        if has_url and not data.get('image_public_id'):
+            raise serializers.ValidationError('image_public_id は必須です')
+        return data

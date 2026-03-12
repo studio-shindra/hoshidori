@@ -10,6 +10,7 @@ class User(AbstractUser):
     ]
 
     display_name = models.CharField(max_length=100, blank=True, default='')
+    bio = models.TextField(blank=True, default='')
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='user')
 
     class Meta:
