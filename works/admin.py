@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import PerformanceCast, Performance, Person, Work
+from .models import PerformanceCast, Performance, Person, PosterSubmission, Work
 
 
 @admin.register(Work)
@@ -30,3 +30,10 @@ class PerformanceAdmin(admin.ModelAdmin):
     list_filter = ['is_approved', 'start_date']
     search_fields = ['work__title', 'theater__name', 'company_name']
     inlines = [PerformanceCastInline]
+
+
+@admin.register(PosterSubmission)
+class PosterSubmissionAdmin(admin.ModelAdmin):
+    list_display = ['work', 'user', 'is_selected', 'created_at']
+    list_filter = ['is_selected']
+    search_fields = ['work__title', 'user__username']
