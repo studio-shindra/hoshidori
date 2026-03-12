@@ -1,0 +1,32 @@
+from django.contrib import admin
+
+from .models import PerformanceCast, Performance, Person, Work
+
+
+@admin.register(Work)
+class WorkAdmin(admin.ModelAdmin):
+    list_display = ['title', 'created_by', 'is_approved', 'created_at']
+    list_filter = ['is_approved']
+    search_fields = ['title']
+    prepopulated_fields = {'slug': ('title',)}
+
+
+@admin.register(Person)
+class PersonAdmin(admin.ModelAdmin):
+    list_display = ['name', 'phonetic', 'created_by', 'is_approved']
+    list_filter = ['is_approved']
+    search_fields = ['name', 'phonetic']
+    prepopulated_fields = {'slug': ('name',)}
+
+
+class PerformanceCastInline(admin.TabularInline):
+    model = PerformanceCast
+    extra = 1
+
+
+@admin.register(Performance)
+class PerformanceAdmin(admin.ModelAdmin):
+    list_display = ['work', 'theater', 'company_name', 'start_date', 'end_date', 'is_approved']
+    list_filter = ['is_approved', 'start_date']
+    search_fields = ['work__title', 'theater__name', 'company_name']
+    inlines = [PerformanceCastInline]
