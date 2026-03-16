@@ -31,6 +31,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/works/:slug/edit',
+      name: 'work-edit',
+      component: () => import('../views/WorkEditView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/works/:slug/poster',
       name: 'poster-upload',
       component: () => import('../views/PosterUploadView.vue'),
@@ -105,9 +111,15 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach((to) => {
+let authReady = false
+
+router.beforeEach(async (to) => {
   if (to.meta.requiresAuth) {
     const auth = useAuthStore()
+    if (!authReady) {
+      await auth.fetchMe()
+      authReady = true
+    }
     if (!auth.isAuthenticated) {
       return { name: 'login', query: { next: to.fullPath } }
     }

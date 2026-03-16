@@ -1,8 +1,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRoute, RouterLink, useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { api } from '@/lib/api'
-import { IconMapPin, IconArrowLeft } from '@tabler/icons-vue'
+import { IconMapPin, IconArrowLeft, IconTheater } from '@tabler/icons-vue'
+import ShopCard from '@/components/ShopCard.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -31,53 +32,49 @@ onMounted(async () => {
 
 <template>
   <div>
-    <header class="d-flex align-items-center gap-2 px-3 pt-4 pb-3">
-      <button class="btn btn-link text-secondary p-0" @click="router.back()">
-        <IconArrowLeft :size="16" />
-      </button>
-      <h1 class="fs-6 fw-bold mb-0">劇場</h1>
-    </header>
-
     <p v-if="loading" class="text-center text-secondary py-4">読み込み中...</p>
     <template v-else-if="theater">
-      <div class="px-3 mb-4">
-        <h2 class="fs-5 fw-bold mb-1">{{ theater.name }}</h2>
-        <div v-if="theater.area" class="small text-secondary">
-          <IconMapPin :size="14" class="me-1" />{{ theater.area }}
+      <!-- Hero -->
+      <div class="position-relative">
+        <div class="theater-hero">
+          <img v-if="theater.image" :src="theater.image" :alt="theater.name" class="w-100 h-100 object-fit-cover" />
+          <div v-else class="w-100 h-100 d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, #27272a, #3f3f46)">
+            <IconTheater :size="48" class="text-secondary" />
+          </div>
         </div>
-        <div v-if="theater.address" class="tiny text-secondary mt-1">{{ theater.address }}</div>
-        <p v-if="theater.description" class="small text-light mt-3 lh-base">{{ theater.description }}</p>
+        <button class="btn btn-dark btn-sm position-absolute top-0 start-0 m-3 rounded-circle back-btn" @click="router.back()">
+          <IconArrowLeft :size="16" />
+        </button>
+        <div class="theater-hero-fade"></div>
       </div>
 
-      <!-- Shop cards (Retty style) -->
-      <section v-if="sortedShops.length" class="px-3 mb-5">
-        <h3 class="small fw-semibold text-secondary mb-3">この劇場の近くの店</h3>
+      <!-- Info -->
+      <div class="px-3 position-relative" style="margin-top: -1.5rem; z-index: 2">
+        <h2 class="fs-4 fw-bold mb-1">{{ theater.name }}</h2>
+        <div v-if="theater.area_name" class="d-flex align-items-center gap-1 small text-secondary">
+          <IconMapPin :size="14" />{{ theater.area_name }}
+        </div>
+        <div v-if="theater.address" class="small text-secondary mt-1">{{ theater.address }}</div>
+        <p v-if="theater.description" class="text-light mt-3 lh-base border-top border-secondary pt-3">{{ theater.description }}</p>
+
+        <!-- Google Map -->
+        <div v-if="theater.address" class="mt-3 overflow-hidden">
+          <iframe
+            :src="`https://maps.google.com/maps?q=${encodeURIComponent(theater.address)}&output=embed&z=16`"
+            width="100%"
+            height="200"
+            style="border:0"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+          ></iframe>
+        </div>
+      </div>
+
+      <!-- Nearby shops -->
+      <section v-if="sortedShops.length" class="px-3 mt-4 mb-5">
+        <h3 class="df-center fw-bold mb-3">この劇場の近くのお店</h3>
         <div class="d-flex flex-column gap-3">
-          <RouterLink
-            v-for="s in sortedShops"
-            :key="s.id"
-            :to="`/shops/${s.slug}`"
-            class="card border-0 p-0 overflow-hidden text-decoration-none"
-            :class="s.is_featured ? 'shop-featured' : 'bg-dark'"
-          >
-            <div class="position-relative">
-              <div class="shop-img" :class="s.is_featured ? 'shop-img-featured' : ''"></div>
-              <span v-if="s.is_featured" class="badge badge-featured position-absolute top-0 start-0 m-2">おすすめ</span>
-            </div>
-            <div class="p-3">
-              <div class="d-flex justify-content-between align-items-start">
-                <div>
-                  <div class="fw-medium small text-light">{{ s.name }}</div>
-                  <div class="tiny text-secondary">
-                    {{ s.category || '' }}
-                    <span v-if="s.walking_minutes"> · 徒歩{{ s.walking_minutes }}分</span>
-                  </div>
-                  <div class="tiny text-secondary mt-1">{{ s.description || '' }}</div>
-                </div>
-                <span v-if="s.benefit_text" class="btn btn-sm btn-coupon flex-shrink-0 ms-2">{{ s.benefit_text }}</span>
-              </div>
-            </div>
-          </RouterLink>
+          <ShopCard v-for="s in sortedShops" :key="s.id" :shop="s" />
         </div>
       </section>
     </template>
@@ -85,17 +82,25 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.shop-img {
+.theater-hero {
   width: 100%;
-  height: 100px;
-  background: linear-gradient(135deg, #27272a 0%, #3f3f46 100%);
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
 }
-.shop-img-featured {
-  height: 120px;
-  background: linear-gradient(135deg, #44403c 0%, #57534e 50%, #44403c 100%);
+.theater-hero-fade {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 8rem;
+  background: linear-gradient(transparent, #0a0a0b 70%);
 }
-.shop-featured {
-  background: #1c1917;
-  border: 1px solid rgba(245, 158, 11, 0.25);
+.back-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.8;
 }
 </style>

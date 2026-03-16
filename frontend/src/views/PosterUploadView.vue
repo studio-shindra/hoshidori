@@ -11,7 +11,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 const route = useRoute()
 const router = useRouter()
 const work = ref(null)
-const posters = ref([])
+const currentPoster = ref(null)
 const loading = ref(true)
 const selectedFile = ref(null)
 const caption = ref('')
@@ -32,7 +32,8 @@ onMounted(async () => {
         api.get(`/api/works/${slug}/posters/`),
       ])
       work.value = w
-      posters.value = Array.isArray(p) ? p : p.results || []
+      const allPosters = Array.isArray(p) ? p : p.results || []
+      currentPoster.value = allPosters.find((x) => x.is_selected) || null
     }
   } catch {
     /* empty */
@@ -96,7 +97,8 @@ async function submitPoster() {
       caption: caption.value,
     })
 
-    posters.value.unshift(result)
+    result.is_selected = true
+    currentPoster.value = result
     uploadSuccess.value = true
     selectedFile.value = null
     preview.value = null
@@ -114,13 +116,11 @@ async function submitPoster() {
 function posterImageSrc(p) {
   return p.image_url || p.image || ''
 }
-
-const selectedPoster = () => posters.value.find((p) => p.is_selected)
 </script>
 
 <template>
   <div>
-    <header class="d-flex align-items-center justify-content-between px-3 pt-4 pb-3">
+    <header class="d-flex align-items-center justify-content-between pt-4 pb-3">
       <button class="btn btn-link text-secondary p-0 small text-decoration-none" @click="router.back()">
         <IconArrowLeft :size="16" class="me-1" />戻る
       </button>
@@ -140,12 +140,12 @@ const selectedPoster = () => posters.value.find((p) => p.is_selected)
       <!-- 現在のトップ画像 -->
       <div>
         <label class="form-label tiny text-secondary">現在のトップ画像</label>
-        <template v-if="selectedPoster()">
+        <template v-if="currentPoster">
           <div class="poster-current overflow-hidden rounded-3">
-            <img :src="posterImageSrc(selectedPoster())" class="w-100 h-100 object-fit-cover" />
+            <img :src="posterImageSrc(currentPoster)" class="w-100 h-100 object-fit-cover" />
           </div>
           <div class="tiny text-secondary mt-1">
-            by {{ selectedPoster().user_display_name }}
+            by {{ currentPoster.user_display_name }}
           </div>
         </template>
         <div v-else class="poster-current poster-empty d-flex flex-column align-items-center justify-content-center gap-2">
@@ -173,7 +173,7 @@ const selectedPoster = () => posters.value.find((p) => p.is_selected)
         </div>
 
         <div class="tiny text-secondary mt-2 lh-base">
-          この画像は作品ページのトップ画像候補になります。投稿者名も表示されます。<br />
+          アップロードすると作品ページのトップ画像に反映されます。<br />
           対応形式: JPG, PNG, WebP（10MB以下）
         </div>
       </div>
@@ -196,22 +196,6 @@ const selectedPoster = () => posters.value.find((p) => p.is_selected)
         </button>
       </div>
 
-      <!-- 投稿済みポスター一覧 -->
-      <section v-if="posters.length" class="mb-5">
-        <h3 class="small fw-semibold text-secondary mb-3">投稿済みポスター</h3>
-        <div class="d-flex flex-column gap-3">
-          <div v-for="p in posters" :key="p.id" class="card bg-dark border-0 overflow-hidden">
-            <img :src="posterImageSrc(p)" class="w-100" style="max-height: 200px; object-fit: cover" />
-            <div class="p-2">
-              <div class="d-flex justify-content-between align-items-center">
-                <span class="tiny text-secondary">by {{ p.user_display_name }}</span>
-                <span v-if="p.is_selected" class="badge badge-green">選択中</span>
-              </div>
-              <div v-if="p.caption" class="tiny text-light mt-1">{{ p.caption }}</div>
-            </div>
-          </div>
-        </div>
-      </section>
     </div>
   </div>
 </template>

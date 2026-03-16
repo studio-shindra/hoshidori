@@ -1,104 +1,194 @@
 <script setup>
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import {
   IconHome,
-  IconBuildingCommunity,
-  IconMask,
+  IconTheater,
+  IconMasksTheater,
   IconPencil,
   IconUser,
+  IconMenu2,
+  IconX,
 } from '@tabler/icons-vue'
+import UserAvatar from '@/components/UserAvatar.vue'
 
 const auth = useAuthStore()
 const route = useRoute()
 onMounted(() => auth.fetchMe())
+
+const showSidebar = ref(false)
+
+async function logout() {
+  await auth.logout()
+  showSidebar.value = false
+  window.location.href = '/'
+}
 </script>
 
 <template>
   <div class="app-shell" data-bs-theme="dark">
-    <header class="top-bar">
-      <RouterLink to="/" class="brand">HOSHIDORI</RouterLink>
-      <div class="top-right">
-        <template v-if="auth.isAuthenticated">
-          <RouterLink to="/mypage" class="user-link">
-            <IconUser :size="18" />
-            <span>{{ auth.user.display_name || auth.user.username }}</span>
+
+    <!-- Backdrop -->
+    <Transition name="fade">
+      <div v-if="showSidebar" class="sidebar-backdrop" @click="showSidebar = false" />
+    </Transition>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" :class="{ 'sidebar-open': showSidebar }">
+      <div class="sidebar-header d-flex align-items-center justify-content-between px-3 border-bottom border-secondary">
+        <span class="fw-bold text-white small">HOSHIDORI</span>
+        <button class="btn-icon" @click="showSidebar = false">
+          <IconX :size="20" />
+        </button>
+      </div>
+      <nav class="d-flex flex-column gap-1 p-3">
+        <RouterLink to="/terms" class="sidebar-link" @click="showSidebar = false">利用規約</RouterLink>
+        <RouterLink to="/privacy" class="sidebar-link" @click="showSidebar = false">プライバシーポリシー</RouterLink>
+        <RouterLink to="/guidelines" class="sidebar-link" @click="showSidebar = false">投稿ガイドライン</RouterLink>
+        <RouterLink to="/contact" class="sidebar-link" @click="showSidebar = false">お問い合わせ</RouterLink>
+      </nav>
+      <div class="mt-auto px-3 pb-4">
+        <button class="btn btn-dark btn-sm w-100 text-white mb-2 fw-bold" @click="logout">ログアウト</button>
+        <p class="text-secondary mb-0" style="font-size: 0.65rem;">&copy; 2026 HOSHIDORI</p>
+      </div>
+    </aside>
+
+    <!-- Header -->
+    <header class="position-absolute top-0 start-0 end-0 w-100 d-flex align-items-center">
+      <div class="container d-flex align-items-center justify-content-between px-3 w-100 mx-auto position-relative">
+        <div class="position-absolute top-50 start-50 translate-middle">
+          <RouterLink to="/" class="d-flex align-items-center text-decoration-none">
+            <img src="/icon.svg" alt="HOSHIDORI" width="40" height="40" />
           </RouterLink>
-        </template>
-        <template v-else>
-          <RouterLink to="/login" class="login-link">ログイン</RouterLink>
-        </template>
+        </div>
+        <button class="btn-icon" @click="showSidebar = true">
+          <IconMenu2 :size="22" />
+        </button>
+        <div>
+          <template v-if="auth.isAuthenticated">
+            <RouterLink to="/mypage" class="user-link">
+              <UserAvatar :src="auth.user.avatar_url" :name="auth.user.display_name || auth.user.username" :size="28" />
+            </RouterLink>
+          </template>
+          <template v-else>
+            <RouterLink to="/login" class="login-link">ログイン</RouterLink>
+          </template>
+        </div>
       </div>
     </header>
 
-    <main class="main-content">
+    <main class="container pt-3 pb-5">
       <RouterView />
     </main>
 
-    <footer class="site-footer">
-      <div class="footer-links">
-        <RouterLink to="/terms">利用規約</RouterLink>
-        <RouterLink to="/privacy">プライバシーポリシー</RouterLink>
-        <RouterLink to="/guidelines">投稿ガイドライン</RouterLink>
-        <RouterLink to="/contact">お問い合わせ</RouterLink>
-      </div>
-      <p class="footer-copy">&copy; 2026 HOSHIDORI</p>
+    <footer
+    style="z-index: 99999;"
+      class="position-fixed bottom-0 start-0 end-0 border-top border-secondary bg-cdark">
+      <nav class="container d-flex align-items-center justify-content-around py-3">
+        <RouterLink to="/" class="nav-item" :class="{ active: route.path === '/' }">
+          <IconHome :size="22" />
+          <span>ホーム</span>
+        </RouterLink>
+        <RouterLink to="/theaters" class="nav-item" :class="{ active: route.path.startsWith('/theaters') }">
+          <IconTheater :size="22" />
+          <span>劇場</span>
+        </RouterLink>
+        <RouterLink to="/works" class="nav-item" :class="{ active: route.path.startsWith('/works') }">
+          <IconMasksTheater :size="22" />
+          <span>作品</span>
+        </RouterLink>
+        <RouterLink to="/logs/new" class="nav-item" :class="{ active: route.path.startsWith('/logs') }">
+          <IconPencil :size="22" />
+          <span>記録</span>
+        </RouterLink>
+        <RouterLink v-if="auth.isAuthenticated" to="/mypage" class="nav-item" :class="{ active: route.path === '/mypage' }">
+          <IconUser :size="22" />
+          <span>観劇棚</span>
+        </RouterLink>
+        <RouterLink v-else to="/login" class="nav-item" :class="{ active: route.path === '/login' }">
+          <IconUser :size="22" />
+          <span>ログイン</span>
+        </RouterLink>
+      </nav>
     </footer>
 
-    <nav class="bottom-nav">
-      <RouterLink to="/" class="nav-item" :class="{ active: route.path === '/' }">
-        <IconHome :size="22" />
-        <span>ホーム</span>
-      </RouterLink>
-      <RouterLink to="/theaters" class="nav-item" :class="{ active: route.path.startsWith('/theaters') }">
-        <IconBuildingCommunity :size="22" />
-        <span>劇場</span>
-      </RouterLink>
-      <RouterLink to="/works" class="nav-item" :class="{ active: route.path.startsWith('/works') }">
-        <IconMask :size="22" />
-        <span>作品</span>
-      </RouterLink>
-      <RouterLink to="/logs/new" class="nav-item" :class="{ active: route.path.startsWith('/logs') }">
-        <IconPencil :size="22" />
-        <span>記録</span>
-      </RouterLink>
-      <RouterLink v-if="auth.isAuthenticated" to="/mypage" class="nav-item" :class="{ active: route.path === '/mypage' }">
-        <IconUser :size="22" />
-        <span>観劇棚</span>
-      </RouterLink>
-      <RouterLink v-else to="/login" class="nav-item" :class="{ active: route.path === '/login' }">
-        <IconUser :size="22" />
-        <span>ログイン</span>
-      </RouterLink>
-    </nav>
   </div>
 </template>
 
 <style scoped>
 .app-shell {
+  --header-height: 56px;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
-.top-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #27272a;
-  background: rgba(10, 10, 11, 0.95);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  backdrop-filter: blur(8px);
+
+/* Sidebar */
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1040;
 }
-.brand {
-  font-weight: 700;
-  font-size: 1.1rem;
-  color: #e4e4e7;
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 260px;
+  height: 100dvh;
+  background: #111;
+  z-index: 1050;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.25s ease;
+}
+.sidebar-open {
+  transform: translateX(0);
+}
+.sidebar-header {
+  height: 56px;
+  flex-shrink: 0;
+}
+.sidebar-link {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  color: #a1a1aa;
   text-decoration: none;
-  letter-spacing: 0.05em;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+
+  &:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
+
+/* Fade */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Header */
+.btn-icon {
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  color: #a1a1aa;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+
+  &:hover {
+    color: #fff;
+  }
 }
 .user-link {
   display: flex;
@@ -112,66 +202,32 @@ onMounted(() => auth.fetchMe())
   font-size: 0.85rem;
   color: #a1a1aa;
 }
-.main-content {
-  flex: 1;
-  padding: 0;
-  padding-bottom: 5rem;
-  max-width: 768px;
-  width: 100%;
-  margin: 0 auto;
+
+header{
+  height: var(--header-height);
+  z-index: 1020;
 }
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 768px;
-  display: flex;
-  justify-content: space-around;
-  background: rgba(10, 10, 11, 0.95);
-  border-top: 1px solid #27272a;
-  padding: 0.5rem 0;
-  z-index: 100;
-  backdrop-filter: blur(8px);
+
+main{
+  margin-top: var(--header-height);
+  margin-bottom: var(--header-height);
 }
-.nav-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  font-size: 0.65rem;
-  color: #71717a;
-  text-decoration: none;
-  padding: 0.25rem 0.5rem;
-}
-.nav-item.active {
-  color: #f43f5e;
-}
-.site-footer {
-  text-align: center;
-  padding: 2rem 1rem 6rem;
-  border-top: 1px solid #27272a;
-  margin-top: 2rem;
-}
-.footer-links {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.5rem 1rem;
-  margin-bottom: 0.75rem;
-}
-.footer-links a {
-  font-size: 0.75rem;
-  color: #71717a;
-  text-decoration: none;
-}
-.footer-links a:hover {
-  color: #a1a1aa;
-}
-.footer-copy {
-  font-size: 0.65rem;
-  color: #52525b;
-  margin: 0;
+
+/* Bottom nav */
+footer {
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 0.65rem;
+    color: white;
+    text-decoration: none;
+    padding: 0.25rem 0.5rem;
+
+    &.active {
+      color: #f43f5e;
+    }
+  }
 }
 </style>

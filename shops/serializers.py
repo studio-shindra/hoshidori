@@ -4,6 +4,10 @@ from .models import Coupon, CouponUseLog, Shop
 
 
 class ShopSerializer(serializers.ModelSerializer):
+    is_featured = serializers.SerializerMethodField()
+    image_src = serializers.SerializerMethodField()
+    coupon_text = serializers.SerializerMethodField()
+
     class Meta:
         model = Shop
         fields = [
@@ -11,8 +15,28 @@ class ShopSerializer(serializers.ModelSerializer):
             'address', 'nearest_station', 'distance_note',
             'website_url', 'instagram_url', 'tabelog_url', 'google_map_url',
             'phone_number', 'opening_hours_text', 'benefit_text',
-            'is_active', 'created_at', 'updated_at',
+            'image_url', 'image_src', 'coupon_text',
+            'is_featured', 'is_active', 'created_at', 'updated_at',
         ]
+
+    def get_is_featured(self, obj):
+        return getattr(obj, '_is_featured', False)
+
+    def get_coupon_text(self, obj):
+        coupon = obj.coupons.filter(is_active=True).first()
+        if coupon:
+            return coupon.discount_text or coupon.title
+        return None
+
+    def get_image_src(self, obj):
+        if obj.image_url:
+            return obj.image_url
+        if obj.image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            return obj.image.url
+        return None
 
 
 class CouponSerializer(serializers.ModelSerializer):

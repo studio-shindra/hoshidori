@@ -12,9 +12,15 @@ class Review(models.Model):
     )
     title = models.CharField(max_length=200, blank=True, default='')
     body = models.TextField()
+    RATING_CHOICES = [
+        (3, '観た'),
+        (4, '良かった'),
+        (5, '最高'),
+    ]
     rating_overall = models.PositiveSmallIntegerField(
         null=True, blank=True,
-        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        choices=RATING_CHOICES,
+        validators=[MinValueValidator(3), MaxValueValidator(5)],
     )
     is_spoiler = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -41,12 +47,16 @@ class ViewingLog(models.Model):
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='watched')
     watched_on = models.DateField(null=True, blank=True)
+    watched_time = models.TimeField(null=True, blank=True)
     memo = models.TextField(blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'performance'], name='unique_user_performance'),
+        ]
 
     def __str__(self):
         return f'{self.user} - {self.performance} ({self.get_status_display()})'

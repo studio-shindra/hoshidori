@@ -17,6 +17,8 @@ class Shop(models.Model):
     phone_number = models.CharField(max_length=50, blank=True, default='')
     opening_hours_text = models.TextField(blank=True, default='')
     benefit_text = models.TextField(blank=True, default='')
+    image = models.ImageField(upload_to='shops/', blank=True, default='')
+    image_url = models.URLField(max_length=500, blank=True, default='')
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
         null=True, blank=True, related_name='owned_shops',

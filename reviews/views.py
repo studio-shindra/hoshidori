@@ -64,5 +64,19 @@ class ViewingLogViewSet(ModelViewSet):
             qs = qs.filter(status=status_filter)
         return qs
 
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+    def create(self, request, *args, **kwargs):
+        performance_id = request.data.get('performance')
+        existing = ViewingLog.objects.filter(
+            user=request.user, performance_id=performance_id,
+        ).first()
+
+        if existing:
+            serializer = self.get_serializer(existing, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

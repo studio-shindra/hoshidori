@@ -1,9 +1,15 @@
-@use 'variables' as *;
-
 // ---- Color helpers ----
 .color-amber { color: $c-amber; }
 .color-green { color: $c-green; }
-.color-rose  { color: $c-rose; }
+.color-rose  { color: $c-rose !important; }
+
+.bg-amber{
+  background-color: $c-amber;
+}
+
+.bg-rose{
+  background-color: $c-rose;
+}
 
 // ---- Badges ----
 .badge-amber {
@@ -29,13 +35,15 @@
 
 // ---- Buttons ----
 .btn-primary-rose {
-  background: $c-rose-dark;
-  color: #fff;
-  border: none;
+  background: $c-rose-dark !important;
+  color: #fff !important;
+  border: none !important;
 
-  &:hover {
-    background: $c-rose-darker;
-    color: #fff;
+  &:hover,
+  &:active,
+  &:focus {
+    background: $c-rose-darker !important;
+    color: #fff !important;
   }
 }
 
@@ -96,4 +104,15 @@
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+
+.dark-gradient {
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.6) 70%, rgba(0, 0, 0, 0) 100%);
+}
+
+.df-center{
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }

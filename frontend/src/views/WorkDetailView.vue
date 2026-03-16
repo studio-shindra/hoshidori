@@ -3,17 +3,25 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
+import Multiselect from '@vueform/multiselect'
 import {
   IconArrowLeft,
   IconCamera,
   IconHeart,
   IconHeartFilled,
-  IconMask,
   IconStar,
   IconTicket,
   IconMapPin,
   IconPlus,
 } from '@tabler/icons-vue'
+import ShopCard from '@/components/ShopCard.vue'
+import PosterImage from '@/components/PosterImage.vue'
+import { ratingLabel, ratingIcon } from '@/lib/rating'
+import { IconThumbUp, IconHeartHandshake, IconSparkles } from '@tabler/icons-vue'
+import RatingButtons from '@/components/RatingButtons.vue'
+import UserAvatar from '@/components/UserAvatar.vue'
+
+const ratingIcons = { IconThumbUp, IconHeartHandshake, IconSparkles }
 
 const route = useRoute()
 const router = useRouter()
@@ -22,17 +30,10 @@ const auth = useAuthStore()
 const work = ref(null)
 const performances = ref([])
 const reviews = ref([])
+const workPosters = ref([])
 const nearbyShops = ref([])
 const loading = ref(true)
-
-// review form
-const showReviewForm = ref(false)
-const reviewPerf = ref('')
-const reviewBody = ref('')
-const reviewRating = ref('')
-const reviewSpoiler = ref(false)
-const reviewError = ref('')
-const reviewLoading = ref(false)
+const detailTab = ref('memo')
 
 // log form
 const showLogForm = ref(false)
@@ -40,6 +41,8 @@ const logPerf = ref('')
 const logStatus = ref('planned')
 const logWatchedOn = ref('')
 const logMemo = ref('')
+const logRating = ref('')
+const logSpoiler = ref(false)
 const logError = ref('')
 const logLoading = ref(false)
 const logSuccess = ref('')
@@ -47,6 +50,10 @@ const logSuccess = ref('')
 const perfIds = computed(() => performances.value.map((p) => p.id))
 const workReviews = computed(() =>
   reviews.value.filter((r) => perfIds.value.includes(r.performance)),
+)
+
+const perfOptions = computed(() =>
+  performances.value.map((p) => ({ value: p.id, label: perfLabel(p) })),
 )
 
 const theaterSlug = computed(() => {
@@ -68,9 +75,17 @@ const dateRange = computed(() => {
   return dates[0]
 })
 
-const hasPoster = computed(() => !!work.value?.selected_poster_image_url)
+const averageRating = computed(() => {
+  const rated = workReviews.value.filter((r) => r.rating_overall)
+  if (!rated.length) return null
+  const sum = rated.reduce((a, r) => a + r.rating_overall, 0)
+  return (sum / rated.length).toFixed(1)
+})
+const reviewCount = computed(() => workReviews.value.length)
+
 const posterUrl = computed(() => work.value?.selected_poster_image_url)
 const posterCredit = computed(() => work.value?.selected_poster_user_display_name)
+const posterCreditAvatar = computed(() => work.value?.selected_poster_user_avatar_url)
 
 async function fetchShops() {
   if (!theaterSlug.value) return
@@ -91,15 +106,17 @@ onMounted(async () => {
     const slug = route.params.slug
     work.value = await api.get(`/api/works/${slug}/`)
 
-    const [perfData, revData] = await Promise.all([
+    const [perfData, revData, posterData] = await Promise.all([
       api.get('/api/performances/'),
       api.get('/api/reviews/'),
+      api.get(`/api/works/${slug}/posters/`),
     ])
     const allPerfs = perfData.results || perfData
     performances.value = allPerfs.filter(
       (p) => p.work === work.value.id || p.work_slug === slug,
     )
     reviews.value = revData.results || revData
+    workPosters.value = Array.isArray(posterData) ? posterData : posterData.results || []
 
     await fetchShops()
   } finally {
@@ -117,7 +134,6 @@ function perfLabel(p) {
 
 function openLogForm(status) {
   showLogForm.value = true
-  showReviewForm.value = false
   logStatus.value = status
   logPerf.value = performances.value.length === 1 ? performances.value[0].id : ''
   logError.value = ''
@@ -138,43 +154,26 @@ async function submitLog() {
       body.watched_on = logWatchedOn.value
     }
     await api.post('/api/viewing-logs/', body)
+    // 感想があればレビューも同時作成
+    if (logMemo.value.trim()) {
+      const reviewBody = {
+        performance: Number(logPerf.value),
+        body: logMemo.value,
+        is_spoiler: logSpoiler.value,
+      }
+      if (logRating.value) reviewBody.rating_overall = Number(logRating.value)
+      const newReview = await api.post('/api/reviews/', reviewBody)
+      reviews.value.unshift(newReview)
+    }
     logSuccess.value = '保存しました'
     logMemo.value = ''
     logWatchedOn.value = ''
+    logRating.value = ''
+    logSpoiler.value = false
   } catch (e) {
     logError.value = e.data ? Object.values(e.data).flat().join(' ') : '保存に失敗しました'
   } finally {
     logLoading.value = false
-  }
-}
-
-function openReviewForm() {
-  showReviewForm.value = true
-  showLogForm.value = false
-  reviewPerf.value = performances.value.length === 1 ? performances.value[0].id : ''
-  reviewError.value = ''
-}
-
-async function submitReview() {
-  reviewError.value = ''
-  reviewLoading.value = true
-  try {
-    const body = {
-      performance: Number(reviewPerf.value),
-      body: reviewBody.value,
-      is_spoiler: reviewSpoiler.value,
-    }
-    if (reviewRating.value) body.rating_overall = Number(reviewRating.value)
-    const newReview = await api.post('/api/reviews/', body)
-    reviews.value.unshift(newReview)
-    showReviewForm.value = false
-    reviewBody.value = ''
-    reviewRating.value = ''
-    reviewSpoiler.value = false
-  } catch (e) {
-    reviewError.value = e.data ? Object.values(e.data).flat().join(' ') : '投稿に失敗しました'
-  } finally {
-    reviewLoading.value = false
   }
 }
 
@@ -205,74 +204,37 @@ async function toggleLike(review) {
     <template v-else-if="work">
       <!-- Hero image area -->
       <div class="position-relative">
-        <template v-if="hasPoster">
-          <div class="hero">
-            <img :src="posterUrl" class="w-100 h-100 object-fit-cover" />
-          </div>
-        </template>
-        <template v-else>
-          <div class="hero poster-empty d-flex flex-column align-items-center justify-content-center gap-2">
-            <IconMask :size="48" class="text-secondary" />
-            <span class="text-secondary small">ポスター画像募集中</span>
-            <RouterLink
-              :to="`/works/${route.params.slug}/poster`"
-              class="btn btn-sm btn-outline-secondary mt-1"
-            >
+        <div class="hero">
+          <PosterImage :src="posterUrl" :alt="work.title || work.name" :work-slug="route.params.slug" :credit="posterCredit" :credit-avatar="posterCreditAvatar" />
+          <div v-if="!posterUrl" class="position-absolute bottom-0 start-0 end-0 text-center pb-4" style="z-index:1">
+            <RouterLink :to="`/works/${route.params.slug}/poster`" class="btn btn-sm btn-outline-secondary">
               <IconCamera :size="14" class="me-1" />最初の1枚を投稿
             </RouterLink>
           </div>
-        </template>
-        <button
-          class="btn btn-dark btn-sm position-absolute top-0 start-0 m-3 rounded-circle back-btn"
-          @click="router.back()"
-        >
-          <IconArrowLeft :size="16" />
-        </button>
+        </div>
         <div class="hero-fade"></div>
       </div>
 
       <!-- Work info -->
-      <div class="px-3 position-relative" style="margin-top: -2.5rem; z-index: 2">
+      <div class="position-relative" style="margin-top: -1rem; z-index: 2">
         <h2 class="fs-5 fw-bold mb-1">{{ work.title || work.name }}</h2>
-        <div class="small text-secondary" v-if="companyName">{{ companyName }}</div>
-        <div class="small text-secondary">
+        <div class="small" v-if="companyName">{{ companyName }}</div>
+        <div class="small">
           <span v-if="theaterName">{{ theaterName }}</span>
           <span v-if="dateRange"> · {{ dateRange }}</span>
-        </div>
-
-        <div class="tiny text-secondary mt-2">
-          <template v-if="hasPoster">
-            Top image by @{{ posterCredit }} ·
-          </template>
-          <template v-else>ポスター画像募集中 · </template>
-          <RouterLink :to="`/works/${route.params.slug}/poster`" class="text-secondary">ポスターを投稿</RouterLink>
         </div>
 
         <!-- Action buttons -->
         <template v-if="auth.isAuthenticated">
           <div class="d-flex gap-2 mt-3">
-            <button class="btn btn-dark flex-fill color-amber fw-medium" @click="openLogForm('planned')">
-              <IconTicket :size="16" class="me-1" />これから観る
+            <button class="btn btn-light flex-fill color-white d-flex align-items-center justify-content-center" @click="openLogForm('planned')">
+              <IconTicket :size="16" class="me-1" />観る
             </button>
-            <button class="btn btn-dark flex-fill color-green fw-medium" @click="openLogForm('watched')">
+            <button class="btn flex-fill btn-primary-rose d-flex align-items-center justify-content-center" @click="openLogForm('watched')">
               <IconStar :size="16" class="me-1" />観た
             </button>
-            <button class="btn btn-primary-rose flex-fill fw-medium" @click="openReviewForm()">感想を書く</button>
           </div>
 
-          <div class="d-flex gap-2 mt-2">
-            <RouterLink to="/logs/new" class="btn btn-outline-secondary btn-sm flex-fill">記録ページへ</RouterLink>
-            <RouterLink :to="`/works/${route.params.slug}/poster`" class="btn btn-outline-secondary btn-sm flex-fill">
-              <IconCamera :size="14" class="me-1" />ポスター投稿
-            </RouterLink>
-          </div>
-
-          <!-- 公演追加導線 -->
-          <div class="mt-2">
-            <RouterLink to="/performances/new" class="btn btn-outline-secondary btn-sm w-100">
-              <IconPlus :size="14" class="me-1" />公演を追加
-            </RouterLink>
-          </div>
         </template>
         <div v-else class="mt-3">
           <RouterLink :to="{ name: 'login', query: { next: route.fullPath } }" class="text-secondary small">
@@ -283,23 +245,45 @@ async function toggleLike(review) {
 
       <!-- Log form (inline) -->
       <section v-if="showLogForm" class="mx-3 mt-3 card bg-dark border-secondary p-3">
-        <h3 class="small fw-semibold mb-3">{{ logStatus === 'planned' ? 'これから観るを登録' : '観たを記録' }}</h3>
+        <h3 class="small fw-semibold mb-3">{{ logStatus === 'planned' ? '観るを登録' : '観たを記録' }}</h3>
         <form @submit.prevent="submitLog" class="d-flex flex-column gap-3">
           <div>
             <label class="form-label tiny text-secondary">公演</label>
-            <select v-model="logPerf" required class="form-select bg-dark border-secondary text-light form-select-sm">
-              <option value="" disabled>選択してください</option>
-              <option v-for="p in performances" :key="p.id" :value="p.id">{{ perfLabel(p) }}</option>
-            </select>
+            <Multiselect
+              v-model="logPerf"
+              :options="perfOptions"
+              :searchable="true"
+              placeholder="公演を検索..."
+              no-results-text="該当する公演がありません"
+              no-options-text="公演データがありません"
+              class="multiselect-dark"
+            >
+              <template #noresults>
+                <div class="py-2 text-center">
+                  <span class="small text-secondary">該当する公演がありません</span>
+                  <RouterLink to="/performances/new" class="d-block small mt-1 color-rose">公演を新しく追加する →</RouterLink>
+                </div>
+              </template>
+            </Multiselect>
           </div>
           <div v-if="logStatus === 'watched'">
             <label class="form-label tiny text-secondary">観劇日</label>
             <input v-model="logWatchedOn" type="date" class="form-control bg-dark border-secondary text-light form-control-sm" />
           </div>
           <div>
-            <label class="form-label tiny text-secondary">メモ</label>
-            <textarea v-model="logMemo" rows="2" placeholder="メモ（任意）" class="form-control bg-dark border-secondary text-light form-control-sm"></textarea>
+            <label class="form-label tiny text-secondary">感想・メモ</label>
+            <textarea v-model="logMemo" :rows="logStatus === 'watched' ? 4 : 2" placeholder="感想やメモ（任意）" class="form-control bg-dark border-secondary text-light form-control-sm"></textarea>
           </div>
+          <template v-if="logStatus === 'watched'">
+            <div>
+              <label class="form-label tiny text-secondary">評価（任意）</label>
+              <RatingButtons v-model="logRating" />
+            </div>
+            <div class="form-check">
+              <input v-model="logSpoiler" type="checkbox" class="form-check-input" id="spoilerCheck" />
+              <label for="spoilerCheck" class="form-check-label small text-secondary">ネタバレを含む</label>
+            </div>
+          </template>
           <p v-if="logError" class="small text-danger mb-0">{{ logError }}</p>
           <p v-if="logSuccess" class="small color-green mb-0">{{ logSuccess }}</p>
           <div class="d-flex gap-2">
@@ -311,115 +295,91 @@ async function toggleLike(review) {
         </form>
       </section>
 
-      <!-- Review form (inline) -->
-      <section v-if="showReviewForm" class="mx-3 mt-3 card bg-dark border-secondary p-3">
-        <h3 class="small fw-semibold mb-3">感想を書く</h3>
-        <form @submit.prevent="submitReview" class="d-flex flex-column gap-3">
-          <div>
-            <label class="form-label tiny text-secondary">公演</label>
-            <select v-model="reviewPerf" required class="form-select bg-dark border-secondary text-light form-select-sm">
-              <option value="" disabled>選択してください</option>
-              <option v-for="p in performances" :key="p.id" :value="p.id">{{ perfLabel(p) }}</option>
-            </select>
-          </div>
-          <div>
-            <label class="form-label tiny text-secondary">感想</label>
-            <textarea v-model="reviewBody" rows="4" placeholder="感想を書く" required class="form-control bg-dark border-secondary text-light form-control-sm"></textarea>
-          </div>
-          <div>
-            <label class="form-label tiny text-secondary">評価（1〜5、任意）</label>
-            <input v-model="reviewRating" type="number" min="1" max="5" placeholder="任意" class="form-control bg-dark border-secondary text-light form-control-sm" />
-          </div>
-          <div class="form-check">
-            <input v-model="reviewSpoiler" type="checkbox" class="form-check-input" id="spoilerCheck" />
-            <label for="spoilerCheck" class="form-check-label small text-secondary">ネタバレを含む</label>
-          </div>
-          <p v-if="reviewError" class="small text-danger mb-0">{{ reviewError }}</p>
-          <div class="d-flex gap-2">
-            <button type="submit" :disabled="reviewLoading" class="btn btn-primary-rose btn-sm flex-fill">
-              {{ reviewLoading ? '投稿中...' : '投稿' }}
-            </button>
-            <button type="button" class="btn btn-dark btn-sm flex-fill text-secondary" @click="showReviewForm = false">キャンセル</button>
-          </div>
-        </form>
-      </section>
-
-      <!-- Reviews section -->
-      <section class="mt-4 px-3">
-        <h3 class="small fw-semibold text-secondary mb-3">みんなの感想</h3>
-        <div v-if="workReviews.length" class="d-flex flex-column gap-3">
-          <div v-for="r in workReviews" :key="r.id" class="card bg-dark border-0 p-3">
-            <div class="d-flex align-items-center gap-2 mb-2">
-              <div class="avatar-sm">{{ (r.user_display_name || r.username || '匿')[0].toUpperCase() }}</div>
-              <span class="small fw-medium">{{ r.user_display_name || r.username || '匿名' }}</span>
-              <span v-if="r.rating_overall" class="ms-auto small color-amber">
-                <IconStar :size="14" /> {{ r.rating_overall }}
-              </span>
-            </div>
-            <p v-if="r.is_spoiler" class="tiny color-rose mb-1">ネタバレあり</p>
-            <p class="small text-light mb-2 lh-base">{{ r.body }}</p>
-            <button
-              class="btn btn-link btn-sm p-0 text-decoration-none small"
-              :class="r.is_liked ? 'color-rose' : 'text-secondary'"
-              @click="toggleLike(r)"
-            >
-              <component :is="r.is_liked ? IconHeartFilled : IconHeart" :size="14" />
-              {{ r.like_count || 0 }}
-            </button>
-          </div>
+      <!-- Memo / Poster tabs -->
+      <section class="mt-4">
+        <div class="d-flex border-bottom border-secondary mb-3">
+          <button class="detail-tab flex-fill" :class="{ active: detailTab === 'memo' }" @click="detailTab = 'memo'">
+            観劇メモ
+            <span v-if="reviewCount" class="tab-count">{{ reviewCount }}</span>
+          </button>
+          <button class="detail-tab flex-fill" :class="{ active: detailTab === 'poster' }" @click="detailTab = 'poster'">
+            ポスター
+            <span v-if="workPosters.length" class="tab-count">{{ workPosters.length }}</span>
+          </button>
         </div>
-        <p v-else class="text-secondary small">まだ感想がありません</p>
+
+        <div class="detail-tab-content scroll-hide">
+          <!-- メモ -->
+          <template v-if="detailTab === 'memo'">
+            <div v-if="averageRating" class="df-center gap-2 mb-3 ">
+              <div class="df-center gap-2">
+                <span class="badge bg-amber fw-bold">レビュー平均</span>
+                <span class="fw-bold fs-4">{{ averageRating }}</span>
+              </div>
+            </div>
+            <div v-if="workReviews.length" class="d-flex flex-column gap-3">
+              <div v-for="r in workReviews" :key="r.id" class="card bg-dark border-0 p-3">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <UserAvatar :src="r.user_avatar_url" :name="r.user_display_name" :size="28" />
+                  <span class="small fw-medium">{{ r.user_display_name }}</span>
+                  <span v-if="r.rating_overall" class="ms-auto d-flex align-items-center gap-1 small bg-amber text-white px-2 rounded fw-bold">
+                    <component :is="ratingIcons[ratingIcon(r.rating_overall)]" :size="14" />
+                    {{ ratingLabel(r.rating_overall) }}
+                  </span>
+                </div>
+                <p v-if="r.is_spoiler" class="tiny color-rose mb-1">ネタバレあり</p>
+                <p class="small text-light lh-base py-2 my-2 border-secondary border-top">{{ r.body }}</p>
+                <div class="text-start">
+                  <button
+                    class="btn btn-link btn-sm p-0 text-decoration-none small"
+                    :class="r.is_liked ? 'color-rose' : 'text-secondary'"
+                    @click="toggleLike(r)"
+                  >
+                    <component :is="r.is_liked ? IconHeartFilled : IconHeart" :size="14" />
+                    {{ r.like_count || 0 }}
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div v-else class="text-center py-4">
+              <p class="text-secondary small mb-2">まだ感想はありません</p>
+              <button v-if="auth.isAuthenticated" class="btn btn-sm btn-outline-secondary" @click="openLogForm('watched')">最初の観劇メモを残す</button>
+            </div>
+          </template>
+
+          <!-- ポスター -->
+          <template v-if="detailTab === 'poster'">
+            <div v-if="workPosters.length" class="grid-wrapper">
+              <div v-for="p in workPosters" :key="p.id" class="position-relative">
+                <PosterImage :src="p.image_url || p.image" :credit="p.user_display_name" :credit-avatar="p.user_avatar_url" />
+              </div>
+            </div>
+            <div v-else class="text-center py-4">
+              <p class="text-secondary small mb-2">まだポスターはありません</p>
+              <RouterLink v-if="auth.isAuthenticated" :to="`/works/${route.params.slug}/poster`" class="btn btn-sm btn-outline-secondary">
+                <IconCamera :size="14" class="me-1" />ポスターを投稿する
+              </RouterLink>
+            </div>
+          </template>
+        </div>
       </section>
 
       <!-- Nearby shops -->
-      <section v-if="sortedShops.length" class="mt-4 px-3 mb-5">
-        <h3 class="small fw-semibold text-secondary mb-3">
-          <IconMapPin :size="14" class="me-1" />
-          {{ theaterName }} の近くの店
-        </h3>
+      <section v-if="sortedShops.length" class="mt-4 mb-5">
+        <div class="bg-white df-center w-100 text-black p-2 mb-3 mt-5 rounded fw-bold">
+          <IconMapPin :size="14" class="me-1" />{{ theaterName }} の近くの店
+        </div>
         <div class="d-flex flex-column gap-3">
-          <RouterLink
-            v-for="s in sortedShops"
-            :key="s.id"
-            :to="`/shops/${s.slug}`"
-            class="card border-0 p-0 overflow-hidden text-decoration-none"
-            :class="s.is_featured ? 'shop-featured' : 'bg-dark'"
-          >
-            <div class="position-relative">
-              <div class="shop-img" :class="s.is_featured ? 'shop-img-featured' : ''"></div>
-              <span v-if="s.is_featured" class="badge badge-featured position-absolute top-0 start-0 m-2">おすすめ</span>
-            </div>
-            <div class="p-3">
-              <div class="d-flex justify-content-between align-items-start">
-                <div>
-                  <div class="fw-medium small text-light">{{ s.name }}</div>
-                  <div class="tiny text-secondary">{{ s.category || '' }}</div>
-                  <div class="tiny text-secondary mt-1">{{ s.description || '' }}</div>
-                </div>
-                <span v-if="s.benefit_text" class="btn btn-sm btn-coupon flex-shrink-0 ms-2">{{ s.benefit_text }}</span>
-              </div>
-            </div>
-          </RouterLink>
+          <ShopCard v-for="s in sortedShops" :key="s.id" :shop="s" />
         </div>
       </section>
     </template>
   </div>
 </template>
 
+<style src="@vueform/multiselect/themes/default.css"></style>
 <style scoped>
-.hero {
-  width: 100%;
-  aspect-ratio: 4 / 5;
-  overflow: hidden;
-}
-.hero-fade {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 6rem;
-  background: linear-gradient(transparent, #0a0a0b);
-}
+
 .back-btn {
   width: 36px;
   height: 36px;
@@ -428,17 +388,80 @@ async function toggleLike(review) {
   justify-content: center;
   opacity: 0.8;
 }
-.shop-img {
-  width: 100%;
-  height: 100px;
-  background: linear-gradient(135deg, #27272a 0%, #3f3f46 100%);
+
+.detail-tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #a1a1aa;
+  padding: 0.6rem 0;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  &.active {
+    color: #fff;
+    border-bottom-color: #fff;
+  }
 }
-.shop-img-featured {
-  height: 120px;
-  background: linear-gradient(135deg, #44403c 0%, #57534e 50%, #44403c 100%);
+
+.tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: #000;
+  font-size: 0.6rem;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  padding: 0 4px;
+  margin-left: 4px;
 }
-.shop-featured {
-  background: #1c1917;
-  border: 1px solid rgba(245, 158, 11, 0.25);
+
+.detail-tab-content {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+/* Multiselect dark theme */
+.multiselect-dark {
+  --ms-bg: #212529;
+  --ms-border-color: #6c757d;
+  --ms-color: #e4e4e7;
+  --ms-placeholder-color: #a1a1aa;
+  --ms-font-size: 0.875rem;
+  --ms-line-height: 1.25;
+  --ms-py: 0.375rem;
+  --ms-px: 0.75rem;
+  --ms-ring-color: rgba(244, 63, 94, 0.3);
+  --ms-radius: 0.375rem;
+
+  --ms-dropdown-bg: #212529;
+  --ms-dropdown-border-color: #6c757d;
+  --ms-dropdown-radius: 0.375rem;
+
+  --ms-option-bg-pointed: #2d2d33;
+  --ms-option-color-pointed: #e4e4e7;
+  --ms-option-bg-selected: #e11d48;
+  --ms-option-color-selected: #fff;
+  --ms-option-bg-selected-pointed: #be123c;
+  --ms-option-color-selected-pointed: #fff;
+  --ms-option-font-size: 0.875rem;
+  --ms-option-py: 0.5rem;
+  --ms-option-px: 0.75rem;
+
+  --ms-empty-color: #a1a1aa;
+
+  --ms-tag-bg: #e11d48;
+  --ms-tag-color: #fff;
+
+  --ms-clear-color: #a1a1aa;
+  --ms-clear-color-hover: #e4e4e7;
+  --ms-caret-color: #a1a1aa;
+  --ms-spinner-color: #e11d48;
 }
 </style>

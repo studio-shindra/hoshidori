@@ -44,26 +44,6 @@ class CouponViewSet(ReadOnlyModelViewSet):
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def use(self, request, pk=None):
         coupon = self.get_object()
-        cooldown_minutes = 5
-
-        last_use = CouponUseLog.objects.filter(
-            coupon=coupon,
-            user=request.user,
-        ).order_by('-used_at').first()
-
-        if last_use:
-            elapsed = (timezone.now() - last_use.used_at).total_seconds()
-            remaining = cooldown_minutes * 60 - elapsed
-            if remaining > 0:
-                return Response(
-                    {
-                        'detail': '5分以内に同じクーポンを利用済みです。',
-                        'message': '5分以内に同じクーポンを利用済みです。',
-                        'cooldown_minutes_remaining': round(remaining / 60, 1),
-                    },
-                    status=status.HTTP_429_TOO_MANY_REQUESTS,
-                )
-
         performance_id = request.data.get('performance')
         log = CouponUseLog.objects.create(
             coupon=coupon,
@@ -74,5 +54,4 @@ class CouponViewSet(ReadOnlyModelViewSet):
             'detail': 'クーポンを利用しました。',
             'coupon_title': coupon.title,
             'used_at': log.used_at.isoformat(),
-            'cooldown_minutes_remaining': cooldown_minutes,
         }, status=status.HTTP_201_CREATED)

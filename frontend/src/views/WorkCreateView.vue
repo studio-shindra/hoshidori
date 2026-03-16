@@ -30,7 +30,7 @@ async function submit() {
 
 <template>
   <div>
-    <header class="d-flex align-items-center gap-2 px-3 pt-4 pb-3">
+    <header class="d-flex align-items-center gap-2 pt-4 pb-3">
       <button class="btn btn-link text-secondary p-0" @click="router.back()">
         <IconArrowLeft :size="16" />
       </button>

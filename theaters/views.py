@@ -25,7 +25,10 @@ class TheaterViewSet(ReadOnlyModelViewSet):
         theater = self.get_object()
         theater_shops = TheaterShop.objects.filter(
             theater=theater, shop__is_active=True,
-        ).select_related('shop').order_by('sort_order')
-        shops = [ts.shop for ts in theater_shops]
+        ).select_related('shop').order_by('-is_featured', 'sort_order')
+        shops = []
+        for ts in theater_shops:
+            ts.shop._is_featured = ts.is_featured
+            shops.append(ts.shop)
         serializer = ShopSerializer(shops, many=True)
         return Response(serializer.data)

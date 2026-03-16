@@ -1,32 +1,95 @@
-@use 'variables' as *;
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-}
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 
 body {
-  min-height: 100vh;
-  font-family: $font-stack;
-  font-size: 15px;
-  line-height: 1.6;
-  color: $c-text;
-  background: $c-bg;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  color: white;
+  background-color: $c-bg;
+}
+
+.mont {
+  font-family: "Montserrat", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 800;
+  font-style: normal;
 }
 
 #app {
   max-width: 768px;
   margin: 0 auto;
-  background: $c-bg-app;
   min-height: 100vh;
 }
 
-a {
-  color: $c-rose;
-  text-decoration: none;
+h1 ,h2{
+  @extend .mont;
+  color: white;
+}
+
+.bg-cdark{
+  background-color: $c-bg;
+}
+
+.container{
+  max-width: 768px !important;
+}
+
+.grid-wrapper{
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+
+  @media (min-width: 576px) {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1rem;
+  }
+}
+
+
+.card-md {
+  flex-shrink: 0;
+  width: 200px;
+
+  .grid-wrapper & {
+    width: auto;
+  }
+}
+
+.card-sm{
+  flex-shrink: 0;
+  width: 120px;
+}
+
+.ab-top{
+  position: absolute;
+  top: 0;
+  left: 0;
+  width:100%;
+  padding: 0.5rem;
+  color: white;
+}
+
+.ab-bottom{
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  padding: 0.5rem;
+  padding-top: 1rem;
+}
+
+
+.hero {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+}
+
+.hero-fade {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 12rem;
+  background: linear-gradient(transparent, $c-bg 70%);
 }

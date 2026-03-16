@@ -37,7 +37,7 @@ function formatDate(dateStr) {
 
 <template>
   <div>
-    <header class="px-3 pt-4 pb-3">
+    <header class="pt-4 pb-3">
       <h1 class="fs-5 fw-bold mb-0">店舗ダッシュボード</h1>
     </header>
 

@@ -3,14 +3,17 @@ import { ref, onMounted } from 'vue'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
-import { IconStar, IconHeart, IconEye, IconCalendar, IconPhoto, IconMessage } from '@tabler/icons-vue'
+import { IconEye, IconCalendar, IconPhoto, IconPencil, IconTrash, IconTicket, IconStar, IconCheck } from '@tabler/icons-vue'
+import RatingButtons from '@/components/RatingButtons.vue'
+import LogListItem from '@/components/LogListItem.vue'
+import UserAvatar from '@/components/UserAvatar.vue'
+import WorkCard from '@/components/WorkCard.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
 
 const planned = ref([])
 const watched = ref([])
-const myReviews = ref([])
 const myPosters = ref([])
 const activeTab = ref('planned')
 const loading = ref(true)
@@ -21,18 +24,14 @@ onMounted(async () => {
     return
   }
   try {
-    const [pData, wData, rData] = await Promise.all([
+    const [pData, wData, posterData] = await Promise.all([
       api.get('/api/viewing-logs/?status=planned'),
       api.get('/api/viewing-logs/?status=watched'),
-      api.get('/api/reviews/'),
+      api.get('/api/works/my-posters/'),
     ])
     planned.value = pData.results || pData
     watched.value = wData.results || wData
-    const allReviews = rData.results || rData
-    const me = auth.user
-    myReviews.value = allReviews.filter(
-      (r) => r.user === me.username,
-    )
+    myPosters.value = Array.isArray(posterData) ? posterData : posterData.results || []
   } catch {
     /* empty */
   } finally {
@@ -40,9 +39,73 @@ onMounted(async () => {
   }
 })
 
-function formatDate(d) {
-  if (!d) return ''
-  return d.replace(/-/g, '.')
+// 編集
+const editingLog = ref(null)
+const editMemo = ref('')
+const editWatchedOn = ref('')
+const editWatchedTime = ref('')
+const editRating = ref('')
+const editLoading = ref(false)
+
+function startEdit(log) {
+  editingLog.value = log.id
+  editMemo.value = log.memo || ''
+  editWatchedOn.value = log.watched_on || ''
+  editWatchedTime.value = log.watched_time || ''
+  editRating.value = log.rating || ''
+}
+
+function cancelEdit() {
+  editingLog.value = null
+}
+
+async function saveEdit(log) {
+  editLoading.value = true
+  try {
+    const body = {
+      performance: log.performance,
+      status: log.status,
+      memo: editMemo.value,
+      watched_on: editWatchedOn.value || null,
+      watched_time: editWatchedTime.value || null,
+    }
+    const updated = await api.patch(`/api/viewing-logs/${log.id}/`, body)
+    Object.assign(log, updated)
+    editingLog.value = null
+  } catch {
+    /* empty */
+  } finally {
+    editLoading.value = false
+  }
+}
+
+async function deleteLog(log, list) {
+  if (!confirm('この記録を削除しますか？')) return
+  try {
+    await api.delete(`/api/viewing-logs/${log.id}/`)
+    const idx = list.findIndex((l) => l.id === log.id)
+    if (idx !== -1) list.splice(idx, 1)
+  } catch {
+    /* empty */
+  }
+}
+
+// ポスター選択・削除
+const selectedPoster = ref(null)
+
+function togglePosterSelect(id) {
+  selectedPoster.value = selectedPoster.value === id ? null : id
+}
+
+async function deletePoster(id) {
+  if (!confirm('このポスターを削除しますか？')) return
+  try {
+    await api.delete(`/api/works/my-posters/${id}/`)
+    myPosters.value = myPosters.value.filter((p) => p.id !== id)
+    selectedPoster.value = null
+  } catch {
+    /* empty */
+  }
 }
 
 async function logout() {
@@ -52,85 +115,101 @@ async function logout() {
 </script>
 
 <template>
-  <div class="px-3 pt-4 pb-3">
+  <div class="pt-4 pb-3">
     <!-- Header -->
     <div class="mb-4">
-      <div class="d-flex justify-content-between align-items-start mb-2">
-        <h2 class="fs-5 fw-bold mb-0">観劇棚</h2>
-        <RouterLink to="/mypage/edit" class="btn btn-sm btn-dark text-secondary">編集</RouterLink>
+      <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-2">
+          <UserAvatar :src="auth.user?.avatar_url" :name="auth.user?.display_name || auth.user?.username" :size="48" />
+          <div class="d-flex flex-column lh-1 gap-1">
+            <span class="fw-semibold">{{ auth.user?.display_name || auth.user?.username }}</span>
+            <span class="small text-secondary">@{{ auth.user?.username }}</span>
+          </div>
+        </div>
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <RouterLink to="/mypage/edit" class="btn btn-sm btn-light text-dark">編集</RouterLink>
+        </div>
       </div>
-      <div class="d-flex align-items-baseline gap-2 mb-1">
-        <span class="fw-semibold">{{ auth.user?.display_name || auth.user?.username }}</span>
-        <span class="small text-secondary">@{{ auth.user?.username }}</span>
-      </div>
-      <p v-if="auth.user?.bio" class="small text-secondary mb-1">{{ auth.user.bio }}</p>
-      <p class="tiny text-secondary mb-0">観た舞台や、これから観る舞台をまとめた自分の棚</p>
+      <p v-if="auth.user?.bio" class="p-2 mt-3 border-top border-secondary">{{ auth.user.bio }}</p>
+
     </div>
 
     <p v-if="loading" class="text-secondary text-center py-5">読み込み中...</p>
 
     <template v-else>
-      <!-- Summary Cards -->
-      <div class="row g-2 mb-4">
-        <div class="col-3">
-          <button class="card bg-dark border-0 text-center py-3 w-100 btn p-0"
-                  :class="{ 'border-warning': activeTab === 'planned' }"
-                  :style="activeTab === 'planned' ? 'border: 1px solid #f59e0b !important' : ''"
-                  @click="activeTab = 'planned'">
-            <div class="fs-4 fw-bold" style="color: #f59e0b;">{{ planned.length }}</div>
-            <div class="tiny text-secondary">これから</div>
-          </button>
-        </div>
-        <div class="col-3">
-          <button class="card bg-dark border-0 text-center py-3 w-100 btn p-0"
-                  :class="{ 'border-success': activeTab === 'watched' }"
-                  :style="activeTab === 'watched' ? 'border: 1px solid #22c55e !important' : ''"
-                  @click="activeTab = 'watched'">
-            <div class="fs-4 fw-bold" style="color: #22c55e;">{{ watched.length }}</div>
-            <div class="tiny text-secondary">観た</div>
-          </button>
-        </div>
-        <div class="col-3">
-          <button class="card bg-dark border-0 text-center py-3 w-100 btn p-0"
-                  :class="{ 'border-light': activeTab === 'reviews' }"
-                  :style="activeTab === 'reviews' ? 'border: 1px solid #a1a1aa !important' : ''"
-                  @click="activeTab = 'reviews'">
-            <div class="fs-4 fw-bold text-light">{{ myReviews.length }}</div>
-            <div class="tiny text-secondary">感想</div>
-          </button>
-        </div>
-        <div class="col-3">
-          <button class="card bg-dark border-0 text-center py-3 w-100 btn p-0"
-                  :class="{ 'border-info': activeTab === 'posters' }"
-                  :style="activeTab === 'posters' ? 'border: 1px solid #38bdf8 !important' : ''"
-                  @click="activeTab = 'posters'">
-            <div class="fs-4 fw-bold" style="color: #38bdf8;">{{ myPosters.length }}</div>
-            <div class="tiny text-secondary">ポスター</div>
-          </button>
-        </div>
+      <!-- Tabs -->
+      <div class="d-flex border-bottom border-secondary mb-3">
+        <button
+          class="shelf-tab flex-fill gap-2"
+          :class="{ active: activeTab === 'planned' }"
+          @click="activeTab = 'planned'"
+        >
+          <div class="df-center gap-1">
+            <IconTicket :size="18" />
+            <span>観る</span>
+          </div>
+          <span class="fw-bold">{{ planned.length }}</span>
+        </button>
+        <button
+          class="shelf-tab flex-fill gap-2"
+          :class="{ active: activeTab === 'watched' }"
+          @click="activeTab = 'watched'"
+        >
+          <div class="df-center gap-1">
+            <IconStar :size="18" />
+            <span>観た</span>
+          </div>
+          <span class="fw-bold">{{ watched.length }}</span>
+        </button>
+        <button
+          class="shelf-tab flex-fill gap-2"
+          :class="{ active: activeTab === 'posters' }"
+          @click="activeTab = 'posters'"
+        >
+          <div class="df-center gap-1">
+            <IconPhoto :size="18" />
+            <span>ポスター</span>
+          </div>
+          <span class="fw-bold">{{ myPosters.length }}</span>
+        </button>
       </div>
 
       <!-- Tab: これから観る -->
       <section v-if="activeTab === 'planned'">
-        <h3 class="small fw-semibold text-secondary mb-3">
-          <IconCalendar :size="14" class="me-1" />これから観る
-        </h3>
         <div v-if="planned.length" class="d-flex flex-column gap-2">
-          <div v-for="log in planned" :key="log.id" class="card bg-dark border-0 p-3">
-            <div class="d-flex gap-3 align-items-start">
-              <div class="poster-thumb bg-secondary rounded d-flex align-items-center justify-content-center flex-shrink-0">
-                <IconPhoto :size="16" class="text-secondary" />
+          <div v-for="log in planned" :key="log.id" class="card bg-dark border-0">
+            <!-- 編集モード -->
+            <template v-if="editingLog === log.id">
+              <div class="d-flex flex-column gap-2">
+                <div class="fw-medium small">{{ log.work_title }}</div>
+                <textarea v-model="editMemo" rows="3" placeholder="メモ（任意）" class="form-control bg-dark border-secondary text-light form-control-sm"></textarea>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-primary-rose btn-sm flex-fill" :disabled="editLoading" @click="saveEdit(log)">{{ editLoading ? '保存中...' : '保存' }}</button>
+                  <button class="btn btn-dark btn-sm flex-fill text-secondary" @click="cancelEdit">キャンセル</button>
+                  <button class="btn btn-sm text-danger" @click="deleteLog(log, planned)"><IconTrash :size="14" /></button>
+                </div>
               </div>
-              <div class="flex-grow-1 min-w-0">
-                <div class="fw-medium small mb-1">{{ log.performance_str || `公演 #${log.performance}` }}</div>
-                <span class="badge bg-warning bg-opacity-25 text-warning tiny">これから観る</span>
-                <div v-if="log.memo" class="tiny text-secondary mt-2 text-truncate-2">{{ log.memo }}</div>
-              </div>
-            </div>
+            </template>
+            <!-- 通常表示 -->
+            <template v-else>
+              <LogListItem
+                :poster-url="log.poster_url"
+                :work-title="log.work_title"
+                :work-slug="log.work_slug"
+                :theater-name="log.theater_name"
+                :memo="log.memo"
+              >
+                <template #action>
+                  <div class="position-absolute top-0 end-0 p-2">
+                    <button class="btn btn-link btn-sm p-0 text-secondary" @click="startEdit(log)"><IconPencil :size="16" /></button>
+                  </div>
+                </template>
+              </LogListItem>
+            </template>
           </div>
         </div>
         <div v-else class="text-center py-5">
-          <p class="text-secondary mb-3">これから観る作品はまだありません</p>
+          <p class="text-secondary mb-3">観る作品はまだありません</p>
           <div class="d-flex flex-column gap-2 align-items-center">
             <RouterLink to="/works" class="btn btn-sm btn-outline-secondary">作品を探す</RouterLink>
             <RouterLink to="/logs/new" class="btn btn-sm btn-outline-secondary">記録する</RouterLink>
@@ -140,24 +219,44 @@ async function logout() {
 
       <!-- Tab: 観た -->
       <section v-if="activeTab === 'watched'">
-        <h3 class="small fw-semibold text-secondary mb-3">
-          <IconEye :size="14" class="me-1" />観た作品
-        </h3>
         <div v-if="watched.length" class="d-flex flex-column gap-2">
-          <div v-for="log in watched" :key="log.id" class="card bg-dark border-0 p-3">
-            <div class="d-flex gap-3 align-items-start">
-              <div class="poster-thumb bg-secondary rounded d-flex align-items-center justify-content-center flex-shrink-0">
-                <IconPhoto :size="16" class="text-secondary" />
-              </div>
-              <div class="flex-grow-1 min-w-0">
-                <div class="fw-medium small mb-1">{{ log.performance_str || `公演 #${log.performance}` }}</div>
-                <div class="d-flex align-items-center gap-2">
-                  <span class="badge bg-success bg-opacity-25 text-success tiny">観た</span>
-                  <span v-if="log.watched_on" class="tiny text-secondary">{{ formatDate(log.watched_on) }}</span>
+          <div v-for="log in watched" :key="log.id" class="card bg-dark border-0">
+            <!-- 編集モード -->
+            <template v-if="editingLog === log.id">
+              <div class="d-flex flex-column gap-2">
+                <div class="fw-medium small">{{ log.work_title }}</div>
+                <div class="d-flex gap-2">
+                  <input v-model="editWatchedOn" type="date" class="form-control bg-dark border-secondary text-light form-control-sm" />
+                  <input v-model="editWatchedTime" type="time" class="form-control bg-dark border-secondary text-light form-control-sm" style="max-width: 7rem" />
                 </div>
-                <div v-if="log.memo" class="tiny text-secondary mt-2 text-truncate-2">{{ log.memo }}</div>
+                <RatingButtons v-model="editRating" />
+                <textarea v-model="editMemo" rows="3" placeholder="メモ（任意）" class="form-control bg-dark border-secondary text-light form-control-sm"></textarea>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-primary-rose btn-sm flex-fill" :disabled="editLoading" @click="saveEdit(log)">{{ editLoading ? '保存中...' : '保存' }}</button>
+                  <button class="btn btn-dark btn-sm flex-fill text-secondary" @click="cancelEdit">キャンセル</button>
+                  <button class="btn btn-sm text-danger" @click="deleteLog(log, watched)"><IconTrash :size="14" /></button>
+                </div>
               </div>
-            </div>
+            </template>
+            <!-- 通常表示 -->
+            <template v-else>
+              <LogListItem
+                :poster-url="log.poster_url"
+                :work-title="log.work_title"
+                :work-slug="log.work_slug"
+                :watched-on="log.watched_on"
+                :watched-time="log.watched_time"
+                :theater-name="log.theater_name"
+                :memo="log.memo"
+                :rating="log.rating"
+              >
+                <template #action>
+                  <div class="position-absolute top-0 end-0 p-2">
+                    <button class="btn btn-link btn-sm p-0 text-secondary" @click="startEdit(log)"><IconPencil :size="16" /></button>
+                  </div>
+                </template>
+              </LogListItem>
+            </template>
           </div>
         </div>
         <div v-else class="text-center py-5">
@@ -169,53 +268,29 @@ async function logout() {
         </div>
       </section>
 
-      <!-- Tab: 感想 -->
-      <section v-if="activeTab === 'reviews'">
-        <h3 class="small fw-semibold text-secondary mb-3">
-          <IconMessage :size="14" class="me-1" />感想
-        </h3>
-        <div v-if="myReviews.length" class="d-flex flex-column gap-2">
-          <div v-for="r in myReviews" :key="r.id" class="card bg-dark border-0 p-3">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-              <div class="fw-medium small">{{ r.performance_str || r.title || '感想' }}</div>
-              <span v-if="r.is_spoiler" class="badge bg-danger bg-opacity-25 text-danger tiny">ネタバレ</span>
-            </div>
-            <div v-if="r.rating_overall" class="mb-2">
-              <span class="small" style="color: #f59e0b;">
-                <IconStar :size="13" v-for="n in r.rating_overall" :key="n" />
-              </span>
-            </div>
-            <p class="small text-light mb-2 lh-base review-body">{{ r.body }}</p>
-            <div class="d-flex justify-content-between align-items-center">
-              <span class="tiny text-secondary">
-                <IconHeart :size="12" /> {{ r.like_count || 0 }}
-              </span>
-              <span class="tiny text-secondary">{{ formatDate(r.created_at?.slice(0, 10)) }}</span>
-            </div>
-          </div>
-        </div>
-        <div v-else class="text-center py-5">
-          <p class="text-secondary mb-3">まだ感想はありません</p>
-          <RouterLink to="/works" class="btn btn-sm btn-outline-secondary">作品を探す</RouterLink>
-        </div>
-      </section>
-
       <!-- Tab: ポスター -->
       <section v-if="activeTab === 'posters'">
-        <h3 class="small fw-semibold text-secondary mb-3">
-          <IconPhoto :size="14" class="me-1" />投稿したポスター
-        </h3>
-        <div v-if="myPosters.length" class="row g-2">
-          <div v-for="p in myPosters" :key="p.id" class="col-6">
-            <div class="card bg-dark border-0 overflow-hidden">
-              <img :src="p.image" class="card-img-top" :alt="p.caption" style="aspect-ratio: 3/4; object-fit: cover;">
-              <div class="card-body p-2">
-                <div class="tiny fw-medium text-truncate">{{ p.work_title }}</div>
-                <div v-if="p.caption" class="tiny text-secondary text-truncate">{{ p.caption }}</div>
-                <span v-if="p.is_selected" class="badge bg-info bg-opacity-25 text-info tiny mt-1">採用中</span>
-              </div>
+        <div v-if="myPosters.length" class="grid-wrapper">
+          <div
+            v-for="p in myPosters"
+            :key="p.id"
+            class="position-relative poster-selectable"
+            :class="{ 'poster-selected': selectedPoster === p.id }"
+            @click="togglePosterSelect(p.id)"
+          >
+            <WorkCard
+              :poster-url="p.image_url || p.image"
+              :work-title="p.work_title"
+            />
+            <div class="poster-check" :class="{ active: selectedPoster === p.id }">
+              <IconCheck :size="14" />
             </div>
           </div>
+        </div>
+        <div v-if="selectedPoster" class="mt-3">
+          <button class="btn btn-sm btn-outline-danger w-100" @click="deletePoster(selectedPoster)">
+            <IconTrash :size="14" class="me-1" />選択中のポスターを削除
+          </button>
         </div>
         <div v-else class="text-center py-5">
           <p class="text-secondary mb-3">まだポスター投稿はありません</p>
@@ -223,23 +298,12 @@ async function logout() {
         </div>
       </section>
 
-      <!-- Logout -->
-      <div class="mt-5 pt-3 border-top border-secondary">
-        <button class="btn btn-dark w-100 text-secondary" @click="logout">ログアウト</button>
-      </div>
+
     </template>
   </div>
 </template>
 
 <style scoped>
-.poster-thumb {
-  width: 48px;
-  height: 64px;
-  background: #27272a !important;
-}
-.tiny {
-  font-size: 0.7rem;
-}
 .text-truncate-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -251,5 +315,52 @@ async function logout() {
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+.shelf-tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #a1a1aa;
+  padding: 0.75rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  cursor: pointer;
+
+  &.active {
+    color: #fff;
+    border-bottom-color: #fff;
+  }
+}
+.poster-selectable {
+  cursor: pointer;
+  border: 2px solid transparent;
+  border-radius: 0.5rem;
+
+  &.poster-selected {
+    border-color: #f43f5e;
+  }
+}
+.poster-check {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #a1a1aa;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: transparent;
+  z-index: 1;
+
+  &.active {
+    background: #f43f5e;
+    border-color: #f43f5e;
+    color: #fff;
+  }
 }
 </style>

@@ -7,13 +7,17 @@ class WorkSerializer(serializers.ModelSerializer):
     created_by = serializers.StringRelatedField(read_only=True)
     selected_poster_image_url = serializers.SerializerMethodField()
     selected_poster_user_display_name = serializers.SerializerMethodField()
+    selected_poster_user_avatar_url = serializers.SerializerMethodField()
+    theater_name = serializers.SerializerMethodField()
+    start_date = serializers.SerializerMethodField()
 
     class Meta:
         model = Work
         fields = [
             'id', 'title', 'slug', 'description',
             'created_by', 'is_approved',
-            'selected_poster_image_url', 'selected_poster_user_display_name',
+            'selected_poster_image_url', 'selected_poster_user_display_name', 'selected_poster_user_avatar_url',
+            'theater_name', 'start_date',
             'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'created_by', 'is_approved', 'created_at', 'updated_at']
@@ -33,12 +37,32 @@ class WorkSerializer(serializers.ModelSerializer):
                 return poster.image.url
         return None
 
+    def get_theater_name(self, obj):
+        perf = obj.performances.select_related('theater').first()
+        if perf and perf.theater:
+            return perf.theater.name
+        return None
+
+    def get_start_date(self, obj):
+        perf = obj.performances.first()
+        if perf:
+            return str(perf.start_date)
+        return None
+
     def get_selected_poster_user_display_name(self, obj):
         poster = getattr(obj, '_selected_poster', None)
         if poster is None:
             poster = obj.poster_submissions.filter(is_selected=True).select_related('user').first()
         if poster:
             return poster.user.display_name or poster.user.username
+        return None
+
+    def get_selected_poster_user_avatar_url(self, obj):
+        poster = getattr(obj, '_selected_poster', None)
+        if poster is None:
+            poster = obj.poster_submissions.filter(is_selected=True).select_related('user').first()
+        if poster:
+            return poster.user.avatar_url or None
         return None
 
 
@@ -68,12 +92,13 @@ class PerformanceSerializer(serializers.ModelSerializer):
     created_by = serializers.StringRelatedField(read_only=True)
     work_title = serializers.CharField(source='work.title', read_only=True)
     theater_name = serializers.CharField(source='theater.name', read_only=True)
+    theater_slug = serializers.CharField(source='theater.slug', read_only=True)
     casts = PerformanceCastSerializer(many=True, read_only=True)
 
     class Meta:
         model = Performance
         fields = [
-            'id', 'work', 'work_title', 'theater', 'theater_name',
+            'id', 'work', 'work_title', 'theater', 'theater_name', 'theater_slug',
             'company_name', 'start_date', 'end_date', 'note',
             'created_by', 'is_approved', 'casts', 'created_at', 'updated_at',
         ]
@@ -82,19 +107,24 @@ class PerformanceSerializer(serializers.ModelSerializer):
 
 class PosterSubmissionSerializer(serializers.ModelSerializer):
     user_display_name = serializers.SerializerMethodField()
+    user_avatar_url = serializers.SerializerMethodField()
+    work_title = serializers.CharField(source='work.title', read_only=True)
 
     class Meta:
         model = PosterSubmission
         fields = [
-            'id', 'work', 'user', 'user_display_name',
+            'id', 'work', 'work_title', 'user', 'user_display_name', 'user_avatar_url',
             'image', 'image_url', 'image_public_id',
             'image_width', 'image_height', 'image_format',
             'caption', 'is_selected', 'created_at',
         ]
-        read_only_fields = ['id', 'user', 'is_selected', 'created_at']
+        read_only_fields = ['id', 'work', 'user', 'is_selected', 'created_at']
 
     def get_user_display_name(self, obj):
         return obj.user.display_name or obj.user.username
+
+    def get_user_avatar_url(self, obj):
+        return obj.user.avatar_url or None
 
     def validate_image_url(self, value):
         if value and 'res.cloudinary.com' not in value:

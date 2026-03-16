@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { api } from '@/lib/api'
-import { IconMapPin, IconSearch } from '@tabler/icons-vue'
+import { IconMapPin, IconSearch, IconTheater } from '@tabler/icons-vue'
 
 const theaters = ref([])
 const loading = ref(true)
@@ -29,8 +29,8 @@ function onSearch() {
 </script>
 
 <template>
-  <div class="px-3 pt-4">
-    <h2 class="fs-5 fw-bold mb-3">劇場一覧</h2>
+  <div class="pt-4">
+    <h2 class="fs-5 fw-bold mb-3 fs-2">Theater List</h2>
 
     <!-- Search -->
     <form @submit.prevent="onSearch" class="d-flex gap-2 mb-3">
@@ -46,19 +46,21 @@ function onSearch() {
     </form>
 
     <p v-if="loading" class="text-secondary">読み込み中...</p>
-    <div v-else class="d-flex flex-column gap-2">
+    <div v-else class="grid-wrapper">
       <RouterLink
         v-for="t in theaters"
         :key="t.id"
         :to="`/theaters/${t.slug}`"
-        class="card bg-dark border-0 p-3 text-decoration-none"
+        class="theater-card text-decoration-none position-relative"
       >
-        <div class="d-flex justify-content-between align-items-center">
-          <div>
-            <div class="fw-medium small text-light">{{ t.name }}</div>
-            <div v-if="t.area_name" class="tiny text-secondary mt-1">
-              <IconMapPin :size="12" class="me-1" />{{ t.area_name }}
-            </div>
+        <img v-if="t.image" :src="t.image" :alt="t.name" class="theater-card-img" />
+        <div v-else class="theater-card-img theater-card-placeholder">
+          <IconTheater :size="32" class="text-secondary" />
+        </div>
+        <div class="theater-card-overlay">
+          <div class="fw-bold small text-white">{{ t.name }}</div>
+          <div v-if="t.area_name" class="d-flex align-items-center gap-1 tiny text-white mt-1">
+            <IconMapPin :size="11" />{{ t.area_name }}
           </div>
         </div>
       </RouterLink>
@@ -68,3 +70,35 @@ function onSearch() {
     </p>
   </div>
 </template>
+
+<style scoped>
+.theater-card {
+  display: block;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  aspect-ratio: 1 / 1;
+  position: relative;
+}
+
+.theater-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.theater-card-placeholder {
+  background: #27272a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theater-card-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0.75rem;
+  background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 60%, transparent 100%);
+}
+</style>

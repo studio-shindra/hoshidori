@@ -1,2 +1,16 @@
-@use 'base';
-@use 'utilities';
+// ---- Bootstrap variable overrides (must be before @import) ----
+$primary: #f43f5e;
+$secondary: #a1a1aa;
+$dark: #444444;
+$light: #ffffff;
+$body-bg-dark: #1c1c1c;
+$body-color-dark: #e4e4e7;
+$link-color: #f43f5e;
+
+// ---- Bootstrap ----
+@import "bootstrap/scss/bootstrap";
+
+// ---- Custom ----
+@import 'variables';
+@import 'base';
+@import 'utilities';

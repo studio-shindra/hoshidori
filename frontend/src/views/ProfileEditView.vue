@@ -3,15 +3,24 @@ import { ref, onMounted } from 'vue'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
+import { IconCamera } from '@tabler/icons-vue'
+import UserAvatar from '@/components/UserAvatar.vue'
+
+const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
+const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
 
 const auth = useAuthStore()
 const router = useRouter()
 
 const displayName = ref('')
 const bio = ref('')
+const avatarUrl = ref('')
+const avatarUploading = ref(false)
 const saving = ref(false)
 const message = ref('')
 const messageType = ref('')
+
+const fileInput = ref(null)
 
 onMounted(() => {
   if (!auth.isAuthenticated) {
@@ -20,7 +29,34 @@ onMounted(() => {
   }
   displayName.value = auth.user.display_name || ''
   bio.value = auth.user.bio || ''
+  avatarUrl.value = auth.user.avatar_url || ''
 })
+
+async function uploadAvatar(e) {
+  const file = e.target.files[0]
+  if (!file) return
+  avatarUploading.value = true
+  try {
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('upload_preset', UPLOAD_PRESET)
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+      { method: 'POST', body: fd },
+    )
+    if (!res.ok) throw new Error()
+    const data = await res.json()
+    avatarUrl.value = data.secure_url
+    // 即座にDBに保存 & auth storeに反映
+    const saved = await api.patch('/api/auth/me/', { avatar_url: data.secure_url })
+    auth.user.avatar_url = saved.avatar_url
+  } catch {
+    message.value = 'アップロードに失敗しました'
+    messageType.value = 'danger'
+  } finally {
+    avatarUploading.value = false
+  }
+}
 
 async function save() {
   saving.value = true
@@ -29,9 +65,11 @@ async function save() {
     const data = await api.patch('/api/auth/me/', {
       display_name: displayName.value,
       bio: bio.value,
+      avatar_url: avatarUrl.value,
     })
     auth.user.display_name = data.display_name
     auth.user.bio = data.bio
+    auth.user.avatar_url = data.avatar_url
     message.value = '保存しました'
     messageType.value = 'success'
     setTimeout(() => router.push('/mypage'), 800)
@@ -51,15 +89,20 @@ async function save() {
       <RouterLink to="/mypage" class="btn btn-sm btn-dark text-secondary">戻る</RouterLink>
     </div>
 
-    <!-- Current profile preview -->
+    <!-- Avatar -->
     <div class="card bg-dark border-0 p-3 mb-4">
       <div class="d-flex align-items-center gap-3">
-        <div class="avatar-circle">
-          {{ (auth.user?.display_name || auth.user?.username || '?').charAt(0) }}
+        <div class="position-relative" style="cursor: pointer" @click="fileInput?.click()">
+          <UserAvatar :src="avatarUrl" :name="displayName || auth.user?.display_name || auth.user?.username" :size="56" />
+          <div class="avatar-edit-badge">
+            <IconCamera :size="12" />
+          </div>
+          <input ref="fileInput" type="file" accept="image/*" class="d-none" @change="uploadAvatar" />
         </div>
         <div>
           <div class="fw-semibold">{{ auth.user?.display_name || auth.user?.username }}</div>
           <div class="tiny text-secondary">@{{ auth.user?.username }}</div>
+          <div v-if="avatarUploading" class="tiny text-secondary">アップロード中...</div>
         </div>
       </div>
     </div>
@@ -105,20 +148,17 @@ async function save() {
 </template>
 
 <style scoped>
-.avatar-circle {
-  width: 48px;
-  height: 48px;
+.avatar-edit-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: #e11d48;
+  color: #fff;
   border-radius: 50%;
-  background: #27272a;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #a1a1aa;
-  flex-shrink: 0;
-}
-.tiny {
-  font-size: 0.7rem;
 }
 </style>
