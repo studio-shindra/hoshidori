@@ -1,0 +1,2 @@
+/api/*  https://hoshidori-67b44bed2d10.herokuapp.com/api/:splat  200
+/*      /index.html   200
