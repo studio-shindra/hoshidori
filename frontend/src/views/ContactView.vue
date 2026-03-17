@@ -1,22 +1,68 @@
+<script setup>
+import { ref, computed } from 'vue'
+import { IconSend } from '@tabler/icons-vue'
+
+const name = ref('')
+const email = ref('')
+const category = ref('general')
+const body = ref('')
+
+const categories = [
+  { value: 'general', label: '一般的なお問い合わせ' },
+  { value: 'delete', label: 'コンテンツ削除依頼' },
+  { value: 'report', label: '不適切なコンテンツの通報' },
+  { value: 'bug', label: '不具合・バグ報告' },
+  { value: 'other', label: 'その他' },
+]
+
+const categoryLabel = computed(() => categories.find(c => c.value === category.value)?.label || '')
+
+const mailtoLink = computed(() => {
+  const subject = encodeURIComponent(`[HOSHIDORI] ${categoryLabel.value}`)
+  const bodyText = encodeURIComponent(
+    `お名前: ${name.value}\nメールアドレス: ${email.value}\nカテゴリ: ${categoryLabel.value}\n\n${body.value}`
+  )
+  return `mailto:info@studio-shindra.com?subject=${subject}&body=${bodyText}`
+})
+
+const canSend = computed(() => body.value.trim().length > 0)
+</script>
+
 <template>
   <div class="container py-4" style="max-width: 720px;">
-    <h1 class="h3 mb-4">お問い合わせ・削除依頼</h1>
-    <p class="text-muted small mb-4">最終更新日: 2026年3月12日</p>
+    <h1 class="h3 mb-4">お問い合わせ</h1>
 
-    <section class="mb-4">
-      <p>HOSHIDORIに関するお問い合わせ、および権利侵害等に基づくコンテンツの削除依頼は、以下の方法でご連絡ください。</p>
-    </section>
-
+    <!-- Contact form -->
     <section class="mb-5">
-      <h2 class="h5">連絡先</h2>
-      <div class="card bg-dark border-secondary">
-        <div class="card-body">
-          <p class="mb-2"><strong>メールアドレス:</strong></p>
-          <p class="mb-0"><a href="mailto:contact@hoshidori.app" class="text-info">contact@hoshidori.app</a></p>
+      <div class="d-flex flex-column gap-3">
+        <div>
+          <label class="form-label small text-secondary">お名前</label>
+          <input v-model="name" type="text" class="form-control bg-dark border-secondary text-light form-control-sm" placeholder="お名前（任意）" />
         </div>
+        <div>
+          <label class="form-label small text-secondary">メールアドレス</label>
+          <input v-model="email" type="email" class="form-control bg-dark border-secondary text-light form-control-sm" placeholder="返信先メールアドレス（任意）" />
+        </div>
+        <div>
+          <label class="form-label small text-secondary">カテゴリ</label>
+          <select v-model="category" class="form-select bg-dark border-secondary text-light form-select-sm">
+            <option v-for="c in categories" :key="c.value" :value="c.value">{{ c.label }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label small text-secondary">お問い合わせ内容</label>
+          <textarea v-model="body" rows="5" class="form-control bg-dark border-secondary text-light form-control-sm" placeholder="お問い合わせ内容をご記入ください"></textarea>
+        </div>
+        <a :href="mailtoLink" class="btn btn-primary-rose fw-medium d-flex align-items-center justify-content-center gap-2" :class="{ disabled: !canSend }">
+          <IconSend :size="16" />メールで送信
+        </a>
+        <p class="text-secondary small mb-0">メールアプリが起動します。送信先: info@studio-shindra.com</p>
       </div>
     </section>
 
+    <hr class="border-secondary" />
+
+    <!-- Existing info sections -->
     <section class="mb-4">
       <h2 class="h5">削除依頼について</h2>
       <p>権利侵害やプライバシー侵害等を理由としてコンテンツの削除を依頼される場合は、以下の情報をメールにてお送りください。</p>
@@ -39,16 +85,6 @@
         <li>権利侵害の疑いが認められる場合、該当コンテンツの削除または非公開化を行います。</li>
         <li>内容によっては追加の確認をお願いする場合があります。</li>
       </ul>
-    </section>
-
-    <section class="mb-4">
-      <h2 class="h5">通報について</h2>
-      <p>ガイドライン違反や不適切なコンテンツを見つけた場合も、上記メールアドレスまでお知らせください。対象のURLと簡単な理由をお伝えいただければ、運営にて確認・対応いたします。</p>
-    </section>
-
-    <section class="mb-4">
-      <h2 class="h5">一般的なお問い合わせ</h2>
-      <p>サービスの利用方法、機能に関するご質問、ご要望なども上記メールアドレスにて受け付けています。</p>
     </section>
   </div>
 </template>

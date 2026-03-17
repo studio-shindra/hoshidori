@@ -22,6 +22,9 @@ async function request(method, path, body = null) {
   if (method !== 'GET') {
     opts.headers['X-CSRFToken'] = getCookie('csrftoken')
   }
+  if (isCapacitor) {
+    opts.headers['X-Requested-With'] = 'capacitor'
+  }
   const res = await fetch(`${BASE}${path}`, opts)
   if (!res.ok) {
     const err = new Error(`API ${res.status}`)
@@ -38,10 +41,14 @@ async function request(method, path, body = null) {
 }
 
 async function upload(path, formData) {
+  const headers = { 'X-CSRFToken': getCookie('csrftoken') }
+  if (isCapacitor) {
+    headers['X-Requested-With'] = 'capacitor'
+  }
   const res = await fetch(`${BASE}${path}`, {
     method: 'POST',
     credentials: 'include',
-    headers: { 'X-CSRFToken': getCookie('csrftoken') },
+    headers,
     body: formData,
   })
   if (!res.ok) {
@@ -57,10 +64,49 @@ async function upload(path, formData) {
   return res.json()
 }
 
+// Simple in-memory cache for GET requests (30s TTL)
+const cache = new Map()
+const CACHE_TTL = 30000
+
+function getCached(path) {
+  const entry = cache.get(path)
+  if (entry && Date.now() - entry.time < CACHE_TTL) {
+    return entry.data
+  }
+  cache.delete(path)
+  return null
+}
+
+function setCache(path, data) {
+  cache.set(path, { data, time: Date.now() })
+}
+
+function invalidateCache() {
+  cache.clear()
+}
+
 export const api = {
-  get: (path) => request('GET', path),
-  post: (path, body) => request('POST', path, body),
-  patch: (path, body) => request('PATCH', path, body),
-  delete: (path) => request('DELETE', path),
-  upload: (path, formData) => upload(path, formData),
+  get: async (path) => {
+    const cached = getCached(path)
+    if (cached) return cached
+    const data = await request('GET', path)
+    setCache(path, data)
+    return data
+  },
+  post: async (path, body) => {
+    invalidateCache()
+    return request('POST', path, body)
+  },
+  patch: async (path, body) => {
+    invalidateCache()
+    return request('PATCH', path, body)
+  },
+  delete: async (path) => {
+    invalidateCache()
+    return request('DELETE', path)
+  },
+  upload: async (path, formData) => {
+    invalidateCache()
+    return upload(path, formData)
+  },
 }

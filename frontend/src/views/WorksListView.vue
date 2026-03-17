@@ -5,6 +5,7 @@ import { api } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
 import { IconSearch, IconPlus, IconTheater, IconMasksTheater, IconUser } from '@tabler/icons-vue'
 import PosterImage from '@/components/PosterImage.vue'
+import AppLoader from '@/components/AppLoader.vue'
 
 const auth = useAuthStore()
 const works = ref([])
@@ -57,14 +58,14 @@ function setSearchType(type) {
       <div class="d-flex gap-1 mb-2">
         <button
           class="btn btn-sm fw-medium"
-          :class="searchType === 'title' ? 'btn-status-amber' : 'btn-dark text-secondary'"
+          :class="searchType === 'title' ? 'btn-light text-dark' : 'btn-dark text-secondary'"
           @click="setSearchType('title')"
         >
           <IconMasksTheater :size="13" class="me-1" />作品名
         </button>
         <button
           class="btn btn-sm fw-medium"
-          :class="searchType === 'person' ? 'btn-status-amber' : 'btn-dark text-secondary'"
+          :class="searchType === 'person' ? 'btn-light text-dark' : 'btn-dark text-secondary'"
           @click="setSearchType('person')"
         >
           <IconUser :size="13" class="me-1" />俳優名
@@ -83,7 +84,7 @@ function setSearchType(type) {
       </form>
     </div>
 
-    <p v-if="loading" class="text-center text-secondary py-4">読み込み中...</p>
+    <AppLoader v-if="loading" />
     <div v-else class="grid-wrapper">
       <RouterLink
         v-for="w in works"

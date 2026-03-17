@@ -13,6 +13,7 @@ import {
   IconTicket,
   IconMapPin,
   IconPlus,
+  IconFlag,
 } from '@tabler/icons-vue'
 import ShopCard from '@/components/ShopCard.vue'
 import PosterImage from '@/components/PosterImage.vue'
@@ -20,6 +21,7 @@ import { ratingLabel, ratingIcon } from '@/lib/rating'
 import { IconThumbUp, IconHeartHandshake, IconSparkles } from '@tabler/icons-vue'
 import RatingButtons from '@/components/RatingButtons.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
+import AppLoader from '@/components/AppLoader.vue'
 
 const ratingIcons = { IconThumbUp, IconHeartHandshake, IconSparkles }
 
@@ -200,7 +202,7 @@ async function toggleLike(review) {
 
 <template>
   <div>
-    <p v-if="loading" class="text-center text-secondary py-4">読み込み中...</p>
+    <AppLoader v-if="loading" />
     <template v-else-if="work">
       <!-- Hero image area -->
       <div class="position-relative">
@@ -352,6 +354,13 @@ async function toggleLike(review) {
             <div v-if="workPosters.length" class="grid-wrapper">
               <div v-for="p in workPosters" :key="p.id" class="position-relative">
                 <PosterImage :src="p.image_url || p.image" :credit="p.user_display_name" :credit-avatar="p.user_avatar_url" />
+                <a
+                  :href="`mailto:info@studio-shindra.com?subject=${encodeURIComponent('[HOSHIDORI] 画像通報')}&body=${encodeURIComponent('通報対象: ' + (work.title || '') + ' のポスター画像\n画像ID: ' + p.id + '\n\n通報理由: ')}`"
+                  class="poster-report-btn"
+                  title="この画像を通報"
+                >
+                  <IconFlag :size="12" />
+                </a>
               </div>
             </div>
             <div v-else class="text-center py-4">
@@ -425,6 +434,26 @@ async function toggleLike(review) {
 .detail-tab-content {
   max-height: 60vh;
   overflow-y: auto;
+}
+
+.poster-report-btn {
+  position: absolute;
+  bottom: 0.4rem;
+  right: 0.4rem;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  color: #a1a1aa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  z-index: 1;
+  &:hover {
+    color: #f43f5e;
+    background: rgba(0, 0, 0, 0.7);
+  }
 }
 
 /* Multiselect dark theme */

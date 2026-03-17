@@ -7,6 +7,7 @@ import { IconMask, IconTicket, IconStar, IconCoffee, IconMessage } from '@tabler
 import UserAvatar from '@/components/UserAvatar.vue'
 import WorkCard from '@/components/WorkCard.vue'
 import LogListItem from '@/components/LogListItem.vue'
+import AppLoader from '@/components/AppLoader.vue'
 
 const auth = useAuthStore()
 const loading = ref(true)
@@ -92,7 +93,7 @@ watch(
 
     <!-- Logged in -->
     <template v-else>
-      <p v-if="loading" class="text-center text-secondary py-4">読み込み中...</p>
+      <AppLoader v-if="loading" />
       <template v-else>
 
         <!-- これから観る -->

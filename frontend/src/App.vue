@@ -1,5 +1,5 @@
 <script setup>
-import { RouterLink, RouterView, useRoute } from 'vue-router'
+import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { onMounted, ref } from 'vue'
 import {
@@ -15,9 +15,36 @@ import UserAvatar from '@/components/UserAvatar.vue'
 
 const auth = useAuthStore()
 const route = useRoute()
+const router = useRouter()
 onMounted(() => auth.fetchMe())
 
 const showSidebar = ref(false)
+
+// Pull to Refresh
+const pullStart = ref(0)
+const pullDistance = ref(0)
+const refreshing = ref(false)
+
+function onTouchStart(e) {
+  if (window.scrollY === 0) {
+    pullStart.value = e.touches[0].clientY
+  } else {
+    pullStart.value = 0
+  }
+}
+function onTouchMove(e) {
+  if (!pullStart.value) return
+  const dist = e.touches[0].clientY - pullStart.value
+  pullDistance.value = Math.max(0, Math.min(dist * 0.5, 80))
+}
+async function onTouchEnd() {
+  if (pullDistance.value > 50 && !refreshing.value) {
+    refreshing.value = true
+    router.go(0)
+  }
+  pullDistance.value = 0
+  pullStart.value = 0
+}
 
 async function logout() {
   await auth.logout()
@@ -37,7 +64,7 @@ async function logout() {
     <!-- Sidebar -->
     <aside class="sidebar" :class="{ 'sidebar-open': showSidebar }">
       <div class="sidebar-header d-flex align-items-center justify-content-between px-3 border-bottom border-secondary">
-        <span class="fw-bold text-white small">HOSHIDORI</span>
+        <span></span>
         <button class="btn-icon" @click="showSidebar = false">
           <IconX :size="20" />
         </button>
@@ -48,7 +75,7 @@ async function logout() {
         <RouterLink to="/guidelines" class="sidebar-link" @click="showSidebar = false">投稿ガイドライン</RouterLink>
         <RouterLink to="/contact" class="sidebar-link" @click="showSidebar = false">お問い合わせ</RouterLink>
       </nav>
-      <div class="mt-auto px-3 pb-4">
+      <div class="mt-auto px-3" style="padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));">
         <button class="btn btn-dark btn-sm w-100 text-white mb-2 fw-bold" @click="logout">ログアウト</button>
         <p class="text-secondary mb-0" style="font-size: 0.65rem;">&copy; 2026 HOSHIDORI</p>
       </div>
@@ -68,13 +95,16 @@ async function logout() {
       </div>
     </header>
 
-    <main class="container pt-3 pb-5">
+    <main class="container pt-3 pb-5" @touchstart="onTouchStart" @touchmove="onTouchMove" @touchend="onTouchEnd">
+      <div v-if="pullDistance > 0" class="pull-indicator" :style="{ height: pullDistance + 'px' }">
+        <div class="pull-spinner" :class="{ active: pullDistance > 50 }" />
+      </div>
       <RouterView />
     </main>
 
     <footer
     style="z-index: 99999;"
-      class="position-fixed bottom-0 start-0 end-0 border-top border-secondary bg-cdark">
+      class="position-fixed bottom-0 start-0 end-0 bg-cdark">
       <nav class="container d-flex align-items-center justify-content-around pt-3" style="padding-bottom: calc(0.5rem + env(safe-area-inset-bottom))">
         <RouterLink to="/" class="nav-item" :class="{ active: route.path === '/' }">
           <IconHome :size="26" />
@@ -202,6 +232,29 @@ header{
 main{
   margin-top: calc(var(--header-height) + env(safe-area-inset-top));
   margin-bottom: calc(var(--header-height) + env(safe-area-inset-bottom));
+}
+
+/* Pull to Refresh */
+.pull-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.pull-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #a1a1aa;
+  border-radius: 50%;
+  transition: border-top-color 0.2s;
+  &.active {
+    border-top-color: #f43f5e;
+    animation: spin 0.7s linear infinite;
+  }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* Bottom nav */

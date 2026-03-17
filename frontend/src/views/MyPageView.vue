@@ -8,6 +8,7 @@ import RatingButtons from '@/components/RatingButtons.vue'
 import LogListItem from '@/components/LogListItem.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import WorkCard from '@/components/WorkCard.vue'
+import AppLoader from '@/components/AppLoader.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -134,7 +135,7 @@ async function logout() {
 
     </div>
 
-    <p v-if="loading" class="text-secondary text-center py-5">読み込み中...</p>
+    <AppLoader v-if="loading" />
 
     <template v-else>
       <!-- Tabs -->
