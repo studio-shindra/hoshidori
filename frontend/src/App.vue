@@ -55,7 +55,7 @@ async function logout() {
     </aside>
 
     <!-- Header -->
-    <header class="position-absolute top-0 start-0 end-0 w-100 d-flex align-items-center">
+    <header class="position-fixed top-0 start-0 end-0 w-100 d-flex align-items-end bg-cdark">
       <div class="container d-flex align-items-center justify-content-between px-3 w-100 mx-auto position-relative">
         <div class="position-absolute top-50 start-50 translate-middle">
           <RouterLink to="/" class="d-flex align-items-center text-decoration-none">
@@ -194,7 +194,7 @@ async function logout() {
 }
 
 header{
-  height: var(--header-height);
+  height: calc(var(--header-height) + env(safe-area-inset-top));
   padding-top: env(safe-area-inset-top);
   z-index: 1020;
 }
