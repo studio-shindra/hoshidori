@@ -137,7 +137,7 @@ async function logout() {
   transform: translateX(0);
 }
 .sidebar-header {
-  height: 56px;
+  min-height: calc(56px + env(safe-area-inset-top));
   padding-top: env(safe-area-inset-top);
   flex-shrink: 0;
 }

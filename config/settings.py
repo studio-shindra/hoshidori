@@ -131,3 +131,10 @@ CSRF_TRUSTED_ORIGINS = [
     'https://hoshidori.netlify.app',
     'https://hoshidori-67b44bed2d10.herokuapp.com',
 ]
+
+# Heroku SSL
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
