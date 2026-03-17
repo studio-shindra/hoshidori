@@ -1,5 +1,8 @@
 {
   "appId": "com.studioshindra.hoshidori",
   "appName": "hoshidori",
-  "webDir": "dist"
+  "webDir": "dist",
+  "server": {
+    "allowNavigation": ["hoshidori-67b44bed2d10.herokuapp.com"]
+  }
 }

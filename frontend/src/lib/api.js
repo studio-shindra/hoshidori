@@ -1,4 +1,8 @@
-const BASE = import.meta.env.VITE_API_BASE_URL || ''
+const isCapacitor = window.location.protocol === 'capacitor:'
+  || window.location.protocol === 'ionic:'
+const BASE = isCapacitor
+  ? 'https://hoshidori-67b44bed2d10.herokuapp.com'
+  : (import.meta.env.VITE_API_BASE_URL || '')
 
 function getCookie(name) {
   const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)')

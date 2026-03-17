@@ -120,6 +120,8 @@ CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:5173',
     'https://hoshidori.netlify.app',
     'https://hoshidori-67b44bed2d10.herokuapp.com',
+    'capacitor://localhost',
+    'ionic://localhost',
 ]
 CORS_ALLOW_ALL_ORIGINS = DEBUG
 CORS_ALLOW_CREDENTIALS = True
@@ -130,6 +132,8 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:5173',
     'https://hoshidori.netlify.app',
     'https://hoshidori-67b44bed2d10.herokuapp.com',
+    'capacitor://localhost',
+    'ionic://localhost',
 ]
 
 # Heroku SSL
