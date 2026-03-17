@@ -1,9 +1,10 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { api } from '@/lib/api'
-import { IconMask, IconMessageCircle, IconTicket, IconStar } from '@tabler/icons-vue'
+import { IconMask, IconTicket, IconStar, IconCoffee, IconMessage } from '@tabler/icons-vue'
+import UserAvatar from '@/components/UserAvatar.vue'
 import WorkCard from '@/components/WorkCard.vue'
 import LogListItem from '@/components/LogListItem.vue'
 
@@ -11,9 +12,12 @@ const auth = useAuthStore()
 const loading = ref(true)
 const plannedLogs = ref([])
 const watchedLogs = ref([])
+const featuredShops = ref([])
+const latestReviews = ref([])
 
 const plannedCount = computed(() => plannedLogs.value.length)
 const watchedCount = computed(() => watchedLogs.value.length)
+const watchedVisible = computed(() => watchedLogs.value.slice(0, 12))
 
 async function fetchData() {
   loading.value = true
@@ -30,6 +34,29 @@ async function fetchData() {
     loading.value = false
   }
 }
+
+async function fetchFeaturedShops() {
+  try {
+    const data = await api.get('/api/shops/featured/')
+    featuredShops.value = data.results || data
+  } catch {
+    /* empty */
+  }
+}
+
+async function fetchLatestReviews() {
+  try {
+    const data = await api.get('/api/reviews/latest/')
+    latestReviews.value = data.results || data
+  } catch {
+    /* empty */
+  }
+}
+
+onMounted(() => {
+  fetchFeaturedShops()
+  fetchLatestReviews()
+})
 
 watch(
   () => auth.isAuthenticated,
@@ -69,13 +96,13 @@ watch(
       <template v-else>
 
         <!-- これから観る -->
-        <section v-if="plannedLogs.length" class="mb-4">
+        <section class="mb-4">
           <h2 class="d-flex align-items-center gap-2 fw-bold mb-3 fs-2">
             <IconTicket :size="20" />
             Clip
-            <span class="count-circle">{{ plannedCount }}</span>
+            <span v-if="plannedCount" class="count-circle">{{ plannedCount }}</span>
           </h2>
-          <div class="d-flex gap-2 overflow-auto scroll-hide">
+          <div v-if="plannedLogs.length" class="d-flex gap-2 overflow-auto scroll-hide">
             <WorkCard
               v-for="log in plannedLogs"
               :key="log.id"
@@ -85,17 +112,25 @@ watch(
               :theater-name="log.theater_name"
             />
           </div>
+          <div v-else class="card bg-dark border-0 p-4 text-center">
+            <p class="text-secondary small mb-2">気になる作品をクリップしよう</p>
+            <RouterLink to="/works" class="btn btn-sm btn-outline-secondary">作品を探す</RouterLink>
+          </div>
         </section>
 
         <!-- 最近観た作品 -->
-        <section v-if="watchedLogs.length" class="mb-4">
-          <h2 class="d-flex align-items-center gap-2 fw-bold mb-3 fs-2">
-            <IconStar :size="20" />
-            Watched
-            <span class="count-circle">{{ watchedCount }}</span></h2>
-          <div class="d-flex flex-column gap-3">
+        <section class="mb-4">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <h2 class="d-flex align-items-center gap-2 fw-bold fs-2 mb-0">
+              <IconStar :size="20" />
+              Watched
+              <span v-if="watchedCount" class="count-circle">{{ watchedCount }}</span>
+            </h2>
+            <RouterLink v-if="watchedCount > 12" to="/mypage" class="text-secondary small text-decoration-none">すべて見る →</RouterLink>
+          </div>
+          <div v-if="watchedLogs.length" class="watched-grid overflow-auto scroll-hide">
             <LogListItem
-              v-for="log in watchedLogs"
+              v-for="log in watchedVisible"
               :key="log.id"
               :poster-url="log.poster_url"
               :work-title="log.work_title"
@@ -106,18 +141,97 @@ watch(
               :theater-area="log.theater_area"
               :memo="log.memo"
               :rating="log.rating"
+              compact
             />
           </div>
+          <div v-else class="card bg-dark border-0 p-4 text-center">
+            <p class="text-secondary small mb-2">観劇したら記録を残そう</p>
+            <RouterLink to="/logs/new" class="btn btn-sm btn-outline-secondary">記録する</RouterLink>
+          </div>
         </section>
-
-        <!-- 空の場合 -->
-        <div v-if="!plannedLogs.length && !watchedLogs.length" class="px-3 py-4 text-center">
-          <IconMessageCircle :size="36" class="text-secondary mb-2" />
-          <p class="text-secondary small">まだ記録がありません</p>
-          <RouterLink to="/works" class="btn btn-primary-rose btn-sm px-3">作品を探す</RouterLink>
-        </div>
       </template>
     </template>
+
+    <!-- おすすめの店 (ログイン不問) -->
+    <section v-if="featuredShops.length" class="mb-4">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 class="d-flex align-items-center gap-2 fw-bold fs-2 mb-0">
+          <IconCoffee :size="20" />
+          おすすめの店
+        </h2>
+        <RouterLink to="/shops" class="text-secondary small text-decoration-none">すべて見る →</RouterLink>
+      </div>
+      <div class="d-flex gap-2 overflow-auto scroll-hide">
+        <RouterLink
+          v-for="shop in featuredShops"
+          :key="shop.id"
+          :to="`/shops/${shop.slug}`"
+          class="text-decoration-none flex-shrink-0"
+        >
+          <div class="featured-shop-card">
+            <div class="featured-shop-img-wrap">
+              <img
+                v-if="shop.image_src"
+                :src="shop.image_src"
+                :alt="shop.name"
+                class="featured-shop-img"
+              />
+              <div v-else class="featured-shop-placeholder d-flex align-items-center justify-content-center">
+                <IconCoffee :size="32" class="text-secondary" />
+              </div>
+            </div>
+            <div class="p-2 bg-dark">
+              <div class="featured-shop-name text-white text-truncate">{{ shop.name }}</div>
+              <div v-if="shop.category" class="text-secondary small text-truncate">{{ shop.category }}</div>
+              <div v-if="shop.distance_note" class="text-secondary small text-truncate">{{ shop.distance_note }}</div>
+            </div>
+          </div>
+        </RouterLink>
+      </div>
+    </section>
+    <section v-else-if="!loading" class="mb-4">
+      <h2 class="d-flex align-items-center gap-2 fw-bold mb-3 fs-2">
+        <IconCoffee :size="20" />
+        おすすめの店
+      </h2>
+      <p class="text-secondary small">まだおすすめの店はありません</p>
+    </section>
+
+    <!-- 最新のコメント (ログイン不問) -->
+    <section v-if="latestReviews.length" class="mb-4">
+      <h2 class="d-flex align-items-center gap-2 fw-bold mb-3 fs-2">
+        <IconMessage :size="20" />
+        最新のコメント
+      </h2>
+      <div class="d-flex gap-3 overflow-auto scroll-hide">
+        <RouterLink
+          v-for="r in latestReviews"
+          :key="r.id"
+          :to="`/works/${r.work_slug}`"
+          class="text-decoration-none flex-shrink-0 review-card"
+        >
+          <div class="card bg-dark border-0 p-2 h-100">
+            <div class="d-flex gap-2">
+              <div class="review-poster-wrap flex-shrink-0">
+                <img v-if="r.poster_url" :src="r.poster_url" :alt="r.work_title" class="review-poster" />
+                <div v-else class="review-poster review-poster-empty"></div>
+              </div>
+              <div class="min-w-0 flex-grow-1">
+                <div class="fw-bold text-white text-truncate">{{ r.work_title }}</div>
+                <div class="d-flex align-items-center gap-1 mt-1">
+                  <UserAvatar :src="r.user_avatar_url" :name="r.user_display_name" :size="18" />
+                  <span class="small text-secondary text-truncate">{{ r.user_display_name }}</span>
+                  <span v-if="r.rating_overall" class="review-rating-badge ms-auto">
+                    {{ r.rating_overall === 5 ? '最高' : r.rating_overall === 4 ? '良かった' : '観た' }}
+                  </span>
+                </div>
+                <p class="small text-white-50 mt-1 mb-0 review-body">{{ r.body }}</p>
+              </div>
+            </div>
+          </div>
+        </RouterLink>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -133,6 +247,84 @@ watch(
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+}
+.watched-grid {
+  display: grid;
+  grid-template-rows: repeat(3, auto);
+  grid-auto-flow: column;
+  grid-auto-columns: min(calc(100vw - 40px), 400px);
+  gap: 8px;
+}
+.watched-grid > :deep(*) {
+  overflow: hidden;
+  min-width: 0;
+}
+.watched-grid :deep(.card-sm) {
+  width: 72px;
+  flex-shrink: 0;
+}
+.featured-shop-card {
+  width: 200px;
+  background: #1a1a1a;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.featured-shop-img-wrap {
+  width: 200px;
+  height: 140px;
+  overflow: hidden;
+}
+.featured-shop-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.featured-shop-placeholder {
+  width: 100%;
+  height: 100%;
+  background: #2a2a2a;
+}
+.featured-shop-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.review-card {
+  width: min(calc(100vw - 40px), 320px);
+}
+.review-poster-wrap {
+  width: 56px;
+}
+.review-poster {
+  width: 56px;
+  height: 80px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+.review-poster-empty {
+  width: 56px;
+  height: 80px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #27272a, #3f3f46);
+}
+.review-body {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+}
+.review-rating-badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
   flex-shrink: 0;
 }
 </style>

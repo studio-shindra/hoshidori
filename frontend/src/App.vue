@@ -4,9 +4,9 @@ import { useAuthStore } from '@/stores/auth'
 import { onMounted, ref } from 'vue'
 import {
   IconHome,
-  IconTheater,
+  IconCoffee,
   IconMasksTheater,
-  IconPencil,
+  IconPlus,
   IconUser,
   IconMenu2,
   IconX,
@@ -65,16 +65,6 @@ async function logout() {
         <button class="btn-icon" @click="showSidebar = true">
           <IconMenu2 :size="22" />
         </button>
-        <div>
-          <template v-if="auth.isAuthenticated">
-            <RouterLink to="/mypage" class="user-link">
-              <UserAvatar :src="auth.user.avatar_url" :name="auth.user.display_name || auth.user.username" :size="28" />
-            </RouterLink>
-          </template>
-          <template v-else>
-            <RouterLink to="/login" class="login-link">ログイン</RouterLink>
-          </template>
-        </div>
       </div>
     </header>
 
@@ -85,30 +75,29 @@ async function logout() {
     <footer
     style="z-index: 99999;"
       class="position-fixed bottom-0 start-0 end-0 border-top border-secondary bg-cdark">
-      <nav class="container d-flex align-items-center justify-content-around py-3">
+      <nav class="container d-flex align-items-center justify-content-around pt-3" style="padding-bottom: calc(0.5rem + env(safe-area-inset-bottom))">
         <RouterLink to="/" class="nav-item" :class="{ active: route.path === '/' }">
-          <IconHome :size="22" />
-          <span>ホーム</span>
+          <IconHome :size="26" />
         </RouterLink>
-        <RouterLink to="/theaters" class="nav-item" :class="{ active: route.path.startsWith('/theaters') }">
-          <IconTheater :size="22" />
-          <span>劇場</span>
+        <RouterLink to="/shops" class="nav-item" :class="{ active: route.path.startsWith('/shops') }">
+          <IconCoffee :size="26" />
+        </RouterLink>
+        <RouterLink to="/logs/new" class="nav-create">
+          <IconPlus :size="26" />
         </RouterLink>
         <RouterLink to="/works" class="nav-item" :class="{ active: route.path.startsWith('/works') }">
-          <IconMasksTheater :size="22" />
-          <span>作品</span>
-        </RouterLink>
-        <RouterLink to="/logs/new" class="nav-item" :class="{ active: route.path.startsWith('/logs') }">
-          <IconPencil :size="22" />
-          <span>記録</span>
+          <IconMasksTheater :size="26" />
         </RouterLink>
         <RouterLink v-if="auth.isAuthenticated" to="/mypage" class="nav-item" :class="{ active: route.path === '/mypage' }">
-          <IconUser :size="22" />
-          <span>観劇棚</span>
+          <UserAvatar
+            :src="auth.user?.avatar_url"
+            :name="auth.user?.display_name || auth.user?.username"
+            :size="32"
+          />
         </RouterLink>
         <RouterLink v-else to="/login" class="nav-item" :class="{ active: route.path === '/login' }">
-          <IconUser :size="22" />
-          <span>ログイン</span>
+          <IconUser :size="26" />
+          <span class="fw-bold">ログイン</span>
         </RouterLink>
       </nav>
     </footer>
@@ -149,6 +138,7 @@ async function logout() {
 }
 .sidebar-header {
   height: 56px;
+  padding-top: env(safe-area-inset-top);
   flex-shrink: 0;
 }
 .sidebar-link {
@@ -205,12 +195,13 @@ async function logout() {
 
 header{
   height: var(--header-height);
+  padding-top: env(safe-area-inset-top);
   z-index: 1020;
 }
 
 main{
-  margin-top: var(--header-height);
-  margin-bottom: var(--header-height);
+  margin-top: calc(var(--header-height) + env(safe-area-inset-top));
+  margin-bottom: calc(var(--header-height) + env(safe-area-inset-bottom));
 }
 
 /* Bottom nav */
@@ -228,6 +219,19 @@ footer {
     &.active {
       color: #f43f5e;
     }
+  }
+  .nav-create {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: #f43f5e;
+    color: #fff;
+    text-decoration: none;
+    flex-shrink: 0;
+    margin-top: -8px;
   }
 }
 </style>

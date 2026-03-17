@@ -47,6 +47,46 @@ class ReviewSerializer(serializers.ModelSerializer):
         return obj.likes.filter(user=request.user).exists()
 
 
+class LatestReviewSerializer(serializers.ModelSerializer):
+    user_display_name = serializers.SerializerMethodField()
+    user_avatar_url = serializers.SerializerMethodField()
+    work_title = serializers.CharField(source='performance.work.title', read_only=True)
+    work_slug = serializers.CharField(source='performance.work.slug', read_only=True)
+    poster_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Review
+        fields = [
+            'id', 'user_display_name', 'user_avatar_url',
+            'work_title', 'work_slug', 'poster_url',
+            'title', 'body', 'rating_overall',
+            'created_at',
+        ]
+
+    def get_user_display_name(self, obj):
+        return obj.user.display_name or obj.user.username
+
+    def get_user_avatar_url(self, obj):
+        return obj.user.avatar_url or None
+
+    def get_poster_url(self, obj):
+        posters = getattr(obj.performance.work, '_prefetched_selected_posters', None)
+        if posters is not None:
+            poster = posters[0] if posters else None
+        else:
+            poster = obj.performance.work.poster_submissions.filter(is_selected=True).first()
+        if not poster:
+            return None
+        if poster.image_url:
+            return poster.image_url
+        if poster.image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(poster.image.url)
+            return poster.image.url
+        return None
+
+
 class ViewingLogSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
     work_title = serializers.CharField(source='performance.work.title', read_only=True)
@@ -67,7 +107,11 @@ class ViewingLogSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'user', 'created_at', 'updated_at']
 
     def get_poster_url(self, obj):
-        poster = obj.performance.work.poster_submissions.filter(is_selected=True).first()
+        posters = getattr(obj.performance.work, '_prefetched_selected_posters', None)
+        if posters is not None:
+            poster = posters[0] if posters else None
+        else:
+            poster = obj.performance.work.poster_submissions.filter(is_selected=True).first()
         if not poster:
             return None
         if poster.image_url:
@@ -80,10 +124,11 @@ class ViewingLogSerializer(serializers.ModelSerializer):
         return None
 
     def get_rating(self, obj):
-        review = Review.objects.filter(
+        if hasattr(obj, '_rating'):
+            return obj._rating
+        return Review.objects.filter(
             user=obj.user, performance=obj.performance,
         ).order_by('-created_at').values_list('rating_overall', flat=True).first()
-        return review
 
     def validate(self, data):
         # PATCH時は既存インスタンスの値をフォールバック

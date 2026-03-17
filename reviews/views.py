@@ -1,14 +1,15 @@
-from django.db.models import Count, Exists, OuterRef
+from django.db.models import Count, Exists, OuterRef, Prefetch, Subquery
 
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from accounts.permissions import IsOwnerOrReadOnly
+from works.models import PosterSubmission
 from .models import Like, Review, ViewingLog
-from .serializers import ReviewSerializer, ViewingLogSerializer
+from .serializers import LatestReviewSerializer, ReviewSerializer, ViewingLogSerializer
 
 
 class ReviewViewSet(ModelViewSet):
@@ -27,6 +28,20 @@ class ReviewViewSet(ModelViewSet):
                 )
             )
         return qs
+
+    @action(detail=False, methods=['get'], permission_classes=[AllowAny])
+    def latest(self, request):
+        qs = Review.objects.select_related(
+            'user', 'performance__work', 'performance__theater',
+        ).prefetch_related(
+            Prefetch(
+                'performance__work__poster_submissions',
+                queryset=PosterSubmission.objects.filter(is_selected=True),
+                to_attr='_prefetched_selected_posters',
+            ),
+        ).filter(body__gt='').order_by('-created_at')[:10]
+        serializer = LatestReviewSerializer(qs, many=True, context={'request': request})
+        return Response(serializer.data)
 
     def get_permissions(self):
         if self.action in ('create', 'like'):
@@ -57,8 +72,23 @@ class ViewingLogViewSet(ModelViewSet):
 
     def get_queryset(self):
         qs = ViewingLog.objects.filter(
-            user=self.request.user
-        ).select_related('performance__work', 'performance__theater')
+            user=self.request.user,
+        ).select_related(
+            'performance__work', 'performance__theater',
+        ).prefetch_related(
+            Prefetch(
+                'performance__work__poster_submissions',
+                queryset=PosterSubmission.objects.filter(is_selected=True),
+                to_attr='_prefetched_selected_posters',
+            ),
+        ).annotate(
+            _rating=Subquery(
+                Review.objects.filter(
+                    user=OuterRef('user'),
+                    performance=OuterRef('performance'),
+                ).order_by('-created_at').values('rating_overall')[:1]
+            ),
+        )
         status_filter = self.request.query_params.get('status')
         if status_filter in ('planned', 'watched'):
             qs = qs.filter(status=status_filter)

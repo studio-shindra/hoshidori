@@ -1,3 +1,5 @@
+from django.db.models import Prefetch, Subquery, OuterRef
+
 from rest_framework.decorators import action
 from rest_framework.mixins import DestroyModelMixin
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
@@ -20,7 +22,20 @@ class WorkViewSet(ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
-        qs = super().get_queryset()
+        qs = super().get_queryset().prefetch_related(
+            Prefetch(
+                'poster_submissions',
+                queryset=PosterSubmission.objects.filter(
+                    is_selected=True,
+                ).select_related('user'),
+                to_attr='_prefetched_selected_posters',
+            ),
+            Prefetch(
+                'performances',
+                queryset=Performance.objects.select_related('theater').order_by('-start_date'),
+                to_attr='_prefetched_performances',
+            ),
+        )
         q = self.request.query_params.get('q')
         if q:
             qs = qs.filter(title__icontains=q)

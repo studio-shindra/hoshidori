@@ -23,10 +23,23 @@ class WorkSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_by', 'is_approved', 'created_at', 'updated_at']
         extra_kwargs = {'slug': {'required': False}}
 
+    def _get_selected_poster(self, obj):
+        """prefetchデータから選択済みポスターを取得（クエリ発行なし）"""
+        posters = getattr(obj, '_prefetched_selected_posters', None)
+        if posters is not None:
+            return posters[0] if posters else None
+        # fallback: prefetchなしの場合（detail等）
+        return obj.poster_submissions.filter(is_selected=True).select_related('user').first()
+
+    def _get_first_performance(self, obj):
+        """prefetchデータから最初のパフォーマンスを取得（クエリ発行なし）"""
+        perfs = getattr(obj, '_prefetched_performances', None)
+        if perfs is not None:
+            return perfs[0] if perfs else None
+        return obj.performances.select_related('theater').first()
+
     def get_selected_poster_image_url(self, obj):
-        poster = getattr(obj, '_selected_poster', None)
-        if poster is None:
-            poster = obj.poster_submissions.filter(is_selected=True).first()
+        poster = self._get_selected_poster(obj)
         if poster:
             if poster.image_url:
                 return poster.image_url
@@ -38,29 +51,25 @@ class WorkSerializer(serializers.ModelSerializer):
         return None
 
     def get_theater_name(self, obj):
-        perf = obj.performances.select_related('theater').first()
+        perf = self._get_first_performance(obj)
         if perf and perf.theater:
             return perf.theater.name
         return None
 
     def get_start_date(self, obj):
-        perf = obj.performances.first()
+        perf = self._get_first_performance(obj)
         if perf:
             return str(perf.start_date)
         return None
 
     def get_selected_poster_user_display_name(self, obj):
-        poster = getattr(obj, '_selected_poster', None)
-        if poster is None:
-            poster = obj.poster_submissions.filter(is_selected=True).select_related('user').first()
+        poster = self._get_selected_poster(obj)
         if poster:
             return poster.user.display_name or poster.user.username
         return None
 
     def get_selected_poster_user_avatar_url(self, obj):
-        poster = getattr(obj, '_selected_poster', None)
-        if poster is None:
-            poster = obj.poster_submissions.filter(is_selected=True).select_related('user').first()
+        poster = self._get_selected_poster(obj)
         if poster:
             return poster.user.avatar_url or None
         return None
@@ -132,10 +141,13 @@ class PosterSubmissionSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
-        has_image = data.get('image')
-        has_url = data.get('image_url')
+        # PATCH時は既存データをフォールバック
+        instance = self.instance
+        has_image = data.get('image') or (instance and instance.image)
+        has_url = data.get('image_url') or (instance and instance.image_url)
         if not has_image and not has_url:
             raise serializers.ValidationError('image または image_url が必要です')
-        if has_url and not data.get('image_public_id'):
+        image_url = data.get('image_url')
+        if image_url and not data.get('image_public_id', getattr(instance, 'image_public_id', '')):
             raise serializers.ValidationError('image_public_id は必須です')
         return data

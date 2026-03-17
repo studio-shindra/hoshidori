@@ -15,6 +15,7 @@ defineProps({
   theaterArea: { type: String, default: '' },
   memo: { type: String, default: '' },
   rating: { type: Number, default: null },
+  compact: { type: Boolean, default: false },
 })
 </script>
 
@@ -29,7 +30,7 @@ defineProps({
           <div class="fw-bold text-truncate">{{ workTitle }}</div>
           <slot name="action" />
         </div>
-        <div class="d-flex align-items-center gap-1">
+        <div class="d-flex align-items-center gap-1 flex-wrap">
           <div v-if="theaterName" class="small text-truncate d-flex align-items-center gap-1">
             <IconTheater size="16" /> {{ theaterName }}
           </div>
@@ -37,15 +38,34 @@ defineProps({
             <IconMapPin size="16" /> {{ theaterArea }}
           </div>
         </div>
-        <div class="d-flex justify-content-start flex-column">
+        <div class="d-flex align-items-center gap-2">
           <div class="small d-flex align-items-center gap-1" v-if="watchedOn">{{ watchedOn }}<span v-if="watchedTime"> {{ watchedTime.slice(0, 5) }}</span></div>
-          <span v-if="rating" class="df-center gap-1 bg-amber text-white fw-bold p-1 rounded mt-3">
-            <component :is="icons[ratingIcon(rating)]" :size="20" />
+          <span v-if="rating" class="log-rating-badge">
+            <component :is="icons[ratingIcon(rating)]" :size="14" />
             {{ ratingLabel(rating) }}
           </span>
         </div>
+        <div v-if="memo" class="small log-memo" :class="compact ? 'text-truncate' : ''">{{ memo }}</div>
       </div>
     </div>
-    <div v-if="memo" class="small text-truncate p-2 border-top border-secondary mt-3">{{ memo }}</div>
   </div>
 </template>
+
+<style scoped>
+.log-rating-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.log-memo {
+  max-width: 100%;
+}
+</style>

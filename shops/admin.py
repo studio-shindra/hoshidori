@@ -8,8 +8,9 @@ from .models import (
 
 @admin.register(Shop)
 class ShopAdmin(admin.ModelAdmin):
-    list_display = ['name', 'category', 'nearest_station', 'is_active', 'created_at']
-    list_filter = ['is_active', 'category']
+    list_display = ['name', 'category', 'nearest_station', 'is_active', 'is_featured', 'featured_order', 'created_at']
+    list_filter = ['is_active', 'category', 'is_featured']
+    list_editable = ['is_featured', 'featured_order']
     search_fields = ['name', 'address']
     prepopulated_fields = {'slug': ('name',)}
 

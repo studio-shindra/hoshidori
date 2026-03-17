@@ -7,6 +7,7 @@ defineProps({
   workTitle: { type: String, default: '' },
   workSlug: { type: String, default: null },
   theaterName: { type: String, default: '' },
+  watchedOn: { type: String, default: '' },
 })
 </script>
 
@@ -18,6 +19,7 @@ defineProps({
         <IconTheater size="16" /> {{ theaterName }}
       </div>
       <div class="small fw-bold text-truncate">{{ workTitle }}</div>
+      <div v-if="watchedOn" class="text-white-50" style="font-size: 0.65rem">{{ watchedOn }}</div>
     </div>
   </div>
 </template>

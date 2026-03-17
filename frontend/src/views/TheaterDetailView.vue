@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { api } from '@/lib/api'
 import { IconMapPin, IconArrowLeft, IconTheater } from '@tabler/icons-vue'
 import ShopCard from '@/components/ShopCard.vue'
@@ -76,6 +76,12 @@ onMounted(async () => {
         <div class="d-flex flex-column gap-3">
           <ShopCard v-for="s in sortedShops" :key="s.id" :shop="s" />
         </div>
+        <RouterLink
+          :to="{ path: '/shops', query: { theater: route.params.slug } }"
+          class="btn btn-dark btn-sm text-secondary w-100 mt-3"
+        >
+          この劇場の近くの店をもっと見る →
+        </RouterLink>
       </section>
     </template>
   </div>

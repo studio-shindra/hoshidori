@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.db.models import Case, IntegerField, Prefetch, Q, Value, When
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import action
@@ -7,7 +8,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
-from .models import Coupon, CouponUseLog, Shop, ShopClickLog
+from .models import Coupon, CouponUseLog, Shop, ShopClickLog, TheaterShop
 from .serializers import CouponSerializer, ShopSerializer
 
 
@@ -16,6 +17,51 @@ class ShopViewSet(ReadOnlyModelViewSet):
     serializer_class = ShopSerializer
     lookup_field = 'slug'
     permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        qs = super().get_queryset().prefetch_related(
+            Prefetch(
+                'coupons',
+                queryset=Coupon.objects.filter(is_active=True),
+                to_attr='_prefetched_active_coupons',
+            ),
+        )
+        q = self.request.query_params.get('q', '').strip()
+        category = self.request.query_params.get('category', '').strip()
+        theater = self.request.query_params.get('theater', '').strip()
+
+        if q:
+            qs = qs.filter(Q(name__icontains=q) | Q(description__icontains=q))
+        if category:
+            qs = qs.filter(category__iexact=category)
+        if theater:
+            shop_ids = TheaterShop.objects.filter(
+                theater__slug=theater,
+            ).values_list('shop_id', flat=True)
+            qs = qs.filter(id__in=shop_ids)
+
+        qs = qs.annotate(
+            _featured_rank=Case(
+                When(is_featured=True, then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField(),
+            ),
+        ).order_by('_featured_rank', 'featured_order', 'name')
+        return qs
+
+    @action(detail=False, methods=['get'], permission_classes=[AllowAny])
+    def featured(self, request):
+        shops = Shop.objects.filter(
+            is_active=True, is_featured=True,
+        ).prefetch_related(
+            Prefetch(
+                'coupons',
+                queryset=Coupon.objects.filter(is_active=True),
+                to_attr='_prefetched_active_coupons',
+            ),
+        ).order_by('featured_order')[:6]
+        serializer = self.get_serializer(shops, many=True)
+        return Response(serializer.data)
 
     @action(detail=True, methods=['post'], permission_classes=[AllowAny])
     def click(self, request, slug=None):

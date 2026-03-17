@@ -4,7 +4,6 @@ from .models import Coupon, CouponUseLog, Shop
 
 
 class ShopSerializer(serializers.ModelSerializer):
-    is_featured = serializers.SerializerMethodField()
     image_src = serializers.SerializerMethodField()
     coupon_text = serializers.SerializerMethodField()
 
@@ -19,11 +18,12 @@ class ShopSerializer(serializers.ModelSerializer):
             'is_featured', 'is_active', 'created_at', 'updated_at',
         ]
 
-    def get_is_featured(self, obj):
-        return getattr(obj, '_is_featured', False)
-
     def get_coupon_text(self, obj):
-        coupon = obj.coupons.filter(is_active=True).first()
+        coupons = getattr(obj, '_prefetched_active_coupons', None)
+        if coupons is not None:
+            coupon = coupons[0] if coupons else None
+        else:
+            coupon = obj.coupons.filter(is_active=True).first()
         if coupon:
             return coupon.discount_text or coupon.title
         return None
