@@ -4,5 +4,13 @@
   "webDir": "dist",
   "server": {
     "allowNavigation": ["hoshidori-67b44bed2d10.herokuapp.com"]
+  },
+  "plugins": {
+    "CapacitorCookies": {
+      "enabled": true
+    },
+    "CapacitorHttp": {
+      "enabled": true
+    }
   }
 }
