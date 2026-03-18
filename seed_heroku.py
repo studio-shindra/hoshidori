@@ -4,8 +4,18 @@ django.setup()
 
 from accounts.models import User
 from theaters.models import Theater
-from works.models import Work, Performance, Person
+from works.models import Work, Performance, Person, PosterSubmission
 from shops.models import Shop, TheaterShop, Coupon
+
+# ---- 既存の作品関連データをクリア ----
+from reviews.models import ViewingLog, Review
+Review.objects.all().delete()
+ViewingLog.objects.all().delete()
+PosterSubmission.objects.all().delete()
+Performance.objects.all().delete()
+Work.objects.all().delete()
+Person.objects.all().delete()
+print('Cleared existing works data')
 
 # ---- Theaters ----
 theaters_data = [
@@ -38,26 +48,26 @@ print(f'Theaters: {Theater.objects.count()}')
 # ---- Works + Performances ----
 admin_user = User.objects.filter(is_superuser=True).first()
 works_data = [
-    {'title': 'ハムレット', 'theater': 'shin-kokuritsu', 'start': '2026-04-01', 'end': '2026-04-30'},
-    {'title': 'レ・ミゼラブル', 'theater': 'teikoku', 'start': '2026-04-05', 'end': '2026-06-30'},
-    {'title': 'エリザベート', 'theater': 'teikoku', 'start': '2026-07-01', 'end': '2026-08-31'},
-    {'title': 'ロミオとジュリエット', 'theater': 'tokyo-takarazuka', 'start': '2026-03-15', 'end': '2026-04-15'},
-    {'title': 'キャッツ', 'theater': 'shinomiya-piloti', 'start': '2026-05-01', 'end': '2026-05-31'},
-    {'title': 'オペラ座の怪人', 'theater': 'theatre-orb', 'start': '2026-06-01', 'end': '2026-07-31'},
-    {'title': 'ライオンキング', 'theater': 'sunshine', 'start': '2026-03-01', 'end': '2026-12-31'},
-    {'title': 'ウエスト・サイド・ストーリー', 'theater': 'tokyo-geijutsu', 'start': '2026-05-10', 'end': '2026-06-10'},
-    {'title': '千と千尋の神隠し', 'theater': 'teikoku', 'start': '2026-09-01', 'end': '2026-10-31'},
-    {'title': 'ミス・サイゴン', 'theater': 'teikoku', 'start': '2026-11-01', 'end': '2026-12-31'},
-    {'title': 'ヘアスプレー', 'theater': 'theatre-crea', 'start': '2026-04-10', 'end': '2026-05-10'},
-    {'title': 'アナスタシア', 'theater': 'tokyo-takarazuka', 'start': '2026-05-01', 'end': '2026-06-15'},
-    {'title': 'ジャージー・ボーイズ', 'theater': 'nissei', 'start': '2026-06-01', 'end': '2026-07-15'},
-    {'title': 'メリー・ポピンズ', 'theater': 'umeda-geijutsu', 'start': '2026-04-01', 'end': '2026-05-15'},
-    {'title': '刀剣乱舞', 'theater': 'meijiza', 'start': '2026-03-20', 'end': '2026-04-20'},
-    {'title': 'ハリー・ポッターと呪いの子', 'theater': 'parco', 'start': '2026-03-01', 'end': '2026-12-31'},
-    {'title': '天保十二年のシェイクスピア', 'theater': 'setagaya-public', 'start': '2026-05-01', 'end': '2026-05-31'},
-    {'title': 'マタ・ハリ', 'theater': 'hakataza', 'start': '2026-06-01', 'end': '2026-06-30'},
-    {'title': 'ムーラン・ルージュ', 'theater': 'teikoku', 'start': '2026-03-01', 'end': '2026-03-31'},
-    {'title': 'ビリー・エリオット', 'theater': 'misonoza', 'start': '2026-07-01', 'end': '2026-07-31'},
+    {'title': '星降る夜のワルツ', 'theater': 'shin-kokuritsu', 'start': '2026-04-01', 'end': '2026-04-30'},
+    {'title': 'ガラスの迷宮', 'theater': 'teikoku', 'start': '2026-04-05', 'end': '2026-06-30'},
+    {'title': 'さよならの先へ', 'theater': 'teikoku', 'start': '2026-07-01', 'end': '2026-08-31'},
+    {'title': '月曜日のピエロ', 'theater': 'tokyo-takarazuka', 'start': '2026-03-15', 'end': '2026-04-15'},
+    {'title': '約束の庭', 'theater': 'morinomiya-piloti', 'start': '2026-05-01', 'end': '2026-05-31'},
+    {'title': '嵐のあとで', 'theater': 'theatre-orb', 'start': '2026-06-01', 'end': '2026-07-31'},
+    {'title': '夜明けのレッスン', 'theater': 'sunshine', 'start': '2026-03-01', 'end': '2026-12-31'},
+    {'title': '水色の手紙', 'theater': 'tokyo-geijutsu', 'start': '2026-05-10', 'end': '2026-06-10'},
+    {'title': '花と嘘と秘密', 'theater': 'teikoku', 'start': '2026-09-01', 'end': '2026-10-31'},
+    {'title': '路地裏のセレナーデ', 'theater': 'teikoku', 'start': '2026-11-01', 'end': '2026-12-31'},
+    {'title': '雨の日の天使', 'theater': 'theatre-crea', 'start': '2026-04-10', 'end': '2026-05-10'},
+    {'title': '銀色のカーテンコール', 'theater': 'tokyo-takarazuka', 'start': '2026-05-01', 'end': '2026-06-15'},
+    {'title': '虹を渡る人', 'theater': 'nissei', 'start': '2026-06-01', 'end': '2026-07-15'},
+    {'title': '風の忘れもの', 'theater': 'umeda-geijutsu', 'start': '2026-04-01', 'end': '2026-05-15'},
+    {'title': '真夜中の図書館', 'theater': 'meijiza', 'start': '2026-03-20', 'end': '2026-04-20'},
+    {'title': '時をかける旅人', 'theater': 'parco', 'start': '2026-03-01', 'end': '2026-12-31'},
+    {'title': '黄昏のダンスホール', 'theater': 'setagaya-public', 'start': '2026-05-01', 'end': '2026-05-31'},
+    {'title': '海辺の椅子', 'theater': 'hakataza', 'start': '2026-06-01', 'end': '2026-06-30'},
+    {'title': '鏡の中の街', 'theater': 'teikoku', 'start': '2026-03-01', 'end': '2026-03-31'},
+    {'title': '窓辺のアリア', 'theater': 'misonoza', 'start': '2026-07-01', 'end': '2026-07-31'},
 ]
 
 for w in works_data:
@@ -116,4 +126,59 @@ for c in coupons_data:
         Coupon.objects.get_or_create(shop=shop, title=c['title'], defaults=c)
 
 print(f'Coupons: {Coupon.objects.count()}')
+
+# ---- Posters (サンプルポスター画像をWorkに紐付け) ----
+poster_urls = [
+    'https://res.cloudinary.com/dbvisrqec/image/upload/v1773818756/f-01_cymgcg.png',
+    'https://res.cloudinary.com/dbvisrqec/image/upload/v1773818756/f-02_wmbepd.png',
+    'https://res.cloudinary.com/dbvisrqec/image/upload/v1773818756/f-03_sahsdd.png',
+    'https://res.cloudinary.com/dbvisrqec/image/upload/v1773818755/f-04_b5q4ec.png',
+    'https://res.cloudinary.com/dbvisrqec/image/upload/v1773818756/f-05_fex9rf.png',
+    'https://res.cloudinary.com/dbvisrqec/image/upload/v1773818756/f-06_gozpyo.png',
+    'https://res.cloudinary.com/dbvisrqec/image/upload/v1773819696/f-08_enfjal.png',
+    'https://res.cloudinary.com/dbvisrqec/image/upload/v1773819696/f-09_j324h0.png',
+    'https://res.cloudinary.com/dbvisrqec/image/upload/v1773819695/f-10_gmzvwz.png',
+    'https://res.cloudinary.com/dbvisrqec/image/upload/v1773819697/f-11_g3qyro.png',
+    'https://res.cloudinary.com/dbvisrqec/image/upload/v1773819697/f-12_bukcuw.png',
+    'https://res.cloudinary.com/dbvisrqec/image/upload/v1773819698/f-13_duv3ng.png',
+    'https://res.cloudinary.com/dbvisrqec/image/upload/v1773819699/f-14_dcwhkj.png',
+    'https://res.cloudinary.com/dbvisrqec/image/upload/v1773819697/f-15_esedn7.png',
+    'https://res.cloudinary.com/dbvisrqec/image/upload/v1773819704/f-16_j6ydwm.png',
+    'https://res.cloudinary.com/dbvisrqec/image/upload/v1773819699/f-17_egirbj.png',
+    'https://res.cloudinary.com/dbvisrqec/image/upload/v1773819699/f-18_vuy0ag.png',
+    'https://res.cloudinary.com/dbvisrqec/image/upload/v1773819699/f-19_qapv85.png',
+    'https://res.cloudinary.com/dbvisrqec/image/upload/v1773819700/f-20_biaqdp.png',
+    'https://res.cloudinary.com/dbvisrqec/image/upload/v1773819909/f-21_nfqd2b.png',
+]
+poster_public_ids = [
+    'f-01_cymgcg', 'f-02_wmbepd', 'f-03_sahsdd',
+    'f-04_b5q4ec', 'f-05_fex9rf', 'f-06_gozpyo',
+    'f-08_enfjal', 'f-09_j324h0', 'f-10_gmzvwz',
+    'f-11_g3qyro', 'f-12_bukcuw', 'f-13_duv3ng',
+    'f-14_dcwhkj', 'f-15_esedn7', 'f-16_j6ydwm',
+    'f-17_egirbj', 'f-18_vuy0ag', 'f-19_qapv85',
+    'f-20_biaqdp', 'f-21_nfqd2b',
+]
+
+works_all = list(Work.objects.order_by('id'))
+for i, work in enumerate(works_all):
+    url = poster_urls[i % len(poster_urls)]
+    public_id = poster_public_ids[i % len(poster_public_ids)]
+    poster, created = PosterSubmission.objects.get_or_create(
+        work=work,
+        user=admin_user,
+        defaults={
+            'image_url': url,
+            'image_public_id': public_id,
+            'image_width': 600,
+            'image_height': 900,
+            'image_format': 'png',
+            'is_selected': True,
+        },
+    )
+    if not created and not poster.is_selected:
+        poster.is_selected = True
+        poster.save()
+
+print(f'Posters: {PosterSubmission.objects.count()}')
 print('Done!')
