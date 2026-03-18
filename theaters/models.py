@@ -10,6 +10,7 @@ class Theater(models.Model):
     description = models.TextField(blank=True, default='')
     website_url = models.URLField(blank=True, default='')
     image = models.ImageField(upload_to='theaters/', blank=True, null=True)
+    image_url = models.URLField(max_length=500, blank=True, default='')
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

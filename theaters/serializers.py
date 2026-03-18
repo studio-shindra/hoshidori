@@ -9,6 +9,6 @@ class TheaterSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'slug', 'area_name', 'address',
             'nearest_station', 'description', 'website_url',
-            'image', 'is_active', 'created_at', 'updated_at',
+            'image', 'image_url', 'is_active', 'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']

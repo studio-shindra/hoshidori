@@ -22,29 +22,34 @@ class Command(BaseCommand):
 
         # ---- Theaters ----
         theaters_data = [
-            {'name': '新国立劇場', 'slug': 'shin-kokuritsu', 'area_name': '初台', 'address': '東京都渋谷区本町1-1-1'},
-            {'name': '帝国劇場', 'slug': 'teikoku', 'area_name': '日比谷', 'address': '東京都千代田区丸の内3-1-1'},
-            {'name': '東京宝塚劇場', 'slug': 'tokyo-takarazuka', 'area_name': '日比谷', 'address': '東京都千代田区有楽町1-1-3'},
-            {'name': '日生劇場', 'slug': 'nissei', 'area_name': '日比谷', 'address': '東京都千代田区有楽町1-1-1'},
-            {'name': 'シアタークリエ', 'slug': 'theatre-crea', 'area_name': '日比谷', 'address': '東京都千代田区有楽町1-2-1'},
-            {'name': '明治座', 'slug': 'meijiza', 'area_name': '浜町', 'address': '東京都中央区日本橋浜町2-31-1'},
-            {'name': '東京芸術劇場', 'slug': 'tokyo-geijutsu', 'area_name': '池袋', 'address': '東京都豊島区西池袋1-8-1'},
-            {'name': 'PARCO劇場', 'slug': 'parco', 'area_name': '渋谷', 'address': '東京都渋谷区宇田川町15-1'},
-            {'name': '世田谷パブリックシアター', 'slug': 'setagaya-public', 'area_name': '三軒茶屋', 'address': '東京都世田谷区太子堂4-1-1'},
-            {'name': '博多座', 'slug': 'hakataza', 'area_name': '中洲川端', 'address': '福岡県福岡市博多区下川端町2-1'},
-            {'name': '梅田芸術劇場', 'slug': 'umeda-geijutsu', 'area_name': '梅田', 'address': '大阪府大阪市北区茶屋町19-1'},
-            {'name': '御園座', 'slug': 'misonoza', 'area_name': '伏見', 'address': '愛知県名古屋市中区栄1-6-14'},
-            {'name': 'シアターオーブ', 'slug': 'theatre-orb', 'area_name': '渋谷', 'address': '東京都渋谷区神宮前6-20-10'},
-            {'name': '紀伊國屋ホール', 'slug': 'kinokuniya', 'area_name': '新宿', 'address': '東京都新宿区新宿3-17-7'},
-            {'name': '本多劇場', 'slug': 'honda', 'area_name': '下北沢', 'address': '東京都世田谷区北沢2-10-15'},
-            {'name': 'サンシャイン劇場', 'slug': 'sunshine', 'area_name': '池袋', 'address': '東京都豊島区東池袋3-1-4'},
-            {'name': '銀河劇場', 'slug': 'gingeki', 'area_name': '天王洲', 'address': '東京都品川区東品川2-3-16'},
-            {'name': 'シアター1010', 'slug': 'theater-1010', 'area_name': '北千住', 'address': '東京都足立区千住3-92'},
-            {'name': '宝塚大劇場', 'slug': 'takarazuka-daigekijo', 'area_name': '宝塚', 'address': '兵庫県宝塚市栄町1-1-57'},
-            {'name': '森ノ宮ピロティホール', 'slug': 'morinomiya-piloti', 'area_name': '森ノ宮', 'address': '大阪府大阪市中央区森ノ宮中央1-17-5'},
+            {'name': '新国立劇場', 'slug': 'shin-kokuritsu', 'area_name': '初台', 'address': '東京都渋谷区本町1-1-1', 'nearest_station': '京王新線 初台駅 中央口直結', 'description': '演劇・オペラ・バレエの3つの専用劇場を擁する国立の舞台芸術センター。オペラパレス・中劇場・小劇場の3ホールで構成。', 'website_url': 'https://www.nntt.jac.go.jp/'},
+            {'name': '帝国劇場', 'slug': 'teikoku', 'area_name': '日比谷', 'address': '東京都千代田区丸の内3-1-1', 'nearest_station': '日比谷駅 B3出口 徒歩3分 / 有楽町駅 徒歩5分', 'description': '1911年開場の日本初の西洋式演劇劇場。東宝が運営し、ミュージカルを中心に上演。客席数約1,900席。', 'website_url': 'https://www.tohostage.com/teigeki/'},
+            {'name': '東京宝塚劇場', 'slug': 'tokyo-takarazuka', 'area_name': '日比谷', 'address': '東京都千代田区有楽町1-1-3', 'nearest_station': '日比谷駅 A5出口 徒歩1分 / 有楽町駅 徒歩5分', 'description': '宝塚歌劇団の東京公演専用劇場。2,065席を有し、華やかな舞台を展開。', 'website_url': 'https://kageki.hankyu.co.jp/theater/tokyo/'},
+            {'name': '日生劇場', 'slug': 'nissei', 'area_name': '日比谷', 'address': '東京都千代田区有楽町1-1-1', 'nearest_station': '日比谷駅 A13出口 徒歩1分 / 有楽町駅 徒歩5分', 'description': '1963年開場。村野藤吾設計の美しい内装で知られ、ミュージカル・オペラ・演劇を上演。客席数約1,330席。', 'website_url': 'https://www.nissaytheatre.or.jp/'},
+            {'name': 'シアタークリエ', 'slug': 'theatre-crea', 'area_name': '日比谷', 'address': '東京都千代田区有楽町1-2-1', 'nearest_station': '日比谷駅 A3出口 徒歩1分 / 有楽町駅 徒歩3分', 'description': '東宝が運営するミュージカル・演劇専用劇場。客席数609席のコンパクトな空間で臨場感ある舞台を提供。', 'website_url': 'https://www.tohostage.com/theatre_crea/'},
+            {'name': '明治座', 'slug': 'meijiza', 'area_name': '浜町', 'address': '東京都中央区日本橋浜町2-31-1', 'nearest_station': '都営新宿線 浜町駅 A2出口 徒歩2分', 'description': '1873年創業の伝統ある劇場。歌舞伎からミュージカル、コンサートまで幅広く上演。客席数約1,368席。', 'website_url': 'https://www.meijiza.co.jp/'},
+            {'name': '東京芸術劇場', 'slug': 'tokyo-geijutsu', 'area_name': '池袋', 'address': '東京都豊島区西池袋1-8-1', 'nearest_station': 'JR・東京メトロ・西武・東武 池袋駅 西口 徒歩2分', 'description': '大ホール・プレイハウス・シアターイースト・シアターウエストの4ホールを擁する総合芸術文化施設。', 'website_url': 'https://www.geigeki.jp/'},
+            {'name': 'PARCO劇場', 'slug': 'parco', 'area_name': '渋谷', 'address': '東京都渋谷区宇田川町15-1 渋谷PARCO 8F', 'nearest_station': '渋谷駅 ハチ公口 徒歩7分', 'description': '渋谷PARCOの8階に位置する636席の劇場。演劇・ミュージカルを中心に先鋭的な舞台作品を上演。', 'website_url': 'https://stage.parco.jp/'},
+            {'name': '世田谷パブリックシアター', 'slug': 'setagaya-public', 'area_name': '三軒茶屋', 'address': '東京都世田谷区太子堂4-1-1 キャロットタワー内', 'nearest_station': '東急田園都市線・世田谷線 三軒茶屋駅 直結', 'description': '主劇場とシアタートラムの2ホールを擁する公共劇場。現代演劇・ダンスの創造と発信の拠点。', 'website_url': 'https://setagaya-pt.jp/'},
+            {'name': '博多座', 'slug': 'hakataza', 'area_name': '中洲川端', 'address': '福岡県福岡市博多区下川端町2-1', 'nearest_station': '地下鉄空港線 中洲川端駅 7番出口直結', 'description': '九州最大級の演劇専用劇場。歌舞伎・ミュージカル・演劇など多彩な演目を上演。客席数約1,500席。', 'website_url': 'https://www.hakataza.co.jp/'},
+            {'name': '梅田芸術劇場', 'slug': 'umeda-geijutsu', 'area_name': '梅田', 'address': '大阪府大阪市北区茶屋町19-1', 'nearest_station': '阪急 大阪梅田駅 茶屋町口 徒歩3分', 'description': 'メインホール（1,905席）とシアター・ドラマシティ（898席）の2ホールを擁する西日本最大級の劇場。', 'website_url': 'https://www.umegei.com/'},
+            {'name': '御園座', 'slug': 'misonoza', 'area_name': '伏見', 'address': '愛知県名古屋市中区栄1-6-14', 'nearest_station': '地下鉄東山線・鶴舞線 伏見駅 1番出口 徒歩2分', 'description': '1896年創業の名古屋を代表する劇場。2018年リニューアル。歌舞伎・ミュージカルを中心に上演。客席数約1,300席。', 'website_url': 'https://www.misonoza.co.jp/'},
+            {'name': 'シアターオーブ', 'slug': 'theatre-orb', 'area_name': '渋谷', 'address': '東京都渋谷区神南2-21-1 渋谷ヒカリエ 11F', 'nearest_station': '渋谷駅 東口・宮益坂口 徒歩5分（ヒカリエ直結）', 'description': '渋谷ヒカリエ11階に位置する約1,972席の劇場。海外ミュージカルの来日公演を中心に上演。', 'website_url': 'https://theatre-orb.com/'},
+            {'name': '紀伊國屋ホール', 'slug': 'kinokuniya', 'area_name': '新宿', 'address': '東京都新宿区新宿3-17-7 紀伊國屋書店新宿本店4F', 'nearest_station': 'JR新宿駅 東口 徒歩5分', 'description': '紀伊國屋書店新宿本店4階にある客席数418席の劇場。1964年開場以来、数々の名作を生み出した演劇の殿堂。', 'website_url': 'https://www.kinokuniya.co.jp/contents/kinokuniya-hall/'},
+            {'name': '本多劇場', 'slug': 'honda', 'area_name': '下北沢', 'address': '東京都世田谷区北沢2-10-15', 'nearest_station': '小田急線・京王井の頭線 下北沢駅 南口 徒歩2分', 'description': '1982年開場。下北沢の演劇文化を象徴する386席の劇場。小劇場演劇の聖地として知られる。', 'website_url': 'http://www.honda-geki.com/'},
+            {'name': 'サンシャイン劇場', 'slug': 'sunshine', 'area_name': '池袋', 'address': '東京都豊島区東池袋3-1-4 サンシャインシティ文化会館4F', 'nearest_station': '東京メトロ有楽町線 東池袋駅 6・7番出口 徒歩3分', 'description': 'サンシャインシティ内にある客席数約808席の劇場。演劇・ミュージカル・2.5次元舞台を中心に上演。', 'website_url': 'https://sunshine-theatre.co.jp/'},
+            {'name': '銀河劇場', 'slug': 'gingeki', 'area_name': '天王洲', 'address': '東京都品川区東品川2-3-16 シーフォートスクエア2F', 'nearest_station': 'りんかい線 天王洲アイル駅 B出口 徒歩1分 / 東京モノレール 天王洲アイル駅 徒歩5分', 'description': '天王洲アイルに位置する客席数746席の劇場。ミュージカル・2.5次元舞台を中心に上演。', 'website_url': 'https://www.gingeki.jp/'},
+            {'name': 'シアター1010', 'slug': 'theater-1010', 'area_name': '北千住', 'address': '東京都足立区千住3-92 千住ミルディスⅠ番館 10F・11F', 'nearest_station': 'JR・東京メトロ・東武・つくばエクスプレス 北千住駅 西口 徒歩2分', 'description': '北千住マルイ上層階にある公共ホール。大ホール（701席）と小ホールを併設。演劇・音楽・ダンスなど多目的に使用。', 'website_url': 'https://www.t1010.jp/'},
+            {'name': '宝塚大劇場', 'slug': 'takarazuka-daigekijo', 'area_name': '宝塚', 'address': '兵庫県宝塚市栄町1-1-57', 'nearest_station': '阪急宝塚線 宝塚駅 徒歩10分 / JR宝塚線 宝塚駅 徒歩10分', 'description': '宝塚歌劇団の本拠地。2,550席を有する大劇場で、花・月・雪・星・宙の5組が公演。', 'website_url': 'https://kageki.hankyu.co.jp/theater/takarazuka/'},
+            {'name': '森ノ宮ピロティホール', 'slug': 'morinomiya-piloti', 'area_name': '森ノ宮', 'address': '大阪府大阪市中央区森ノ宮中央1-17-5', 'nearest_station': 'JR環状線・地下鉄中央線 森ノ宮駅 徒歩3分', 'description': '大阪城公園に隣接する多目的ホール。客席数約1,030席。演劇・コンサート・イベントに幅広く使用。', 'website_url': 'https://www.piloti-hall.jp/'},
         ]
         for t in theaters_data:
-            Theater.objects.get_or_create(slug=t['slug'], defaults=t)
+            obj, created = Theater.objects.get_or_create(slug=t['slug'], defaults=t)
+            if not created:
+                for key, val in t.items():
+                    if key != 'slug':
+                        setattr(obj, key, val)
+                obj.save()
         self.stdout.write(f'Theaters: {Theater.objects.count()}')
 
         # ---- Works + Performances ----
