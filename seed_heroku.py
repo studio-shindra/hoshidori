@@ -86,46 +86,9 @@ for w in works_data:
         )
 print(f'Works: {Work.objects.count()}, Performances: {Performance.objects.count()}')
 
-# ---- Shops ----
-shops_data = [
-    {'name': 'Paul 新宿南口店', 'slug': 'paul-shinjuku', 'category': 'カフェ・ベーカリー', 'address': '東京都渋谷区代々木2-7-7', 'nearest_station': '新宿駅', 'distance_note': '新国立劇場から徒歩8分', 'theaters': ['shin-kokuritsu']},
-    {'name': 'タリーズコーヒー 初台店', 'slug': 'tullys-hatsudai', 'category': 'カフェ', 'address': '東京都渋谷区初台1-9-1', 'nearest_station': '初台駅', 'distance_note': '新国立劇場から徒歩2分', 'theaters': ['shin-kokuritsu']},
-    {'name': '鳥貴族 初台店', 'slug': 'torikizoku-hatsudai', 'category': '居酒屋', 'address': '東京都渋谷区初台1-12-5', 'nearest_station': '初台駅', 'distance_note': '新国立劇場から徒歩3分', 'theaters': ['shin-kokuritsu']},
-    {'name': 'サイゼリヤ オペラシティ店', 'slug': 'saizeriya-operacity', 'category': 'レストラン', 'address': '東京都新宿区西新宿3-20-2', 'nearest_station': '初台駅', 'distance_note': '新国立劇場直結', 'theaters': ['shin-kokuritsu']},
-    {'name': 'ドトールコーヒー 初台店', 'slug': 'doutor-hatsudai', 'category': 'カフェ', 'address': '東京都新宿区西新宿3-20-2 B1F', 'nearest_station': '初台駅', 'distance_note': '新国立劇場直結', 'theaters': ['shin-kokuritsu']},
-    {'name': 'カフェ・ド・クリエ 日比谷店', 'slug': 'cafe-de-crie-hibiya', 'category': 'カフェ', 'address': '東京都千代田区有楽町1-2-2', 'nearest_station': '日比谷駅', 'distance_note': '帝国劇場から徒歩2分', 'theaters': ['teikoku', 'nissei', 'theatre-crea', 'tokyo-takarazuka']},
-    {'name': 'ペニンシュラ東京 ザ・ロビー', 'slug': 'peninsula-lobby', 'category': 'ラウンジ', 'address': '東京都千代田区有楽町1-8-1', 'nearest_station': '日比谷駅', 'distance_note': '帝国劇場から徒歩3分', 'theaters': ['teikoku', 'nissei']},
-    {'name': 'ビヤホール ライオン 銀座七丁目店', 'slug': 'lion-ginza', 'category': 'ビアホール', 'address': '東京都中央区銀座7-9-20', 'nearest_station': '銀座駅', 'distance_note': '帝国劇場から徒歩10分', 'theaters': ['teikoku']},
-    {'name': 'スターバックス 池袋西口店', 'slug': 'starbucks-ikebukuro', 'category': 'カフェ', 'address': '東京都豊島区西池袋1-1-25', 'nearest_station': '池袋駅', 'distance_note': '東京芸術劇場から徒歩1分', 'theaters': ['tokyo-geijutsu', 'sunshine']},
-    {'name': 'サクラカフェ 池袋', 'slug': 'sakura-cafe-ikebukuro', 'category': 'カフェ・レストラン', 'address': '東京都豊島区池袋2-39-10', 'nearest_station': '池袋駅', 'distance_note': '東京芸術劇場から徒歩5分', 'theaters': ['tokyo-geijutsu']},
-    {'name': 'ヴィレッジヴァンガード ダイナー 下北沢', 'slug': 'vv-diner-shimokita', 'category': 'ダイナー', 'address': '東京都世田谷区北沢2-26-15', 'nearest_station': '下北沢駅', 'distance_note': '本多劇場から徒歩3分', 'theaters': ['honda']},
-    {'name': '珈琲館 渋谷店', 'slug': 'kohikan-shibuya', 'category': 'カフェ', 'address': '東京都渋谷区宇田川町15-1', 'nearest_station': '渋谷駅', 'distance_note': 'PARCO劇場から徒歩1分', 'theaters': ['parco', 'theatre-orb']},
-]
-
-for s in shops_data:
-    theater_slugs = s.pop('theaters')
-    shop, _ = Shop.objects.get_or_create(slug=s['slug'], defaults=s)
-    for ts in theater_slugs:
-        theater = Theater.objects.filter(slug=ts).first()
-        if theater:
-            TheaterShop.objects.get_or_create(theater=theater, shop=shop)
-
-print(f'Shops: {Shop.objects.count()}, TheaterShops: {TheaterShop.objects.count()}')
-
-# ---- Coupons ----
-coupons_data = [
-    {'shop': 'saizeriya-operacity', 'title': '観劇割 全品5%OFF', 'discount_text': '全品5%OFF', 'description': '観劇チケットの半券ご提示で割引', 'conditions': '注文時に半券をご提示ください\n1グループ1回まで'},
-    {'shop': 'tullys-hatsudai', 'title': 'ドリンク50円引き', 'discount_text': '50円OFF', 'description': '観劇チケット提示でドリンク割引', 'conditions': 'チケット半券ご提示'},
-    {'shop': 'cafe-de-crie-hibiya', 'title': 'ケーキセット100円引き', 'discount_text': '100円OFF', 'description': '日比谷エリアの劇場チケット半券で割引', 'conditions': '当日の半券をご提示'},
-    {'shop': 'sakura-cafe-ikebukuro', 'title': 'ランチ10%OFF', 'discount_text': '10%OFF', 'description': '池袋エリアの劇場チケットで割引', 'conditions': '当日の半券をご提示\nランチタイム限定'},
-]
-
-for c in coupons_data:
-    shop = Shop.objects.filter(slug=c.pop('shop')).first()
-    if shop:
-        Coupon.objects.get_or_create(shop=shop, title=c['title'], defaults=c)
-
-print(f'Coupons: {Coupon.objects.count()}')
+# ---- Shops + Coupons (seed_shops.py を実行) ----
+# django.setup() は冪等なので二重呼び出しOK
+exec(open(os.path.join(os.path.dirname(__file__) or '.', 'seed_shops.py')).read())
 
 # ---- Posters (サンプルポスター画像をWorkに紐付け) ----
 poster_urls = [
