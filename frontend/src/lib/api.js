@@ -44,6 +44,7 @@ async function request(method, path, body = null) {
   if (isCapacitor) {
     // Mobile: Token auth (no CSRF)
     const token = getToken()
+    console.log('[API]', method, path, 'token=', token ? token.slice(0, 8) + '...' : null)
     if (token) {
       opts.headers['Authorization'] = `Token ${token}`
     }
@@ -119,7 +120,7 @@ function invalidateCache() {
   cache.clear()
 }
 
-export { isCapacitor, setToken, clearToken }
+export { isCapacitor, getToken, setToken, clearToken }
 
 export const api = {
   get: async (path) => {

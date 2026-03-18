@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { api, isCapacitor, setToken, clearToken } from '@/lib/api'
+import { api, isCapacitor, getToken, setToken, clearToken } from '@/lib/api'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
@@ -11,6 +11,11 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function fetchMe() {
     try {
+      if (isCapacitor && !getToken()) {
+        // Token がなければ未ログイン（旧 Session に依存しない）
+        user.value = null
+        return
+      }
       const path = isCapacitor ? '/api/mobile/auth/me/' : '/api/auth/me/'
       user.value = await api.get(path)
     } catch {
@@ -22,7 +27,9 @@ export const useAuthStore = defineStore('auth', () => {
   async function login(username, password) {
     if (isCapacitor) {
       const data = await api.post('/api/mobile/auth/login/', { username, password })
+      console.log('[AUTH] login response token=', data.token ? data.token.slice(0, 8) + '...' : null)
       setToken(data.token)
+      console.log('[AUTH] saved token=', getToken() ? getToken().slice(0, 8) + '...' : null)
       user.value = data.user
       return data
     }
