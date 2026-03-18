@@ -103,6 +103,21 @@ class ShopClickLog(models.Model):
         ordering = ['-created_at']
 
 
+class ShopWantToGo(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='want_to_go_shops',
+    )
+    shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name='want_to_go')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['user', 'shop']
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.user} → {self.shop.name}'
+
+
 class ShopPlan(models.Model):
     name = models.CharField(max_length=100)
     monthly_price = models.IntegerField()

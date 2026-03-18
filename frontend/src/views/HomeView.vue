@@ -3,10 +3,11 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { api } from '@/lib/api'
-import { IconMask, IconTicket, IconStar, IconCoffee, IconMessage } from '@tabler/icons-vue'
+import { IconMask, IconTicket, IconStar, IconCoffee, IconMessage, IconHeart } from '@tabler/icons-vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import WorkCard from '@/components/WorkCard.vue'
 import LogListItem from '@/components/LogListItem.vue'
+import ShopCard from '@/components/ShopCard.vue'
 import AppLoader from '@/components/AppLoader.vue'
 
 const auth = useAuthStore()
@@ -14,6 +15,7 @@ const loading = ref(true)
 const plannedLogs = ref([])
 const watchedLogs = ref([])
 const featuredShops = ref([])
+const wantToGoShops = ref([])
 const latestReviews = ref([])
 
 const plannedCount = computed(() => plannedLogs.value.length)
@@ -45,6 +47,19 @@ async function fetchFeaturedShops() {
   }
 }
 
+async function fetchWantToGoShops() {
+  try {
+    const data = await api.get('/api/shops/want-to-go/')
+    wantToGoShops.value = data.results || data
+  } catch {
+    /* empty */
+  }
+}
+
+function onWantToGoChanged() {
+  fetchWantToGoShops()
+}
+
 async function fetchLatestReviews() {
   try {
     const data = await api.get('/api/reviews/latest/')
@@ -64,6 +79,7 @@ watch(
   (val) => {
     if (val) {
       fetchData()
+      fetchWantToGoShops()
     } else {
       loading.value = false
     }
@@ -100,7 +116,7 @@ watch(
         <section class="mb-4">
           <h2 class="d-flex align-items-center gap-2 fw-bold mb-3 fs-2">
             <IconTicket :size="20" />
-            Clip
+            観る
             <span v-if="plannedCount" class="count-circle">{{ plannedCount }}</span>
           </h2>
           <div v-if="plannedLogs.length" class="d-flex gap-2 overflow-auto scroll-hide">
@@ -124,7 +140,7 @@ watch(
           <div class="d-flex align-items-center justify-content-between mb-3">
             <h2 class="d-flex align-items-center gap-2 fw-bold fs-2 mb-0">
               <IconStar :size="20" />
-              Watched
+              観た
               <span v-if="watchedCount" class="count-circle">{{ watchedCount }}</span>
             </h2>
             <RouterLink v-if="watchedCount > 12" to="/mypage" class="text-secondary small text-decoration-none">すべて見る →</RouterLink>
@@ -153,6 +169,23 @@ watch(
       </template>
     </template>
 
+    <!-- 行きたい店 (ログイン中のみ) -->
+    <section v-if="auth.isAuthenticated" class="mb-4">
+      <h2 class="d-flex align-items-center gap-2 fw-bold mb-3 fs-2">
+        <IconHeart :size="20" />
+        観劇後・観劇前に
+      </h2>
+      <div v-if="wantToGoShops.length" class="d-flex gap-2 overflow-auto scroll-hide">
+        <div v-for="shop in wantToGoShops" :key="shop.id" class="flex-shrink-0 want-to-go-card-wrap">
+          <ShopCard :shop="shop" @want-to-go-changed="onWantToGoChanged" />
+        </div>
+      </div>
+      <div v-else class="card bg-dark border-0 p-4 text-center">
+        <p class="text-secondary small mb-2">気になるお店をハートで保存しよう</p>
+        <RouterLink to="/shops" class="btn btn-sm btn-outline-secondary">お店を探す</RouterLink>
+      </div>
+    </section>
+
     <!-- おすすめの店 (ログイン不問) -->
     <section v-if="featuredShops.length" class="mb-4">
       <div class="d-flex align-items-center justify-content-between mb-3">
@@ -163,31 +196,9 @@ watch(
         <RouterLink to="/shops" class="text-secondary small text-decoration-none">すべて見る →</RouterLink>
       </div>
       <div class="d-flex gap-2 overflow-auto scroll-hide">
-        <RouterLink
-          v-for="shop in featuredShops"
-          :key="shop.id"
-          :to="`/shops/${shop.slug}`"
-          class="text-decoration-none flex-shrink-0"
-        >
-          <div class="featured-shop-card">
-            <div class="featured-shop-img-wrap">
-              <img
-                v-if="shop.image_src"
-                :src="shop.image_src"
-                :alt="shop.name"
-                class="featured-shop-img"
-              />
-              <div v-else class="featured-shop-placeholder d-flex align-items-center justify-content-center">
-                <IconCoffee :size="32" class="text-secondary" />
-              </div>
-            </div>
-            <div class="p-2 bg-dark">
-              <div class="featured-shop-name text-white text-truncate">{{ shop.name }}</div>
-              <div v-if="shop.category" class="text-secondary small text-truncate">{{ shop.category }}</div>
-              <div v-if="shop.distance_note" class="text-secondary small text-truncate">{{ shop.distance_note }}</div>
-            </div>
-          </div>
-        </RouterLink>
+        <div v-for="shop in featuredShops" :key="shop.id" class="flex-shrink-0 want-to-go-card-wrap">
+          <ShopCard :shop="shop" @want-to-go-changed="onWantToGoChanged" />
+        </div>
       </div>
     </section>
     <section v-else-if="!loading" class="mb-4">
@@ -237,6 +248,9 @@ watch(
 </template>
 
 <style scoped>
+.want-to-go-card-wrap {
+  width: 200px;
+}
 .count-circle {
   width: 28px;
   height: 28px;
@@ -264,31 +278,6 @@ watch(
 .watched-grid :deep(.card-sm) {
   width: 72px;
   flex-shrink: 0;
-}
-.featured-shop-card {
-  width: 200px;
-  background: #1a1a1a;
-  border-radius: 10px;
-  overflow: hidden;
-}
-.featured-shop-img-wrap {
-  width: 200px;
-  height: 140px;
-  overflow: hidden;
-}
-.featured-shop-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.featured-shop-placeholder {
-  width: 100%;
-  height: 100%;
-  background: #2a2a2a;
-}
-.featured-shop-name {
-  font-size: 0.85rem;
-  font-weight: 600;
 }
 .review-card {
   width: min(calc(100vw - 40px), 320px);

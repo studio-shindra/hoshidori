@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from .models import (
     Coupon, CouponUseLog, Shop, ShopClickLog,
-    ShopPlan, ShopSubscription, TheaterShop,
+    ShopPlan, ShopSubscription, ShopWantToGo, TheaterShop,
 )
 
 
@@ -37,6 +37,13 @@ class CouponUseLogAdmin(admin.ModelAdmin):
 class ShopClickLogAdmin(admin.ModelAdmin):
     list_display = ['shop', 'user', 'source_type', 'clicked_target', 'created_at']
     list_filter = ['source_type', 'clicked_target']
+
+
+@admin.register(ShopWantToGo)
+class ShopWantToGoAdmin(admin.ModelAdmin):
+    list_display = ['user', 'shop', 'created_at']
+    list_filter = ['created_at']
+    search_fields = ['user__username', 'shop__name']
 
 
 @admin.register(ShopPlan)

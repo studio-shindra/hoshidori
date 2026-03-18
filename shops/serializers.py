@@ -6,6 +6,7 @@ from .models import Coupon, CouponUseLog, Shop
 class ShopSerializer(serializers.ModelSerializer):
     image_src = serializers.SerializerMethodField()
     coupon_text = serializers.SerializerMethodField()
+    is_want_to_go = serializers.SerializerMethodField()
 
     class Meta:
         model = Shop
@@ -16,7 +17,16 @@ class ShopSerializer(serializers.ModelSerializer):
             'phone_number', 'opening_hours_text', 'benefit_text',
             'image_url', 'image_src', 'coupon_text',
             'is_featured', 'is_active', 'created_at', 'updated_at',
+            'is_want_to_go',
         ]
+
+    def get_is_want_to_go(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return False
+        if hasattr(obj, '_is_want_to_go'):
+            return obj._is_want_to_go
+        return obj.want_to_go.filter(user=request.user).exists()
 
     def get_coupon_text(self, obj):
         coupons = getattr(obj, '_prefetched_active_coupons', None)

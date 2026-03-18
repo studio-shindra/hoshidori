@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
-import { IconCamera } from '@tabler/icons-vue'
+import { IconCamera, IconX } from '@tabler/icons-vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
@@ -58,6 +58,20 @@ async function uploadAvatar(e) {
   }
 }
 
+async function removeAvatar() {
+  avatarUploading.value = true
+  try {
+    const saved = await api.patch('/api/auth/me/', { avatar_url: '' })
+    avatarUrl.value = ''
+    auth.user.avatar_url = saved.avatar_url
+  } catch {
+    message.value = '画像の削除に失敗しました'
+    messageType.value = 'danger'
+  } finally {
+    avatarUploading.value = false
+  }
+}
+
 async function save() {
   saving.value = true
   message.value = ''
@@ -97,6 +111,13 @@ async function save() {
           <div class="avatar-edit-badge">
             <IconCamera :size="12" />
           </div>
+          <button
+            v-if="avatarUrl && !avatarUploading"
+            class="avatar-delete-badge"
+            @click="removeAvatar"
+          >
+            <IconX :size="12" />
+          </button>
           <input ref="fileInput" type="file" accept="image/*" class="d-none" @change="uploadAvatar" />
         </div>
         <div>
@@ -160,5 +181,20 @@ async function save() {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+.avatar-delete-badge{
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: white;
+  color: black;
+  border-radius: 50%;
+  aspect-ratio: 1/1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  padding: 2px;
 }
 </style>
