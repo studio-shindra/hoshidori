@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # 3rd party
     'rest_framework',
+    'knox',
     'corsheaders',
     'cloudinary_storage',
     'cloudinary',
@@ -39,7 +40,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'config.middleware.CapacitorCsrfMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -105,6 +106,7 @@ AUTH_USER_MODEL = 'accounts.User'
 # DRF
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
+        'knox.auth.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
@@ -146,6 +148,12 @@ CSRF_TRUSTED_ORIGINS = [
     'capacitor://localhost',
     'ionic://localhost',
 ]
+
+# Knox (Mobile token auth)
+REST_KNOX = {
+    'TOKEN_TTL': None,  # トークン無期限（明示的ログアウトで失効）
+    'AUTO_REFRESH': False,
+}
 
 # Heroku SSL
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

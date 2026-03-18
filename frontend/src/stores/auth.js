@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { api } from '@/lib/api'
+import { api, isCapacitor, setToken, clearToken } from '@/lib/api'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
@@ -11,26 +11,49 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function fetchMe() {
     try {
-      user.value = await api.get('/api/auth/me/')
+      const path = isCapacitor ? '/api/mobile/auth/me/' : '/api/auth/me/'
+      user.value = await api.get(path)
     } catch {
       user.value = null
+      if (isCapacitor) clearToken()
     }
   }
 
   async function login(username, password) {
+    if (isCapacitor) {
+      const data = await api.post('/api/mobile/auth/login/', { username, password })
+      setToken(data.token)
+      user.value = data.user
+      return data
+    }
     const data = await api.post('/api/auth/login/', { username, password })
     user.value = data.user || data
     return data
   }
 
   async function register(payload) {
+    if (isCapacitor) {
+      const data = await api.post('/api/mobile/auth/register/', payload)
+      setToken(data.token)
+      user.value = data.user
+      return data
+    }
     const data = await api.post('/api/auth/register/', payload)
     user.value = data.user || data
     return data
   }
 
   async function logout() {
-    await api.post('/api/auth/logout/')
+    if (isCapacitor) {
+      try {
+        await api.post('/api/mobile/auth/logout/')
+      } catch {
+        /* token already invalid */
+      }
+      clearToken()
+    } else {
+      await api.post('/api/auth/logout/')
+    }
     user.value = null
   }
 

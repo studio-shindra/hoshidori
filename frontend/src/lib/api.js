@@ -4,6 +4,27 @@ const BASE = isCapacitor
   ? 'https://hoshidori-67b44bed2d10.herokuapp.com'
   : (import.meta.env.VITE_API_BASE_URL || '')
 
+// --- Token storage (Capacitor only) ---
+const TOKEN_KEY = 'hoshidori_token'
+
+function getToken() {
+  if (!isCapacitor) return null
+  return localStorage.getItem(TOKEN_KEY)
+}
+
+function setToken(token) {
+  if (token) {
+    localStorage.setItem(TOKEN_KEY, token)
+  } else {
+    localStorage.removeItem(TOKEN_KEY)
+  }
+}
+
+function clearToken() {
+  localStorage.removeItem(TOKEN_KEY)
+}
+
+// --- CSRF (Web only) ---
 function getCookie(name) {
   const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)')
   return v ? v.pop() : ''
@@ -19,12 +40,20 @@ async function request(method, path, body = null) {
     opts.headers['Content-Type'] = 'application/json'
     opts.body = JSON.stringify(body)
   }
-  if (method !== 'GET') {
-    opts.headers['X-CSRFToken'] = getCookie('csrftoken')
-  }
+
   if (isCapacitor) {
-    opts.headers['X-Requested-With'] = 'capacitor'
+    // Mobile: Token auth (no CSRF)
+    const token = getToken()
+    if (token) {
+      opts.headers['Authorization'] = `Token ${token}`
+    }
+  } else {
+    // Web: Session + CSRF
+    if (method !== 'GET') {
+      opts.headers['X-CSRFToken'] = getCookie('csrftoken')
+    }
   }
+
   const res = await fetch(`${BASE}${path}`, opts)
   if (!res.ok) {
     const err = new Error(`API ${res.status}`)
@@ -41,9 +70,14 @@ async function request(method, path, body = null) {
 }
 
 async function upload(path, formData) {
-  const headers = { 'X-CSRFToken': getCookie('csrftoken') }
+  const headers = {}
   if (isCapacitor) {
-    headers['X-Requested-With'] = 'capacitor'
+    const token = getToken()
+    if (token) {
+      headers['Authorization'] = `Token ${token}`
+    }
+  } else {
+    headers['X-CSRFToken'] = getCookie('csrftoken')
   }
   const res = await fetch(`${BASE}${path}`, {
     method: 'POST',
@@ -84,6 +118,8 @@ function setCache(path, data) {
 function invalidateCache() {
   cache.clear()
 }
+
+export { isCapacitor, setToken, clearToken }
 
 export const api = {
   get: async (path) => {
