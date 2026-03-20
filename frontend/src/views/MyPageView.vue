@@ -184,6 +184,10 @@ async function logout() {
               <div class="d-flex flex-column gap-2">
                 <div class="fw-medium small">{{ log.work_title }}</div>
                 <div class="d-flex gap-2">
+                  <input v-model="editWatchedOn" type="date" class="form-control bg-dark border-secondary text-light form-control-sm" />
+                  <input v-model="editWatchedTime" type="time" class="form-control bg-dark border-secondary text-light form-control-sm" style="max-width: 7rem" />
+                </div>
+                <div class="d-flex gap-2">
                   <button class="btn btn-primary-rose btn-sm flex-fill" :disabled="editLoading" @click="saveEdit(log)">{{ editLoading ? '保存中...' : '保存' }}</button>
                   <button class="btn btn-dark btn-sm flex-fill text-secondary" @click="cancelEdit">キャンセル</button>
                   <button class="btn btn-sm text-danger" @click="deleteLog(log, planned)"><IconTrash :size="14" /></button>
@@ -196,6 +200,8 @@ async function logout() {
                 :poster-url="log.poster_url"
                 :work-title="log.work_title"
                 :work-slug="log.work_slug"
+                :watched-on="log.watched_on"
+                :watched-time="log.watched_time"
                 :theater-name="log.theater_name"
               >
                 <template #action>

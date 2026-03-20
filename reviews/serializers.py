@@ -148,10 +148,6 @@ class ViewingLogSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {'watched_on': 'status が watched の場合、watched_on は必須です。'}
             )
-        if log_status == 'planned':
-            if 'watched_on' not in data:
-                data['watched_on'] = None
-            data['watched_time'] = None
         return data
 
 
