@@ -14,7 +14,13 @@ import {
   IconMapPin,
   IconPlus,
   IconFlag,
+  IconX,
 } from '@tabler/icons-vue'
+
+const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
+const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
+const MAX_FILE_SIZE = 10 * 1024 * 1024
+const MAX_IMAGES = 4
 import ShopCard from '@/components/ShopCard.vue'
 import PosterImage from '@/components/PosterImage.vue'
 import { ratingLabel, ratingIcon } from '@/lib/rating'
@@ -48,6 +54,47 @@ const logSpoiler = ref(false)
 const logError = ref('')
 const logLoading = ref(false)
 const logSuccess = ref('')
+const logImages = ref([])
+const logImageInput = ref(null)
+
+function onLogImageSelect(e) {
+  const files = Array.from(e.target.files)
+  for (const file of files) {
+    if (logImages.value.length >= MAX_IMAGES) break
+    if (!file.type.startsWith('image/')) continue
+    if (file.size > MAX_FILE_SIZE) continue
+    logImages.value.push({ file, preview: URL.createObjectURL(file) })
+  }
+  e.target.value = ''
+}
+
+function removeLogImage(index) {
+  URL.revokeObjectURL(logImages.value[index].preview)
+  logImages.value.splice(index, 1)
+}
+
+async function uploadLogImages(logId) {
+  for (let i = 0; i < logImages.value.length; i++) {
+    const { file } = logImages.value[i]
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('upload_preset', UPLOAD_PRESET)
+    const cloudRes = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+      { method: 'POST', body: fd }
+    )
+    if (!cloudRes.ok) continue
+    const d = await cloudRes.json()
+    await api.post(`/api/viewing-logs/${logId}/images/`, {
+      image_url: d.secure_url,
+      image_public_id: d.public_id,
+      image_width: d.width,
+      image_height: d.height,
+      image_format: d.format,
+      order: i,
+    })
+  }
+}
 
 const workReviews = computed(() => reviews.value)
 
@@ -150,7 +197,11 @@ async function submitLog() {
     if (logWatchedOn.value) {
       body.watched_on = logWatchedOn.value
     }
-    await api.post('/api/viewing-logs/', body)
+    const log = await api.post('/api/viewing-logs/', body)
+    // 画像アップロード（観た時のみ）
+    if (logImages.value.length && logStatus.value === 'watched') {
+      await uploadLogImages(log.id)
+    }
     // 感想があればレビューも同時作成
     if (logMemo.value.trim()) {
       const reviewBody = {
@@ -167,6 +218,7 @@ async function submitLog() {
     logWatchedOn.value = ''
     logRating.value = ''
     logSpoiler.value = false
+    logImages.value = []
   } catch (e) {
     logError.value = e.data ? Object.values(e.data).flat().join(' ') : '保存に失敗しました'
   } finally {
@@ -272,6 +324,19 @@ async function toggleLike(review) {
             <textarea v-model="logMemo" :rows="logStatus === 'watched' ? 4 : 2" placeholder="感想やメモ（任意）" class="form-control bg-dark border-secondary text-light form-control-sm"></textarea>
           </div>
           <template v-if="logStatus === 'watched'">
+            <div>
+              <label class="form-label tiny text-secondary">写真（最大{{ MAX_IMAGES }}枚）</label>
+              <input ref="logImageInput" type="file" accept="image/*" multiple class="d-none" @change="onLogImageSelect" />
+              <div class="d-flex gap-2 flex-wrap">
+                <div v-for="(img, i) in logImages" :key="i" class="img-thumb">
+                  <img :src="img.preview" class="w-100 h-100 object-fit-cover rounded" />
+                  <button class="img-thumb-remove" type="button" @click="removeLogImage(i)"><IconX :size="12" /></button>
+                </div>
+                <button v-if="logImages.length < MAX_IMAGES" type="button" class="img-thumb img-thumb-add" @click="logImageInput?.click()">
+                  <IconCamera :size="20" class="text-secondary" />
+                </button>
+              </div>
+            </div>
             <div>
               <label class="form-label tiny text-secondary">評価（任意）</label>
               <RatingButtons v-model="logRating" />
@@ -449,6 +514,40 @@ async function toggleLike(review) {
     color: #f43f5e;
     background: rgba(0, 0, 0, 0.7);
   }
+}
+
+.img-thumb {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+}
+.img-thumb-add {
+  background: #18181b;
+  border: 2px dashed #3f3f46;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  &:hover { border-color: #52525b; }
+}
+.img-thumb-remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.7);
+  border: none;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
 }
 
 /* Multiselect dark theme */

@@ -94,6 +94,9 @@ async function toggleWantToGo(e) {
 
 <style scoped>
 .shop-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   transition: opacity 0.15s;
   &:hover { opacity: 0.85; }
 }
