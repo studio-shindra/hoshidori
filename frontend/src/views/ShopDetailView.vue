@@ -1,7 +1,8 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '@/lib/api'
+import { cloudinaryUrl, IMG_HERO } from '@/lib/cloudinary'
 import {
   IconArrowLeft, IconExternalLink, IconTicket,
   IconBrandInstagram, IconWorld, IconPhone, IconToolsKitchen2, IconMap,
@@ -81,7 +82,7 @@ async function useCoupon(coupon) {
     <template v-else-if="shop">
       <!-- Hero image -->
       <div class="shop-hero position-relative">
-        <img v-if="shop.image_src" :src="shop.image_src" :alt="shop.name" class="w-100 h-100 object-fit-cover" />
+        <img v-if="shop.image_src" :src="cloudinaryUrl(shop.image_src, IMG_HERO)" :alt="shop.name" class="w-100 h-100 object-fit-cover" />
         <div v-else class="w-100 h-100 d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, #27272a, #3f3f46)">
           <IconToolsKitchen2 :size="48" class="text-secondary" />
         </div>

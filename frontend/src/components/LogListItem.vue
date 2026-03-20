@@ -2,6 +2,7 @@
 import { IconTheater, IconMapPin, IconThumbUp, IconHeartHandshake, IconSparkles } from '@tabler/icons-vue'
 import PosterImage from '@/components/PosterImage.vue'
 import { ratingLabel, ratingIcon } from '@/lib/rating'
+import { cloudinaryUrl, IMG_TINY } from '@/lib/cloudinary'
 
 const icons = { IconThumbUp, IconHeartHandshake, IconSparkles }
 
@@ -15,6 +16,7 @@ defineProps({
   theaterArea: { type: String, default: '' },
   memo: { type: String, default: '' },
   rating: { type: Number, default: null },
+  images: { type: Array, default: () => [] },
   compact: { type: Boolean, default: false },
 })
 </script>
@@ -23,7 +25,7 @@ defineProps({
   <div class="card bg-dark border-0 p-2 position-relative">
     <div class="df-center gap-2">
       <div class="card-sm">
-        <PosterImage :src="posterUrl" :alt="workTitle" :work-slug="workSlug" />
+        <PosterImage :src="posterUrl" :alt="workTitle" :work-slug="workSlug" size="sm" />
       </div>
       <div class="d-flex flex-column gap-1 min-w-0 flex-grow-1">
         <div class="d-flex justify-content-between align-items-start">
@@ -45,6 +47,9 @@ defineProps({
             {{ ratingLabel(rating) }}
           </span>
         </div>
+        <div v-if="images && images.length" class="d-flex gap-1 mt-1">
+          <img v-for="img in images" :key="img.id" :src="cloudinaryUrl(img.image_url, IMG_TINY)" class="log-img-thumb rounded" loading="lazy" />
+        </div>
         <div v-if="memo" class="small log-memo" :class="compact ? 'text-truncate' : ''">{{ memo }}</div>
       </div>
     </div>
@@ -63,6 +68,12 @@ defineProps({
   padding: 1px 6px;
   border-radius: 4px;
   white-space: nowrap;
+  flex-shrink: 0;
+}
+.log-img-thumb {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
   flex-shrink: 0;
 }
 .log-memo {

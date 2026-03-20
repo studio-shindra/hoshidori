@@ -45,7 +45,7 @@ watch(tab, fetchLogs)
         <div v-for="log in logs" :key="log.id" class="card bg-dark border-0 p-3">
           <div class="d-flex gap-3">
             <div class="card-sm">
-              <PosterImage :src="log.poster_url" :alt="log.work_title" :work-slug="log.work_slug" />
+              <PosterImage :src="log.poster_url" :alt="log.work_title" :work-slug="log.work_slug" size="sm" />
             </div>
             <div class="d-flex flex-column gap-1">
               <div class="fw-medium small text-truncate">{{ log.work_title }}</div>

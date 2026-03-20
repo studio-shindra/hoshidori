@@ -183,7 +183,6 @@ async function logout() {
             <template v-if="editingLog === log.id">
               <div class="d-flex flex-column gap-2">
                 <div class="fw-medium small">{{ log.work_title }}</div>
-                <textarea v-model="editMemo" rows="3" placeholder="メモ（任意）" class="form-control bg-dark border-secondary text-light form-control-sm"></textarea>
                 <div class="d-flex gap-2">
                   <button class="btn btn-primary-rose btn-sm flex-fill" :disabled="editLoading" @click="saveEdit(log)">{{ editLoading ? '保存中...' : '保存' }}</button>
                   <button class="btn btn-dark btn-sm flex-fill text-secondary" @click="cancelEdit">キャンセル</button>
@@ -198,7 +197,6 @@ async function logout() {
                 :work-title="log.work_title"
                 :work-slug="log.work_slug"
                 :theater-name="log.theater_name"
-                :memo="log.memo"
               >
                 <template #action>
                   <div class="position-absolute top-0 end-0 p-2">
@@ -250,6 +248,7 @@ async function logout() {
                 :theater-name="log.theater_name"
                 :memo="log.memo"
                 :rating="log.rating"
+                :images="log.images"
               >
                 <template #action>
                   <div class="position-absolute top-0 end-0 p-2">

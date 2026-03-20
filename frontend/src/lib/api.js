@@ -44,7 +44,6 @@ async function request(method, path, body = null) {
   if (isCapacitor) {
     // Mobile: Token auth (no CSRF)
     const token = getToken()
-    console.log('[API]', method, path, 'token=', token ? token.slice(0, 8) + '...' : null)
     if (token) {
       opts.headers['Authorization'] = `Token ${token}`
     }
@@ -99,9 +98,9 @@ async function upload(path, formData) {
   return res.json()
 }
 
-// Simple in-memory cache for GET requests (30s TTL)
+// In-memory cache for GET requests (5min TTL)
 const cache = new Map()
-const CACHE_TTL = 30000
+const CACHE_TTL = 300000
 
 function getCached(path) {
   const entry = cache.get(path)
@@ -116,8 +115,24 @@ function setCache(path, data) {
   cache.set(path, { data, time: Date.now() })
 }
 
-function invalidateCache() {
-  cache.clear()
+// /api/reviews/123/like/ → "reviews"
+// /api/viewing-logs/?status=planned → "viewing-logs"
+function getResourceName(path) {
+  const m = path.match(/^\/api\/([^/?]+)/)
+  return m ? m[1] : null
+}
+
+function invalidateByPath(path) {
+  const resource = getResourceName(path)
+  if (!resource) {
+    cache.clear()
+    return
+  }
+  for (const key of cache.keys()) {
+    if (key.includes(`/${resource}`)) {
+      cache.delete(key)
+    }
+  }
 }
 
 export { isCapacitor, getToken, setToken, clearToken }
@@ -131,19 +146,19 @@ export const api = {
     return data
   },
   post: async (path, body) => {
-    invalidateCache()
+    invalidateByPath(path)
     return request('POST', path, body)
   },
   patch: async (path, body) => {
-    invalidateCache()
+    invalidateByPath(path)
     return request('PATCH', path, body)
   },
   delete: async (path) => {
-    invalidateCache()
+    invalidateByPath(path)
     return request('DELETE', path)
   },
   upload: async (path, formData) => {
-    invalidateCache()
+    invalidateByPath(path)
     return upload(path, formData)
   },
 }

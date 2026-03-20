@@ -1,8 +1,9 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { api } from '@/lib/api'
+import { cloudinaryUrl, IMG_THUMB } from '@/lib/cloudinary'
 import { IconMask, IconTicket, IconStar, IconCoffee, IconMessage, IconHeart } from '@tabler/icons-vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import WorkCard from '@/components/WorkCard.vue'
@@ -69,23 +70,15 @@ async function fetchLatestReviews() {
   }
 }
 
-onMounted(() => {
-  fetchFeaturedShops()
-  fetchLatestReviews()
+onMounted(async () => {
+  const publicFetches = [fetchFeaturedShops(), fetchLatestReviews()]
+  if (auth.isAuthenticated) {
+    await Promise.all([...publicFetches, fetchData(), fetchWantToGoShops()])
+  } else {
+    loading.value = false
+    await Promise.all(publicFetches)
+  }
 })
-
-watch(
-  () => auth.isAuthenticated,
-  (val) => {
-    if (val) {
-      fetchData()
-      fetchWantToGoShops()
-    } else {
-      loading.value = false
-    }
-  },
-  { immediate: true },
-)
 </script>
 
 <template>
@@ -158,6 +151,7 @@ watch(
               :theater-area="log.theater_area"
               :memo="log.memo"
               :rating="log.rating"
+              :images="log.images"
               compact
             />
           </div>
@@ -225,7 +219,7 @@ watch(
           <div class="card bg-dark border-0 p-2 h-100">
             <div class="d-flex gap-2">
               <div class="review-poster-wrap flex-shrink-0">
-                <img v-if="r.poster_url" :src="r.poster_url" :alt="r.work_title" class="review-poster" />
+                <img v-if="r.poster_url" :src="cloudinaryUrl(r.poster_url, IMG_THUMB)" :alt="r.work_title" class="review-poster" loading="lazy" />
                 <div v-else class="review-poster review-poster-empty"></div>
               </div>
               <div class="min-w-0 flex-grow-1">

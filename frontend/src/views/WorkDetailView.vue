@@ -14,7 +14,13 @@ import {
   IconMapPin,
   IconPlus,
   IconFlag,
+  IconX,
 } from '@tabler/icons-vue'
+
+const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
+const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
+const MAX_FILE_SIZE = 10 * 1024 * 1024
+const MAX_IMAGES = 4
 import ShopCard from '@/components/ShopCard.vue'
 import PosterImage from '@/components/PosterImage.vue'
 import { ratingLabel, ratingIcon } from '@/lib/rating'
@@ -48,11 +54,49 @@ const logSpoiler = ref(false)
 const logError = ref('')
 const logLoading = ref(false)
 const logSuccess = ref('')
+const logImages = ref([])
+const logImageInput = ref(null)
 
-const perfIds = computed(() => performances.value.map((p) => p.id))
-const workReviews = computed(() =>
-  reviews.value.filter((r) => perfIds.value.includes(r.performance)),
-)
+function onLogImageSelect(e) {
+  const files = Array.from(e.target.files)
+  for (const file of files) {
+    if (logImages.value.length >= MAX_IMAGES) break
+    if (!file.type.startsWith('image/')) continue
+    if (file.size > MAX_FILE_SIZE) continue
+    logImages.value.push({ file, preview: URL.createObjectURL(file) })
+  }
+  e.target.value = ''
+}
+
+function removeLogImage(index) {
+  URL.revokeObjectURL(logImages.value[index].preview)
+  logImages.value.splice(index, 1)
+}
+
+async function uploadLogImages(logId) {
+  for (let i = 0; i < logImages.value.length; i++) {
+    const { file } = logImages.value[i]
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('upload_preset', UPLOAD_PRESET)
+    const cloudRes = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+      { method: 'POST', body: fd }
+    )
+    if (!cloudRes.ok) continue
+    const d = await cloudRes.json()
+    await api.post(`/api/viewing-logs/${logId}/images/`, {
+      image_url: d.secure_url,
+      image_public_id: d.public_id,
+      image_width: d.width,
+      image_height: d.height,
+      image_format: d.format,
+      order: i,
+    })
+  }
+}
+
+const workReviews = computed(() => reviews.value)
 
 const perfOptions = computed(() =>
   performances.value.map((p) => ({ value: p.id, label: perfLabel(p) })),
@@ -108,15 +152,13 @@ onMounted(async () => {
     const slug = route.params.slug
     work.value = await api.get(`/api/works/${slug}/`)
 
+    const workId = work.value.id
     const [perfData, revData, posterData] = await Promise.all([
-      api.get('/api/performances/'),
-      api.get('/api/reviews/'),
+      api.get(`/api/performances/?work=${workId}`),
+      api.get(`/api/reviews/?work=${workId}`),
       api.get(`/api/works/${slug}/posters/`),
     ])
-    const allPerfs = perfData.results || perfData
-    performances.value = allPerfs.filter(
-      (p) => p.work === work.value.id || p.work_slug === slug,
-    )
+    performances.value = perfData.results || perfData
     reviews.value = revData.results || revData
     workPosters.value = Array.isArray(posterData) ? posterData : posterData.results || []
 
@@ -155,7 +197,11 @@ async function submitLog() {
     if (logStatus.value === 'watched' && logWatchedOn.value) {
       body.watched_on = logWatchedOn.value
     }
-    await api.post('/api/viewing-logs/', body)
+    const log = await api.post('/api/viewing-logs/', body)
+    // 画像アップロード
+    if (logImages.value.length && logStatus.value === 'watched') {
+      await uploadLogImages(log.id)
+    }
     // 感想があればレビューも同時作成
     if (logMemo.value.trim()) {
       const reviewBody = {
@@ -172,6 +218,7 @@ async function submitLog() {
     logWatchedOn.value = ''
     logRating.value = ''
     logSpoiler.value = false
+    logImages.value = []
   } catch (e) {
     logError.value = e.data ? Object.values(e.data).flat().join(' ') : '保存に失敗しました'
   } finally {
@@ -207,7 +254,7 @@ async function toggleLike(review) {
       <!-- Hero image area -->
       <div class="position-relative">
         <div class="hero">
-          <PosterImage :src="posterUrl" :alt="work.title || work.name" :work-slug="route.params.slug" :credit="posterCredit" :credit-avatar="posterCreditAvatar" />
+          <PosterImage :src="posterUrl" :alt="work.title || work.name" :work-slug="route.params.slug" :credit="posterCredit" :credit-avatar="posterCreditAvatar" size="lg" />
           <div v-if="!posterUrl" class="position-absolute bottom-0 start-0 end-0 text-center pb-4" style="z-index:1">
             <RouterLink :to="`/works/${route.params.slug}/poster`" class="btn btn-sm btn-outline-secondary">
               <IconCamera :size="14" class="me-1" />最初の1枚を投稿
@@ -272,10 +319,25 @@ async function toggleLike(review) {
             <label class="form-label tiny text-secondary">観劇日</label>
             <input v-model="logWatchedOn" type="date" class="form-control bg-dark border-secondary text-light form-control-sm" />
           </div>
-          <div>
-            <label class="form-label tiny text-secondary">感想・メモ</label>
-            <textarea v-model="logMemo" :rows="logStatus === 'watched' ? 4 : 2" placeholder="感想やメモ（任意）" class="form-control bg-dark border-secondary text-light form-control-sm"></textarea>
-          </div>
+          <template v-if="logStatus === 'watched'">
+            <div>
+              <label class="form-label tiny text-secondary">写真（最大{{ MAX_IMAGES }}枚）</label>
+              <input ref="logImageInput" type="file" accept="image/*" multiple class="d-none" @change="onLogImageSelect" />
+              <div class="d-flex gap-2 flex-wrap">
+                <div v-for="(img, i) in logImages" :key="i" class="img-thumb">
+                  <img :src="img.preview" class="w-100 h-100 object-fit-cover rounded" />
+                  <button class="img-thumb-remove" @click="removeLogImage(i)"><IconX :size="12" /></button>
+                </div>
+                <button v-if="logImages.length < MAX_IMAGES" class="img-thumb img-thumb-add" @click="logImageInput?.click()">
+                  <IconCamera :size="20" class="text-secondary" />
+                </button>
+              </div>
+            </div>
+            <div>
+              <label class="form-label tiny text-secondary">感想・メモ</label>
+              <textarea v-model="logMemo" rows="4" placeholder="感想やメモ（任意）" class="form-control bg-dark border-secondary text-light form-control-sm"></textarea>
+            </div>
+          </template>
           <template v-if="logStatus === 'watched'">
             <div>
               <label class="form-label tiny text-secondary">評価（任意）</label>
@@ -353,7 +415,7 @@ async function toggleLike(review) {
           <template v-if="detailTab === 'poster'">
             <div v-if="workPosters.length" class="grid-wrapper">
               <div v-for="p in workPosters" :key="p.id" class="position-relative">
-                <PosterImage :src="p.image_url || p.image" :credit="p.user_display_name" :credit-avatar="p.user_avatar_url" />
+                <PosterImage :src="p.image_url || p.image" :credit="p.user_display_name" :credit-avatar="p.user_avatar_url" size="md" />
                 <a
                   :href="`mailto:info@studio-shindra.com?subject=${encodeURIComponent('[HOSHIDORI] 画像通報')}&body=${encodeURIComponent('通報対象: ' + (work.title || '') + ' のポスター画像\n画像ID: ' + p.id + '\n\n通報理由: ')}`"
                   class="poster-report-btn"
@@ -454,6 +516,40 @@ async function toggleLike(review) {
     color: #f43f5e;
     background: rgba(0, 0, 0, 0.7);
   }
+}
+
+.img-thumb {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+}
+.img-thumb-add {
+  background: #18181b;
+  border: 2px dashed #3f3f46;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  &:hover { border-color: #52525b; }
+}
+.img-thumb-remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.7);
+  border: none;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
 }
 
 /* Multiselect dark theme */

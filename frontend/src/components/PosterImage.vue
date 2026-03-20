@@ -1,8 +1,12 @@
 <script setup>
+import { computed } from 'vue'
 import { IconMasksTheater } from '@tabler/icons-vue'
 import UserAvatar from '@/components/UserAvatar.vue'
+import { cloudinaryUrl, IMG_THUMB, IMG_CARD, IMG_HERO } from '@/lib/cloudinary'
 
-defineProps({
+const SIZE_MAP = { sm: IMG_THUMB, md: IMG_CARD, lg: IMG_HERO }
+
+const props = defineProps({
   src: {
     type: String,
     default: null,
@@ -23,13 +27,20 @@ defineProps({
     type: String,
     default: null,
   },
+  size: {
+    type: String,
+    default: 'md',
+    validator: (v) => ['sm', 'md', 'lg'].includes(v),
+  },
 })
+
+const optimizedSrc = computed(() => cloudinaryUrl(props.src, SIZE_MAP[props.size] || IMG_CARD))
 </script>
 
 <template>
   <div class="poster-image">
     <component :is="workSlug ? 'router-link' : 'div'" :to="workSlug ? `/works/${workSlug}` : undefined" class="poster-link">
-      <img v-if="src" :src="src" :alt="alt" />
+      <img v-if="src" :src="optimizedSrc" :alt="alt" loading="lazy" />
       <div v-else class="poster-placeholder">
         <IconMasksTheater :size="24" class="text-secondary" />
         <span class="small text-secondary mt-1">No Image</span>

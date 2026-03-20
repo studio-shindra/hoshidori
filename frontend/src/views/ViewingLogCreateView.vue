@@ -2,9 +2,14 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute, RouterLink } from 'vue-router'
 import { api } from '@/lib/api'
-import { IconArrowLeft, IconTicket, IconStar } from '@tabler/icons-vue'
+import { IconArrowLeft, IconTicket, IconStar, IconCamera, IconX } from '@tabler/icons-vue'
 import Multiselect from '@vueform/multiselect'
 import RatingButtons from '@/components/RatingButtons.vue'
+
+const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
+const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
+const MAX_FILE_SIZE = 10 * 1024 * 1024
+const MAX_IMAGES = 4
 
 const router = useRouter()
 const route = useRoute()
@@ -27,6 +32,49 @@ const spoiler = ref(false)
 const error = ref('')
 const loading = ref(false)
 const perfLoading = ref(true)
+
+// 画像アップロード
+const selectedImages = ref([]) // { file, preview }
+const imageFileInput = ref(null)
+
+function onImageSelect(e) {
+  const files = Array.from(e.target.files)
+  for (const file of files) {
+    if (selectedImages.value.length >= MAX_IMAGES) break
+    if (!file.type.startsWith('image/')) continue
+    if (file.size > MAX_FILE_SIZE) continue
+    selectedImages.value.push({ file, preview: URL.createObjectURL(file) })
+  }
+  e.target.value = ''
+}
+
+function removeImage(index) {
+  URL.revokeObjectURL(selectedImages.value[index].preview)
+  selectedImages.value.splice(index, 1)
+}
+
+async function uploadImages(logId) {
+  for (let i = 0; i < selectedImages.value.length; i++) {
+    const { file } = selectedImages.value[i]
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('upload_preset', UPLOAD_PRESET)
+    const cloudRes = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+      { method: 'POST', body: fd }
+    )
+    if (!cloudRes.ok) continue
+    const d = await cloudRes.json()
+    await api.post(`/api/viewing-logs/${logId}/images/`, {
+      image_url: d.secure_url,
+      image_public_id: d.public_id,
+      image_width: d.width,
+      image_height: d.height,
+      image_format: d.format,
+      order: i,
+    })
+  }
+}
 
 onMounted(async () => {
   try {
@@ -72,7 +120,11 @@ async function submit() {
       body.watched_on = watchedOn.value
       if (watchedTime.value) body.watched_time = watchedTime.value
     }
-    await api.post('/api/viewing-logs/', body)
+    const log = await api.post('/api/viewing-logs/', body)
+    // 画像アップロード
+    if (selectedImages.value.length && status.value === 'watched') {
+      await uploadImages(log.id)
+    }
     // 感想があればレビューも同時作成
     if (memo.value.trim() && status.value === 'watched') {
       const reviewBody = {
@@ -185,8 +237,27 @@ async function submit() {
         <RatingButtons v-model="rating" />
       </div>
 
-      <!-- メモ / 感想 -->
-      <div>
+      <!-- 画像（観た時のみ） -->
+      <div v-if="status === 'watched'">
+        <label class="form-label small text-secondary">写真（最大{{ MAX_IMAGES }}枚）</label>
+        <input ref="imageFileInput" type="file" accept="image/*" multiple class="d-none" @change="onImageSelect" />
+        <div class="d-flex gap-2 flex-wrap">
+          <div v-for="(img, i) in selectedImages" :key="i" class="img-thumb">
+            <img :src="img.preview" class="w-100 h-100 object-fit-cover rounded" />
+            <button class="img-thumb-remove" @click="removeImage(i)"><IconX :size="12" /></button>
+          </div>
+          <button
+            v-if="selectedImages.length < MAX_IMAGES"
+            class="img-thumb img-thumb-add"
+            @click="imageFileInput?.click()"
+          >
+            <IconCamera :size="24" class="text-secondary" />
+          </button>
+        </div>
+      </div>
+
+      <!-- メモ / 感想（観た時のみ） -->
+      <div v-if="status === 'watched'">
         <label class="form-label small text-secondary">メモ / 感想</label>
         <textarea
           v-model="memo"
@@ -235,6 +306,39 @@ async function submit() {
     background: #e11d48;
     color: #fff;
   }
+}
+.img-thumb {
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+}
+.img-thumb-add {
+  background: #18181b;
+  border: 2px dashed #3f3f46;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  &:hover { border-color: #52525b; }
+}
+.img-thumb-remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.7);
+  border: none;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
 }
 .multiselect-dark {
   --ms-bg: #212529;

@@ -27,9 +27,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function login(username, password) {
     if (isCapacitor) {
       const data = await api.post('/api/mobile/auth/login/', { username, password })
-      console.log('[AUTH] login response token=', data.token ? data.token.slice(0, 8) + '...' : null)
       setToken(data.token)
-      console.log('[AUTH] saved token=', getToken() ? getToken().slice(0, 8) + '...' : null)
       user.value = data.user
       return data
     }

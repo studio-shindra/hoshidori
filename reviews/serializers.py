@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Like, Review, ViewingLog
+from .models import Like, Review, ViewingLog, ViewingLogImage
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -87,6 +87,13 @@ class LatestReviewSerializer(serializers.ModelSerializer):
         return None
 
 
+class ViewingLogImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ViewingLogImage
+        fields = ['id', 'image_url', 'image_public_id', 'image_width', 'image_height', 'image_format', 'order', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+
 class ViewingLogSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
     work_title = serializers.CharField(source='performance.work.title', read_only=True)
@@ -95,6 +102,7 @@ class ViewingLogSerializer(serializers.ModelSerializer):
     theater_area = serializers.CharField(source='performance.theater.area_name', read_only=True)
     poster_url = serializers.SerializerMethodField()
     rating = serializers.SerializerMethodField()
+    images = ViewingLogImageSerializer(many=True, read_only=True)
 
     class Meta:
         model = ViewingLog
@@ -102,7 +110,7 @@ class ViewingLogSerializer(serializers.ModelSerializer):
             'id', 'user', 'performance',
             'work_title', 'work_slug', 'theater_name', 'theater_area',
             'poster_url', 'status', 'watched_on', 'watched_time', 'memo',
-            'rating', 'created_at', 'updated_at',
+            'rating', 'images', 'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'user', 'created_at', 'updated_at']
 

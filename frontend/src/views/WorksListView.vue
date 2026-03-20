@@ -92,7 +92,7 @@ function setSearchType(type) {
         :to="`/works/${w.slug}`"
         class="position-relative d-block text-decoration-none rounded-2 overflow-hidden"
       >
-        <PosterImage :src="w.selected_poster_image_url" :alt="w.title" :work-slug="w.slug" />
+        <PosterImage :src="w.selected_poster_image_url" :alt="w.title" :work-slug="w.slug" size="sm" />
         <div class="ab-top text-white">
           <div v-if="w.theater_name" class="d-flex align-items-center gap-1 label-xs">
             <IconTheater :size="10" />{{ w.theater_name }}

@@ -13,7 +13,7 @@ defineProps({
 
 <template>
   <div class="card-md position-relative">
-    <PosterImage :src="posterUrl" :alt="workTitle" :work-slug="workSlug" />
+    <PosterImage :src="posterUrl" :alt="workTitle" :work-slug="workSlug" size="sm" />
     <div class="ab-bottom dark-gradient text-white">
       <div v-if="theaterName" class="d-flex align-items-center gap-1 small fw-bold">
         <IconTheater size="16" /> {{ theaterName }}

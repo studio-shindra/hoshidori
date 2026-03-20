@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { api } from '@/lib/api'
+import { cloudinaryUrl, IMG_THUMB } from '@/lib/cloudinary'
 import { IconMapPin, IconSearch, IconTheater } from '@tabler/icons-vue'
 
 const theaters = ref([])
@@ -53,7 +54,7 @@ function onSearch() {
         :to="`/theaters/${t.slug}`"
         class="theater-card text-decoration-none position-relative"
       >
-        <img v-if="t.image" :src="t.image" :alt="t.name" class="theater-card-img" />
+        <img v-if="t.image" :src="cloudinaryUrl(t.image, IMG_THUMB)" :alt="t.name" class="theater-card-img" loading="lazy" />
         <div v-else class="theater-card-img theater-card-placeholder">
           <IconTheater :size="32" class="text-secondary" />
         </div>

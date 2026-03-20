@@ -1,9 +1,10 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { IconMapPin, IconTicket, IconHeart, IconHeartFilled } from '@tabler/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { api } from '@/lib/api'
+import { cloudinaryUrl, IMG_CARD } from '@/lib/cloudinary'
 
 const props = defineProps({
   shop: {
@@ -16,6 +17,7 @@ const emit = defineEmits(['want-to-go-changed'])
 
 const auth = useAuthStore()
 const router = useRouter()
+const optimizedImage = computed(() => cloudinaryUrl(props.shop.image_src, IMG_CARD))
 const wantToGo = ref(!!props.shop.is_want_to_go)
 const toggling = ref(false)
 
@@ -53,7 +55,7 @@ async function toggleWantToGo(e) {
   >
     <!-- Thumbnail -->
     <div class="shop-thumb position-relative">
-      <img v-if="shop.image_src" :src="shop.image_src" :alt="shop.name" class="shop-thumb-img" />
+      <img v-if="shop.image_src" :src="optimizedImage" :alt="shop.name" class="shop-thumb-img" loading="lazy" />
       <div v-else class="shop-thumb-img" :class="shop.is_featured ? 'shop-thumb-featured' : ''"></div>
       <span v-if="shop.category" class="shop-tag position-absolute bottom-0 start-0 m-2">
         {{ shop.category }}

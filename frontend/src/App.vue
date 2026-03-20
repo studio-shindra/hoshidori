@@ -24,6 +24,7 @@ const showSidebar = ref(false)
 const pullStart = ref(0)
 const pullDistance = ref(0)
 const refreshing = ref(false)
+const viewKey = ref(0)
 
 function onTouchStart(e) {
   if (window.scrollY === 0) {
@@ -40,7 +41,8 @@ function onTouchMove(e) {
 async function onTouchEnd() {
   if (pullDistance.value > 50 && !refreshing.value) {
     refreshing.value = true
-    router.go(0)
+    viewKey.value++
+    refreshing.value = false
   }
   pullDistance.value = 0
   pullStart.value = 0
@@ -99,7 +101,7 @@ async function logout() {
       <div v-if="pullDistance > 0" class="pull-indicator" :style="{ height: pullDistance + 'px' }">
         <div class="pull-spinner" :class="{ active: pullDistance > 50 }" />
       </div>
-      <RouterView />
+      <RouterView :key="viewKey" />
     </main>
 
     <footer

@@ -8,8 +8,8 @@ from rest_framework.viewsets import ModelViewSet
 
 from accounts.permissions import IsOwnerOrReadOnly
 from works.models import PosterSubmission
-from .models import Like, Review, ViewingLog
-from .serializers import LatestReviewSerializer, ReviewSerializer, ViewingLogSerializer
+from .models import Like, Review, ViewingLog, ViewingLogImage
+from .serializers import LatestReviewSerializer, ReviewSerializer, ViewingLogImageSerializer, ViewingLogSerializer
 
 
 class ReviewViewSet(ModelViewSet):
@@ -27,6 +27,9 @@ class ReviewViewSet(ModelViewSet):
                     Like.objects.filter(review=OuterRef('pk'), user=self.request.user)
                 )
             )
+        work = self.request.query_params.get('work')
+        if work:
+            qs = qs.filter(performance__work_id=work)
         return qs
 
     @action(detail=False, methods=['get'], permission_classes=[AllowAny])
@@ -81,6 +84,7 @@ class ViewingLogViewSet(ModelViewSet):
                 queryset=PosterSubmission.objects.filter(is_selected=True),
                 to_attr='_prefetched_selected_posters',
             ),
+            'images',
         ).annotate(
             _rating=Subquery(
                 Review.objects.filter(
@@ -110,3 +114,20 @@ class ViewingLogViewSet(ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save(user=request.user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'], url_path='images')
+    def add_image(self, request, pk=None):
+        viewing_log = self.get_object()
+        serializer = ViewingLogImageSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(viewing_log=viewing_log)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['delete'], url_path='images/(?P<image_id>[0-9]+)')
+    def delete_image(self, request, pk=None, image_id=None):
+        viewing_log = self.get_object()
+        image = ViewingLogImage.objects.filter(viewing_log=viewing_log, id=image_id).first()
+        if not image:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        image.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

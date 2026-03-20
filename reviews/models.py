@@ -62,6 +62,25 @@ class ViewingLog(models.Model):
         return f'{self.user} - {self.performance} ({self.get_status_display()})'
 
 
+class ViewingLogImage(models.Model):
+    viewing_log = models.ForeignKey(
+        ViewingLog, on_delete=models.CASCADE, related_name='images',
+    )
+    image_url = models.URLField(max_length=500)
+    image_public_id = models.CharField(max_length=300, blank=True, default='')
+    image_width = models.IntegerField(null=True, blank=True)
+    image_height = models.IntegerField(null=True, blank=True)
+    image_format = models.CharField(max_length=20, blank=True, default='')
+    order = models.PositiveSmallIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order', 'created_at']
+
+    def __str__(self):
+        return f'Image #{self.id} for {self.viewing_log}'
+
+
 class Like(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='likes',

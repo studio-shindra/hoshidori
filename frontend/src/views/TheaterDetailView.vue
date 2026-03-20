@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { api } from '@/lib/api'
+import { cloudinaryUrl, IMG_HERO } from '@/lib/cloudinary'
 import { IconMapPin, IconArrowLeft, IconTheater } from '@tabler/icons-vue'
 import ShopCard from '@/components/ShopCard.vue'
 
@@ -37,7 +38,7 @@ onMounted(async () => {
       <!-- Hero -->
       <div class="position-relative">
         <div class="theater-hero">
-          <img v-if="theater.image" :src="theater.image" :alt="theater.name" class="w-100 h-100 object-fit-cover" />
+          <img v-if="theater.image" :src="cloudinaryUrl(theater.image, IMG_HERO)" :alt="theater.name" class="w-100 h-100 object-fit-cover" />
           <div v-else class="w-100 h-100 d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, #27272a, #3f3f46)">
             <IconTheater :size="48" class="text-secondary" />
           </div>
