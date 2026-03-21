@@ -169,8 +169,8 @@ onMounted(async () => {
         <IconHeart :size="20" />
         観劇後・観劇前に
       </h2>
-      <div v-if="wantToGoShops.length" class="d-flex gap-2 overflow-auto scroll-hide">
-        <div v-for="shop in wantToGoShops" :key="shop.id" class="flex-shrink-0 want-to-go-card-wrap">
+      <div v-if="wantToGoShops.length" class="d-flex gap-2 overflow-auto scroll-hide align-items-stretch">
+        <div v-for="shop in wantToGoShops" :key="shop.id" class="flex-shrink-0 want-to-go-card-wrap d-flex">
           <ShopCard :shop="shop" @want-to-go-changed="onWantToGoChanged" />
         </div>
       </div>
@@ -189,8 +189,8 @@ onMounted(async () => {
         </h2>
         <RouterLink to="/shops" class="text-secondary small text-decoration-none">すべて見る →</RouterLink>
       </div>
-      <div class="d-flex gap-2 overflow-auto scroll-hide">
-        <div v-for="shop in featuredShops" :key="shop.id" class="flex-shrink-0 want-to-go-card-wrap">
+      <div class="d-flex gap-2 overflow-auto scroll-hide align-items-stretch">
+        <div v-for="shop in featuredShops" :key="shop.id" class="flex-shrink-0 want-to-go-card-wrap d-flex">
           <ShopCard :shop="shop" @want-to-go-changed="onWantToGoChanged" />
         </div>
       </div>

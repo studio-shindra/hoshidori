@@ -1,4 +1,5 @@
 <script setup>
+import { RouterLink } from 'vue-router'
 import { IconTheater, IconMapPin, IconThumbUp, IconHeartHandshake, IconSparkles } from '@tabler/icons-vue'
 import PosterImage from '@/components/PosterImage.vue'
 import { ratingLabel, ratingIcon } from '@/lib/rating'
@@ -22,7 +23,39 @@ defineProps({
 </script>
 
 <template>
-  <div class="card bg-dark border-0 p-2 position-relative">
+  <RouterLink v-if="workSlug" :to="`/works/${workSlug}`" class="card bg-dark border-0 p-2 position-relative text-decoration-none text-white d-block">
+    <div class="df-center gap-2">
+      <div class="card-sm">
+        <PosterImage :src="posterUrl" :alt="workTitle" :work-slug="workSlug" size="sm" />
+      </div>
+      <div class="d-flex flex-column gap-1 min-w-0 flex-grow-1">
+        <div class="d-flex justify-content-between align-items-start">
+          <div class="fw-bold text-truncate">{{ workTitle }}</div>
+          <slot name="action" />
+        </div>
+        <div class="d-flex align-items-center gap-1 flex-wrap">
+          <div v-if="theaterName" class="small text-truncate d-flex align-items-center gap-1">
+            <IconTheater size="16" /> {{ theaterName }}
+          </div>
+          <div v-if="theaterArea" class="small text-truncate d-flex align-items-center gap-1">
+            <IconMapPin size="16" /> {{ theaterArea }}
+          </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <div class="small d-flex align-items-center gap-1" v-if="watchedOn">{{ watchedOn }}<span v-if="watchedTime"> {{ watchedTime.slice(0, 5) }}</span></div>
+          <span v-if="rating" class="log-rating-badge">
+            <component :is="icons[ratingIcon(rating)]" :size="14" />
+            {{ ratingLabel(rating) }}
+          </span>
+        </div>
+        <div v-if="images && images.length" class="d-flex gap-1 mt-1">
+          <img v-for="img in images" :key="img.id" :src="cloudinaryUrl(img.image_url, IMG_TINY)" class="log-img-thumb rounded" loading="lazy" />
+        </div>
+        <div v-if="memo" class="small log-memo" :class="compact ? 'text-truncate' : ''">{{ memo }}</div>
+      </div>
+    </div>
+  </RouterLink>
+  <div v-else class="card bg-dark border-0 p-2 position-relative">
     <div class="df-center gap-2">
       <div class="card-sm">
         <PosterImage :src="posterUrl" :alt="workTitle" :work-slug="workSlug" size="sm" />

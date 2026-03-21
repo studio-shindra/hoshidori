@@ -1,17 +1,34 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
 import { IconSearch, IconPlus, IconTheater, IconMasksTheater, IconUser } from '@tabler/icons-vue'
 import PosterImage from '@/components/PosterImage.vue'
 import AppLoader from '@/components/AppLoader.vue'
 
+const route = useRoute()
 const auth = useAuthStore()
 const works = ref([])
 const loading = ref(true)
-const query = ref('')
-const searchType = ref('title') // 'title' | 'person'
+const query = ref(route.query.person || '')
+const searchType = ref(route.query.person ? 'person' : 'title')
+const popularPeople = ref([])
+
+async function fetchPopularPeople() {
+  try {
+    const data = await api.get('/api/people/popular/')
+    popularPeople.value = data.results || data
+  } catch {
+    /* empty */
+  }
+}
+
+function searchByPerson(name) {
+  searchType.value = 'person'
+  query.value = name
+  fetchWorks()
+}
 
 async function fetchWorks() {
   loading.value = true
@@ -32,7 +49,10 @@ async function fetchWorks() {
   }
 }
 
-onMounted(fetchWorks)
+onMounted(() => {
+  fetchWorks()
+  fetchPopularPeople()
+})
 
 function onSearch() {
   fetchWorks()
@@ -40,7 +60,8 @@ function onSearch() {
 
 function setSearchType(type) {
   searchType.value = type
-  if (query.value.trim()) fetchWorks()
+  query.value = ''
+  fetchWorks()
 }
 </script>
 
@@ -84,6 +105,18 @@ function setSearchType(type) {
       </form>
     </div>
 
+    <!-- タグクラウド（俳優名タブ & 未検索時のみ） -->
+    <div v-if="searchType === 'person' && !query.trim() && popularPeople.length" class="d-flex flex-wrap gap-1 mb-3">
+      <button
+        v-for="p in popularPeople"
+        :key="p.id"
+        class="person-tag"
+        @click="searchByPerson(p.name)"
+      >
+        {{ p.name }}
+      </button>
+    </div>
+
     <AppLoader v-if="loading" />
     <div v-else class="grid-wrapper">
       <RouterLink
@@ -111,6 +144,20 @@ function setSearchType(type) {
 </template>
 
 <style scoped>
+.person-tag {
+  background: rgba(255, 255, 255, 0.08);
+  color: #a1a1aa;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.75rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 99px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.person-tag:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #e4e4e7;
+}
 .grid-works {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

@@ -74,7 +74,7 @@ async function toggleWantToGo(e) {
     </div>
 
     <!-- Info -->
-    <div class="p-3">
+    <div class="p-3 d-flex flex-column flex-grow-1">
       <div class="fw-bold text-white">{{ shop.name }}</div>
       <div
         v-if="shop.nearest_station || shop.distance_note"
@@ -83,7 +83,7 @@ async function toggleWantToGo(e) {
         <IconMapPin :size="11" />
         <span class="tiny">{{ [shop.nearest_station, shop.distance_note].filter(Boolean).join(' · ') }}</span>
       </div>
-      <div v-if="shop.coupon_text" class="mt-2">
+      <div v-if="shop.coupon_text" class="mt-auto pt-2">
         <span class="coupon-pill">
           <IconTicket :size="11" />{{ shop.coupon_text }}
         </span>

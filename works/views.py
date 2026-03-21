@@ -131,6 +131,15 @@ class PersonViewSet(ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
 
+    @action(detail=False, methods=['get'], url_path='popular')
+    def popular(self, request):
+        from django.db.models import Count
+        qs = Person.objects.annotate(
+            work_count=Count('casts__performance__work', distinct=True),
+        ).filter(work_count__gt=0).order_by('-work_count')[:20]
+        serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data)
+
 
 class PerformanceCastViewSet(DestroyModelMixin, GenericViewSet):
     queryset = PerformanceCast.objects.all()

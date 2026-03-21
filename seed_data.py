@@ -125,6 +125,31 @@ for i, work in enumerate(works_all):
         },
     )
 
+# --- People & Casts (仮の俳優・スタッフデータ) ---
+from works.models import Person, PerformanceCast
+PerformanceCast.objects.all().delete()
+Person.objects.all().delete()
+
+people_names = [
+    '山田太郎', '佐藤花子', '鈴木一郎', '高橋美咲',
+    '田中健太', '渡辺あかり', '伊藤翔', '中村さくら',
+    '小林誠', '加藤真理', '松本大輔', '木村由美',
+]
+people = []
+for name in people_names:
+    p, _ = Person.objects.get_or_create(name=name, defaults={'created_by': user, 'is_approved': True})
+    people.append(p)
+
+# 各公演にキャスト・スタッフを割り当て
+all_perfs = list(Performance.objects.order_by('id'))
+for i, perf in enumerate(all_perfs):
+    members = [people[j % len(people)] for j in range(i, i + 4 + (i % 2))]
+    for person in members:
+        PerformanceCast.objects.get_or_create(
+            performance=perf, person=person,
+            defaults={'role_name': ''},
+        )
+
 planned = ViewingLog.objects.filter(user=user, status='planned').count()
 watched = ViewingLog.objects.filter(user=user, status='watched').count()
-print(f'Done! planned={planned}, watched={watched}, posters={PosterSubmission.objects.count()}')
+print(f'Done! planned={planned}, watched={watched}, posters={PosterSubmission.objects.count()}, casts={PerformanceCast.objects.count()}')

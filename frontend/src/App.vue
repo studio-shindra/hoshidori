@@ -77,7 +77,7 @@ async function logout() {
         <RouterLink to="/guidelines" class="sidebar-link" @click="showSidebar = false">投稿ガイドライン</RouterLink>
         <RouterLink to="/contact" class="sidebar-link" @click="showSidebar = false">お問い合わせ</RouterLink>
       </nav>
-      <div class="mt-auto px-3" style="padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));">
+      <div class="mt-auto px-3" style="padding-bottom: calc(4rem + env(safe-area-inset-bottom));">
         <button class="btn btn-dark btn-sm w-100 text-white mb-2 fw-bold" @click="logout">ログアウト</button>
         <p class="text-secondary mb-0" style="font-size: 0.65rem;">&copy; 2026 HOSHIDORI</p>
       </div>

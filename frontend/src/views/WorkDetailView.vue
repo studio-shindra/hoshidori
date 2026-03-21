@@ -121,6 +121,18 @@ const dateRange = computed(() => {
   return dates[0]
 })
 
+const allCasts = computed(() => {
+  const castMap = new Map()
+  for (const perf of performances.value) {
+    for (const c of (perf.casts || [])) {
+      if (!castMap.has(c.person)) {
+        castMap.set(c.person, { name: c.person_name, role: c.role_name })
+      }
+    }
+  }
+  return Array.from(castMap.values())
+})
+
 const averageRating = computed(() => {
   const rated = workReviews.value.filter((r) => r.rating_overall)
   if (!rated.length) return null
@@ -267,10 +279,13 @@ async function toggleLike(review) {
       <!-- Work info -->
       <div class="position-relative" style="margin-top: -1rem; z-index: 2">
         <h2 class="fs-5 fw-bold mb-1">{{ work.title || work.name }}</h2>
-        <div class="small" v-if="companyName">{{ companyName }}</div>
-        <div class="small">
-          <span v-if="theaterName">{{ theaterName }}</span>
-          <span v-if="dateRange"> · {{ dateRange }}</span>
+        <div class="small text-secondary" v-if="dateRange">{{ dateRange }}</div>
+        <div class="small" v-if="theaterName">{{ theaterName }}</div>
+        <div class="small text-secondary" v-if="companyName">{{ companyName }}</div>
+
+        <!-- キャスト・スタッフ -->
+        <div v-if="allCasts.length" class="d-flex flex-wrap gap-1 mt-2">
+          <RouterLink v-for="c in allCasts" :key="c.name" :to="{ path: '/works', query: { person: c.name } }" class="cast-pill text-decoration-none">{{ c.name }}</RouterLink>
         </div>
 
         <!-- Action buttons -->
@@ -292,70 +307,79 @@ async function toggleLike(review) {
         </div>
       </div>
 
-      <!-- Log form (inline) -->
-      <section v-if="showLogForm" class="mx-3 mt-3 card bg-dark border-secondary p-3">
-        <h3 class="small fw-semibold mb-3">{{ logStatus === 'planned' ? '観るを登録' : '観たを記録' }}</h3>
-        <form @submit.prevent="submitLog" class="d-flex flex-column gap-3">
-          <div>
-            <label class="form-label tiny text-secondary">公演</label>
-            <Multiselect
-              v-model="logPerf"
-              :options="perfOptions"
-              :searchable="true"
-              placeholder="公演を検索..."
-              no-results-text="該当する公演がありません"
-              no-options-text="公演データがありません"
-              class="multiselect-dark"
-            >
-              <template #noresults>
-                <div class="py-2 text-center">
-                  <span class="small text-secondary">該当する公演がありません</span>
-                  <RouterLink to="/performances/new" class="d-block small mt-1 color-rose">公演を新しく追加する →</RouterLink>
-                </div>
-              </template>
-            </Multiselect>
-          </div>
-          <div>
-            <label class="form-label tiny text-secondary">{{ logStatus === 'watched' ? '観劇日' : '観劇予定日' }}</label>
-            <input v-model="logWatchedOn" type="date" class="form-control bg-dark border-secondary text-light form-control-sm" />
-          </div>
-          <div>
-            <label class="form-label tiny text-secondary">感想・メモ</label>
-            <textarea v-model="logMemo" :rows="logStatus === 'watched' ? 4 : 2" placeholder="感想やメモ（任意）" class="form-control bg-dark border-secondary text-light form-control-sm"></textarea>
-          </div>
-          <template v-if="logStatus === 'watched'">
-            <div>
-              <label class="form-label tiny text-secondary">写真（最大{{ MAX_IMAGES }}枚）</label>
-              <input ref="logImageInput" type="file" accept="image/*" multiple class="d-none" @change="onLogImageSelect" />
-              <div class="d-flex gap-2 flex-wrap">
-                <div v-for="(img, i) in logImages" :key="i" class="img-thumb">
-                  <img :src="img.preview" class="w-100 h-100 object-fit-cover rounded" />
-                  <button class="img-thumb-remove" type="button" @click="removeLogImage(i)"><IconX :size="12" /></button>
-                </div>
-                <button v-if="logImages.length < MAX_IMAGES" type="button" class="img-thumb img-thumb-add" @click="logImageInput?.click()">
-                  <IconCamera :size="20" class="text-secondary" />
-                </button>
+      <!-- Log form (modal) -->
+      <Teleport to="body">
+        <Transition name="fade">
+          <div v-if="showLogForm" class="log-modal-backdrop" @click.self="showLogForm = false">
+            <div class="log-modal">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="small fw-semibold mb-0">{{ logStatus === 'planned' ? '観るを登録' : '観たを記録' }}</h3>
+                <button type="button" class="btn-close btn-close-white" @click="showLogForm = false"></button>
               </div>
+              <form @submit.prevent="submitLog" class="d-flex flex-column gap-3">
+                <div>
+                  <label class="form-label tiny text-secondary">公演</label>
+                  <Multiselect
+                    v-model="logPerf"
+                    :options="perfOptions"
+                    :searchable="true"
+                    placeholder="公演を検索..."
+                    no-results-text="該当する公演がありません"
+                    no-options-text="公演データがありません"
+                    class="multiselect-dark"
+                  >
+                    <template #noresults>
+                      <div class="py-2 text-center">
+                        <span class="small text-secondary">該当する公演がありません</span>
+                        <RouterLink to="/performances/new" class="d-block small mt-1 color-rose">公演を新しく追加する →</RouterLink>
+                      </div>
+                    </template>
+                  </Multiselect>
+                </div>
+                <div>
+                  <label class="form-label tiny text-secondary">{{ logStatus === 'watched' ? '観劇日' : '観劇予定日' }}</label>
+                  <input v-model="logWatchedOn" type="date" class="form-control bg-dark border-secondary text-light form-control-sm" />
+                </div>
+                <div>
+                  <label class="form-label tiny text-secondary">感想・メモ</label>
+                  <textarea v-model="logMemo" :rows="logStatus === 'watched' ? 4 : 2" placeholder="感想やメモ（任意）" class="form-control bg-dark border-secondary text-light form-control-sm"></textarea>
+                </div>
+                <template v-if="logStatus === 'watched'">
+                  <div>
+                    <label class="form-label tiny text-secondary">写真（最大{{ MAX_IMAGES }}枚）</label>
+                    <input ref="logImageInput" type="file" accept="image/*" multiple class="d-none" @change="onLogImageSelect" />
+                    <div class="d-flex gap-2 flex-wrap">
+                      <div v-for="(img, i) in logImages" :key="i" class="img-thumb">
+                        <img :src="img.preview" class="w-100 h-100 object-fit-cover rounded" />
+                        <button class="img-thumb-remove" type="button" @click="removeLogImage(i)"><IconX :size="12" /></button>
+                      </div>
+                      <button v-if="logImages.length < MAX_IMAGES" type="button" class="img-thumb img-thumb-add" @click="logImageInput?.click()">
+                        <IconCamera :size="20" class="text-secondary" />
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label class="form-label tiny text-secondary">評価（任意）</label>
+                    <RatingButtons v-model="logRating" />
+                  </div>
+                  <div class="form-check">
+                    <input v-model="logSpoiler" type="checkbox" class="form-check-input" id="spoilerCheck" />
+                    <label for="spoilerCheck" class="form-check-label small text-secondary">ネタバレを含む</label>
+                  </div>
+                </template>
+                <p v-if="logError" class="small text-danger mb-0">{{ logError }}</p>
+                <p v-if="logSuccess" class="small color-green mb-0">{{ logSuccess }}</p>
+                <div class="d-flex gap-2">
+                  <button type="submit" :disabled="logLoading" class="btn btn-primary-rose btn-sm flex-fill">
+                    {{ logLoading ? '保存中...' : '保存' }}
+                  </button>
+                  <button type="button" class="btn btn-dark btn-sm flex-fill text-secondary" @click="showLogForm = false">キャンセル</button>
+                </div>
+              </form>
             </div>
-            <div>
-              <label class="form-label tiny text-secondary">評価（任意）</label>
-              <RatingButtons v-model="logRating" />
-            </div>
-            <div class="form-check">
-              <input v-model="logSpoiler" type="checkbox" class="form-check-input" id="spoilerCheck" />
-              <label for="spoilerCheck" class="form-check-label small text-secondary">ネタバレを含む</label>
-            </div>
-          </template>
-          <p v-if="logError" class="small text-danger mb-0">{{ logError }}</p>
-          <p v-if="logSuccess" class="small color-green mb-0">{{ logSuccess }}</p>
-          <div class="d-flex gap-2">
-            <button type="submit" :disabled="logLoading" class="btn btn-primary-rose btn-sm flex-fill">
-              {{ logLoading ? '保存中...' : '保存' }}
-            </button>
-            <button type="button" class="btn btn-dark btn-sm flex-fill text-secondary" @click="showLogForm = false">キャンセル</button>
           </div>
-        </form>
-      </section>
+        </Transition>
+      </Teleport>
 
       <!-- Memo / Poster tabs -->
       <section class="mt-4">
@@ -548,6 +572,37 @@ async function toggleLike(review) {
   justify-content: center;
   cursor: pointer;
   padding: 0;
+}
+
+/* Cast pills */
+.cast-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.7rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #e4e4e7;
+  white-space: nowrap;
+}
+/* Log modal */
+.log-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 100000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.log-modal {
+  background: #1c1c1e;
+  border-radius: 16px 16px 0 0;
+  padding: 1.25rem;
+  width: 100%;
+  max-width: 500px;
+  max-height: 85vh;
+  overflow-y: auto;
 }
 
 /* Multiselect dark theme */
