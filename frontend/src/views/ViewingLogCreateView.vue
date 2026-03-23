@@ -32,6 +32,7 @@ const spoiler = ref(false)
 const error = ref('')
 const loading = ref(false)
 const perfLoading = ref(true)
+const showAddPerf = ref(false)
 
 // 画像アップロード（観た時のみ）
 const selectedImages = ref([])
@@ -177,10 +178,22 @@ async function submit() {
           <template #noresults>
             <div class="px-3 py-2 text-center">
               <span class="small text-secondary">該当する公演がありません</span>
-              <RouterLink to="/performances/new" class="d-block small mt-1 color-rose">公演を新しく追加する →</RouterLink>
+              <RouterLink to="/performances/new" class="d-block small mt-1 color-rose">公演を新しく登録する →</RouterLink>
             </div>
           </template>
         </Multiselect>
+        <div class="mt-2">
+          <button
+            v-if="!showAddPerf"
+            class="border-0 bg-transparent small text-secondary p-0"
+            @click="showAddPerf = true"
+          >見つかりませんか？</button>
+          <RouterLink
+            v-else
+            to="/performances/new"
+            class="small color-rose fw-medium text-decoration-none"
+          >公演を新しく登録する →</RouterLink>
+        </div>
       </div>
 
       <!-- ステータス切替 -->
