@@ -57,3 +57,9 @@ class MobileMeView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+    def delete(self, request):
+        user = request.user
+        request._auth.delete()
+        user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

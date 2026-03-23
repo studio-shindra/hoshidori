@@ -19,6 +19,8 @@ const avatarUploading = ref(false)
 const saving = ref(false)
 const message = ref('')
 const messageType = ref('')
+const showDeleteModal = ref(false)
+const deleting = ref(false)
 
 const fileInput = ref(null)
 
@@ -94,6 +96,20 @@ async function save() {
     saving.value = false
   }
 }
+
+async function deleteAccount() {
+  deleting.value = true
+  try {
+    await auth.deleteAccount()
+    router.push({ name: 'login', query: { deleted: '1' } })
+  } catch {
+    message.value = 'アカウント削除に失敗しました'
+    messageType.value = 'danger'
+    showDeleteModal.value = false
+  } finally {
+    deleting.value = false
+  }
+}
 </script>
 
 <template>
@@ -164,6 +180,35 @@ async function save() {
         {{ saving ? '保存中...' : '保存する' }}
       </button>
       <RouterLink to="/mypage" class="btn btn-dark text-secondary flex-grow-1 text-center">キャンセル</RouterLink>
+    </div>
+
+    <!-- Account Delete -->
+    <hr class="border-secondary my-4" />
+    <button class="btn btn-outline-danger btn-sm w-100" @click="showDeleteModal = true">
+      アカウントを削除
+    </button>
+
+    <!-- Delete Confirm Modal -->
+    <div v-if="showDeleteModal" class="modal-backdrop fade show" @click="showDeleteModal = false"></div>
+    <div v-if="showDeleteModal" class="modal fade show d-block" tabindex="-1" @click.self="showDeleteModal = false">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light border-secondary">
+          <div class="modal-header border-secondary">
+            <h5 class="modal-title fs-6">アカウント削除</h5>
+            <button type="button" class="btn-close btn-close-white" @click="showDeleteModal = false"></button>
+          </div>
+          <div class="modal-body small">
+            アカウントを削除すると、保存された観劇ログやプロフィール情報は削除され、元に戻せません。<br />
+            本当に削除しますか？
+          </div>
+          <div class="modal-footer border-secondary">
+            <button class="btn btn-sm btn-dark text-secondary" @click="showDeleteModal = false">キャンセル</button>
+            <button class="btn btn-sm btn-danger" :disabled="deleting" @click="deleteAccount">
+              {{ deleting ? '削除中...' : '削除する' }}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>

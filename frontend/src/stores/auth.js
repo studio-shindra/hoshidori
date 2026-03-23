@@ -62,5 +62,12 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
   }
 
-  return { user, isAuthenticated, isShopUser, fetchMe, login, register, logout }
+  async function deleteAccount() {
+    const path = isCapacitor ? '/api/mobile/auth/me/' : '/api/auth/me/'
+    await api.delete(path)
+    if (isCapacitor) clearToken()
+    user.value = null
+  }
+
+  return { user, isAuthenticated, isShopUser, fetchMe, login, register, logout, deleteAccount }
 })
