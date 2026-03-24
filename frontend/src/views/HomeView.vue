@@ -9,7 +9,7 @@ import UserAvatar from '@/components/UserAvatar.vue'
 import WorkCard from '@/components/WorkCard.vue'
 import LogListItem from '@/components/LogListItem.vue'
 import ShopCard from '@/components/ShopCard.vue'
-import AppLoader from '@/components/AppLoader.vue'
+import HomeSkeleton from '@/components/HomeSkeleton.vue'
 
 const auth = useAuthStore()
 const loading = ref(true)
@@ -102,7 +102,7 @@ onMounted(async () => {
 
     <!-- Logged in -->
     <template v-else>
-      <AppLoader v-if="loading" />
+      <HomeSkeleton v-if="loading" />
       <template v-else>
 
         <!-- これから観る -->

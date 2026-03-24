@@ -116,3 +116,39 @@
   align-items: center !important;
   justify-content: center !important;
 }
+
+// ---- Skeleton loading ----
+.skeleton {
+  background: $c-bg-card;
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.04) 50%,
+      transparent 100%
+    );
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  }
+}
+
+.skeleton-text {
+  @extend .skeleton;
+  height: 12px;
+}
+
+.skeleton-text-sm {
+  @extend .skeleton;
+  height: 10px;
+}
+
+@keyframes skeleton-shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
