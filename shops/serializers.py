@@ -68,4 +68,6 @@ class ShopSerializer(serializers.ModelSerializer):
             return 'sponsored'
         if getattr(obj, '_has_recognized_link', False):
             return 'recognized'
+        if getattr(obj, '_has_listed_link', False):
+            return 'listed'
         return 'standard'

@@ -13,12 +13,13 @@ const theaterPlace = ref(null)
 const shops = ref([])
 const loading = ref(true)
 
-const tierOrder = { sponsored: 0, recognized: 1, google: 2 }
+const tierOrder = { sponsored: 0, recognized: 1, listed: 2, google: 3 }
 const sortedShops = computed(() => [...shops.value].sort((a, b) =>
   (tierOrder[a.listing_tier] ?? 9) - (tierOrder[b.listing_tier] ?? 9),
 ))
 const sponsoredShops = computed(() => sortedShops.value.filter((shop) => shop.listing_tier === 'sponsored'))
 const recognizedShops = computed(() => sortedShops.value.filter((shop) => shop.listing_tier === 'recognized'))
+const listedShops = computed(() => sortedShops.value.filter((shop) => shop.listing_tier === 'listed'))
 const googleShops = computed(() => sortedShops.value.filter((shop) => shop.source === 'google_places'))
 const ownedHeroImage = computed(() => theater.value?.image_url || theater.value?.image || '')
 const heroImage = computed(() => ownedHeroImage.value || theaterPlace.value?.photo_uri || '')
@@ -108,6 +109,9 @@ onMounted(async () => {
         <div v-if="recognizedShops.length" class="d-flex flex-column gap-3 mb-3">
           <ShopCard v-for="shop in recognizedShops" :key="shop.id" :shop="shop" />
         </div>
+        <div v-if="listedShops.length" class="d-flex flex-column gap-3 mb-3">
+          <ShopCard v-for="shop in listedShops" :key="shop.id" :shop="shop" />
+        </div>
         <div v-if="googleShops.length" class="google-shop-list">
           <div class="d-flex justify-content-end mb-1">
             <a :href="googleMapsUrl" target="_blank" rel="noopener noreferrer" class="google-attribution" translate="no">
@@ -117,7 +121,7 @@ onMounted(async () => {
           <ShopCard v-for="shop in googleShops" :key="shop.id" :shop="shop" />
         </div>
         <RouterLink
-          v-if="sponsoredShops.length || recognizedShops.length"
+          v-if="sponsoredShops.length || recognizedShops.length || listedShops.length"
           :to="{ path: '/shops', query: { theater: route.params.slug } }"
           class="btn btn-dark btn-sm text-secondary w-100 mt-3"
         >

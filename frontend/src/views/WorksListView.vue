@@ -28,7 +28,7 @@ const theatersLoading = ref(false)
 const theatersLoadingMore = ref(false)
 const theaterPage = ref(1)
 const theaterHasNext = ref(false)
-let theaterPhotoRequest = 0
+let theaterPhotoGeneration = 0
 
 const peopleCountRange = computed(() => {
   const counts = popularPeople.value.map((person) => Number(person.work_count) || 1)
@@ -61,19 +61,26 @@ function usesGoogleTheaterImage(theater) {
 }
 
 async function fetchTheaterPhotos(batch, reset = false) {
-  const requestId = ++theaterPhotoRequest
+  const generation = reset ? ++theaterPhotoGeneration : theaterPhotoGeneration
   try {
-    const slugs = batch.slice(0, 12).map((theater) => theater.slug).join(',')
-    if (!slugs) return
-    const url = `/api/theaters/google-places/?slugs=${encodeURIComponent(slugs)}`
-    const places = await api.getFresh(url)
-    if (requestId === theaterPhotoRequest) {
-      theaterPlaces.value = reset
-        ? (places || {})
-        : { ...theaterPlaces.value, ...(places || {}) }
+    const chunks = []
+    for (let index = 0; index < batch.length; index += 12) {
+      chunks.push(batch.slice(index, index + 12))
+    }
+    if (!chunks.length) return
+    if (reset) theaterPlaces.value = {}
+    const responses = await Promise.all(chunks.map((chunk) => {
+      const slugs = chunk.map((theater) => theater.slug).join(',')
+      const url = `/api/theaters/google-places/?slugs=${encodeURIComponent(slugs)}`
+      return api.getFresh(url).catch(() => ({}))
+    }))
+    if (generation !== theaterPhotoGeneration) return
+    theaterPlaces.value = {
+      ...theaterPlaces.value,
+      ...Object.assign({}, ...responses),
     }
   } catch {
-    if (requestId === theaterPhotoRequest && reset) theaterPlaces.value = {}
+    if (generation === theaterPhotoGeneration && reset) theaterPlaces.value = {}
   }
 }
 
@@ -123,7 +130,7 @@ async function fetchTheaters({ append = false } = {}) {
     theaters.value = append ? [...theaters.value, ...results] : results
     theaterPage.value = page
     theaterHasNext.value = Boolean(data.next)
-    fetchTheaterPhotos(results, !append)
+    await fetchTheaterPhotos(results, !append)
   } catch {
     if (!append) theaters.value = []
   } finally {

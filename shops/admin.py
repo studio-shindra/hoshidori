@@ -17,8 +17,9 @@ class ShopAdmin(admin.ModelAdmin):
 
 @admin.register(TheaterShop)
 class TheaterShopAdmin(admin.ModelAdmin):
-    list_display = ['theater', 'shop', 'sort_order', 'is_featured']
-    list_filter = ['is_featured']
+    list_display = ['theater', 'shop', 'sort_order', 'is_featured', 'is_recognized']
+    list_filter = ['is_featured', 'is_recognized']
+    list_editable = ['sort_order', 'is_featured', 'is_recognized']
 
 
 @admin.register(Coupon)

@@ -1,6 +1,7 @@
 import csv
 from django.core.management.base import BaseCommand, CommandError
 from theaters.models import Theater
+from theaters.text import normalize_theater_name
 
 
 class Command(BaseCommand):
@@ -29,7 +30,7 @@ class Command(BaseCommand):
                             raise ValueError('name / slug は空にできません')
 
                         defaults = {
-                            'name': row['name'].strip(),
+                            'name': normalize_theater_name(row['name']),
                             'area_name': row.get('area_name', '').strip(),
                             'address': row.get('address', '').strip(),
                             'nearest_station': row.get('nearest_station', '').strip(),
@@ -41,6 +42,7 @@ class Command(BaseCommand):
                             'google_place_id': row.get('google_place_id', '').strip() or None,
                             'is_approved': row.get('is_approved', 'true').strip().lower() in ('true', '1', 'yes'),
                             'is_active': row.get('is_active', 'true').strip().lower() in ('true', '1', 'yes'),
+                            'display_order': int(row.get('display_order', '1000').strip() or '1000'),
                         }
 
                         if dry_run:

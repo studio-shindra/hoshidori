@@ -4,6 +4,8 @@ from django.conf import settings
 from django.db import models
 from django.utils.text import slugify
 
+from .text import normalize_theater_name
+
 
 def _unique_theater_slug(name):
     base = slugify(name, allow_unicode=True)[:200] or f'theater-{uuid.uuid4().hex[:8]}'
@@ -37,16 +39,18 @@ class Theater(models.Model):
     )
     is_approved = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
+    display_order = models.PositiveIntegerField(default=1000, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['name']
+        ordering = ['display_order', 'name', 'id']
 
     def __str__(self):
         return self.name
 
     def save(self, *args, **kwargs):
+        self.name = normalize_theater_name(self.name)
         if not self.slug:
             self.slug = _unique_theater_slug(self.name)
         if self.google_place_id == '':

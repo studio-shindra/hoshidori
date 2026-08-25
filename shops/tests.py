@@ -73,7 +73,12 @@ class RecognizedShopTests(TestCase):
     def test_recognized_endpoint_excludes_paid_featured_links(self):
         recognized = Shop.objects.create(name='認定食堂', slug='recognized-diner')
         sponsored = Shop.objects.create(name='おすすめ酒場', slug='sponsored-bar')
-        TheaterShop.objects.create(theater=self.theater, shop=recognized, is_featured=False)
+        listed = Shop.objects.create(name='無料掲載店', slug='listed-diner')
+        TheaterShop.objects.create(
+            theater=self.theater, shop=recognized,
+            is_featured=False, is_recognized=True,
+        )
+        TheaterShop.objects.create(theater=self.theater, shop=listed)
         TheaterShop.objects.create(theater=self.theater, shop=sponsored, is_featured=True)
 
         response = self.client.get('/api/shops/recognized/')
@@ -85,7 +90,12 @@ class RecognizedShopTests(TestCase):
         standard = Shop.objects.create(name='通常書店', slug='standard-bookstore')
         recognized = Shop.objects.create(name='認定食堂', slug='recognized-diner')
         sponsored = Shop.objects.create(name='おすすめ酒場', slug='sponsored-bar')
-        TheaterShop.objects.create(theater=self.theater, shop=recognized, is_featured=False)
+        listed = Shop.objects.create(name='無料掲載店', slug='listed-diner')
+        TheaterShop.objects.create(
+            theater=self.theater, shop=recognized,
+            is_featured=False, is_recognized=True,
+        )
+        TheaterShop.objects.create(theater=self.theater, shop=listed)
         TheaterShop.objects.create(theater=self.theater, shop=sponsored, is_featured=True)
 
         response = self.client.get('/api/shops/')
@@ -94,11 +104,11 @@ class RecognizedShopTests(TestCase):
         shops = response.data['results']
         self.assertEqual(
             [shop['name'] for shop in shops],
-            ['おすすめ酒場', '認定食堂', '通常書店'],
+            ['おすすめ酒場', '認定食堂', '無料掲載店', '通常書店'],
         )
         self.assertEqual(
             [shop['listing_tier'] for shop in shops],
-            ['sponsored', 'recognized', 'standard'],
+            ['sponsored', 'recognized', 'listed', 'standard'],
         )
 
 

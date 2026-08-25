@@ -44,6 +44,7 @@ class TheaterShop(models.Model):
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name='theater_shops')
     sort_order = models.IntegerField(default=0)
     is_featured = models.BooleanField(default=False)
+    is_recognized = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ['theater', 'shop']

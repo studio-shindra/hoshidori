@@ -120,7 +120,7 @@ class TheaterViewSet(ModelViewSet):
         theater = self.get_object()
         theater_shops = TheaterShop.objects.filter(
             theater=theater, shop__is_active=True,
-        ).select_related('shop').order_by('-is_featured', 'sort_order')
+        ).select_related('shop').order_by('-is_featured', '-is_recognized', 'sort_order')
         theater_shops = list(theater_shops)
         shops = [ts.shop for ts in theater_shops]
         attach_google_place_data(shops)
@@ -132,7 +132,7 @@ class TheaterViewSet(ModelViewSet):
                 'listing_tier': (
                     'sponsored'
                     if theater_shop.is_featured or theater_shop.shop.is_featured
-                    else 'recognized'
+                    else ('recognized' if theater_shop.is_recognized else 'listed')
                 ),
             }
             for theater_shop, shop_data in zip(theater_shops, serializer.data)

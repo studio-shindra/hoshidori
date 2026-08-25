@@ -64,6 +64,7 @@ function openManualShop() {
     :class="{
       'shop-card-sponsored': shop.listing_tier === 'sponsored',
       'shop-card-recognized': shop.listing_tier === 'recognized',
+      'shop-card-listed': shop.listing_tier === 'listed',
       'shop-card-google': isGooglePlace,
       'shop-card-text-only': !isGooglePlace && !shop.image_src,
     }"
@@ -89,9 +90,11 @@ function openManualShop() {
       <!-- Thumbnail -->
       <div v-if="shop.image_src" class="shop-thumb position-relative">
         <img :src="optimizedImage" :alt="shop.name" class="shop-thumb-img" loading="lazy" />
-        <div v-if="shop.category || shop.listing_tier === 'sponsored'" class="shop-labels position-absolute bottom-0 start-0 m-2">
+        <div v-if="shop.category || ['sponsored', 'recognized', 'listed'].includes(shop.listing_tier)" class="shop-labels position-absolute bottom-0 start-0 m-2">
           <span v-if="shop.category" class="shop-tag">{{ shop.category }}</span>
           <span v-if="shop.listing_tier === 'sponsored'" class="shop-recommend-tag">ホシドリおすすめ店</span>
+          <span v-else-if="shop.listing_tier === 'recognized'" class="shop-recognized-tag">ホシドリ認定店</span>
+          <span v-else-if="shop.listing_tier === 'listed'" class="shop-listed-tag">掲載店</span>
         </div>
         <div v-if="shop.image_source === 'google_places'" class="google-photo-credit" @click.stop>
           <a
@@ -124,9 +127,11 @@ function openManualShop() {
 
       <!-- Info -->
       <div class="p-3 d-flex flex-column flex-grow-1">
-        <div v-if="!shop.image_src && (shop.category || shop.listing_tier === 'sponsored')" class="shop-labels mb-2">
+        <div v-if="!shop.image_src && (shop.category || ['sponsored', 'recognized', 'listed'].includes(shop.listing_tier))" class="shop-labels mb-2">
           <span v-if="shop.category" class="shop-tag shop-tag-static">{{ shop.category }}</span>
           <span v-if="shop.listing_tier === 'sponsored'" class="shop-recommend-tag shop-tag-static">ホシドリおすすめ店</span>
+          <span v-else-if="shop.listing_tier === 'recognized'" class="shop-recognized-tag shop-tag-static">ホシドリ認定店</span>
+          <span v-else-if="shop.listing_tier === 'listed'" class="shop-listed-tag shop-tag-static">掲載店</span>
         </div>
         <div class="shop-name-row">
           <span v-if="shop.listing_tier === 'sponsored'" class="listing-mark" aria-hidden="true"></span>
@@ -184,6 +189,7 @@ function openManualShop() {
   border: 0;
 }
 .shop-card-recognized { background: #18181b; border: 0; }
+.shop-card-listed { background: #18181b; border: 0; }
 .shop-card-text-only {
   position: relative;
   width: 100%;
@@ -219,6 +225,8 @@ function openManualShop() {
 .shop-labels { display: flex; align-items: center; gap: .35rem; }
 .shop-tag-static { background: rgba(255,255,255,.06); backdrop-filter: none; }
 .shop-recommend-tag { padding: .2rem .5rem; border-radius: 4px; background: rgba(10,10,11,.68); color: #fde68a; font-size: .62rem; font-weight: 700; backdrop-filter: blur(4px); }
+.shop-recognized-tag { padding: .2rem .5rem; border-radius: 4px; background: rgba(244,63,94,.14); color: #fecdd3; font-size: .62rem; font-weight: 700; backdrop-filter: blur(4px); }
+.shop-listed-tag { padding: .2rem .5rem; border-radius: 4px; background: rgba(255,255,255,.08); color: #d4d4d8; font-size: .62rem; font-weight: 650; backdrop-filter: blur(4px); }
 .shop-name-row { display: flex; align-items: center; gap: .4rem; }
 .listing-mark { width: 19px; height: 19px; flex: 0 0 auto; background: #fff; filter: drop-shadow(0 0 4px rgba(251,191,36,.9)) drop-shadow(0 0 9px rgba(245,158,11,.5)); -webkit-mask: url('/icon.svg') center / contain no-repeat; mask: url('/icon.svg') center / contain no-repeat; }
 .shop-info-footer { display: flex; align-items: flex-end; justify-content: space-between; gap: .5rem; }

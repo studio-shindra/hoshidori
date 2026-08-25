@@ -83,11 +83,12 @@ const averageRating = computed(() => {
   if (!rated.length) return null
   return (rated.reduce((sum, review) => sum + review.rating_overall, 0) / rated.length).toFixed(1)
 })
-const tierOrder = { sponsored: 0, recognized: 1, google: 2 }
+const tierOrder = { sponsored: 0, recognized: 1, listed: 2, google: 3 }
 const sortedShops = computed(() => [...nearbyShops.value]
   .sort((a, b) => (tierOrder[a.listing_tier] ?? 9) - (tierOrder[b.listing_tier] ?? 9)))
 const sponsoredShops = computed(() => sortedShops.value.filter((shop) => shop.listing_tier === 'sponsored'))
 const recognizedShops = computed(() => sortedShops.value.filter((shop) => shop.listing_tier === 'recognized'))
+const listedShops = computed(() => sortedShops.value.filter((shop) => shop.listing_tier === 'listed'))
 const googleShops = computed(() => sortedShops.value.filter((shop) => shop.source === 'google_places'))
 const googleNearbyUrl = computed(() => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${theaterName.value} 周辺 飲食店`)}`)
 const shopOptions = computed(() => sortedShops.value
@@ -424,6 +425,11 @@ async function toggleLike(review) {
         <div v-if="recognizedShops.length" class="shop-tier-block recognized-block mb-4">
           <div class="d-flex flex-column gap-3">
             <ShopCard v-for="shop in recognizedShops" :key="shop.id" :shop="shop" />
+          </div>
+        </div>
+        <div v-if="listedShops.length" class="shop-tier-block recognized-block mb-4">
+          <div class="d-flex flex-column gap-3">
+            <ShopCard v-for="shop in listedShops" :key="shop.id" :shop="shop" />
           </div>
         </div>
         <div v-if="googleShops.length" class="shop-tier-block google-block">

@@ -61,6 +61,12 @@ class ShopViewSet(ReadOnlyModelViewSet):
         recognized_link = TheaterShop.objects.filter(
             shop_id=OuterRef('pk'),
             is_featured=False,
+            is_recognized=True,
+        )
+        listed_link = TheaterShop.objects.filter(
+            shop_id=OuterRef('pk'),
+            is_featured=False,
+            is_recognized=False,
         )
         qs = qs.annotate(
             after_viewing_count=Count(
@@ -70,12 +76,14 @@ class ShopViewSet(ReadOnlyModelViewSet):
             ),
             _has_featured_link=Exists(featured_link),
             _has_recognized_link=Exists(recognized_link),
+            _has_listed_link=Exists(listed_link),
         ).annotate(
             _listing_rank=Case(
                 When(is_featured=True, then=Value(0)),
                 When(_has_featured_link=True, then=Value(0)),
                 When(_has_recognized_link=True, then=Value(1)),
-                default=Value(2),
+                When(_has_listed_link=True, then=Value(2)),
+                default=Value(3),
                 output_field=IntegerField(),
             ),
         ).order_by('_listing_rank', 'featured_order', 'name')
@@ -107,7 +115,11 @@ class ShopViewSet(ReadOnlyModelViewSet):
         ).annotate(
             _has_featured_link=Exists(featured_link),
             _has_recognized_link=Exists(
-                TheaterShop.objects.filter(shop_id=OuterRef('pk'), is_featured=False)
+                TheaterShop.objects.filter(
+                    shop_id=OuterRef('pk'),
+                    is_featured=False,
+                    is_recognized=True,
+                )
             ),
             after_viewing_count=Count(
                 'after_viewing_logs',
@@ -116,6 +128,7 @@ class ShopViewSet(ReadOnlyModelViewSet):
             ),
         ).filter(
             _has_featured_link=False,
+            _has_recognized_link=True,
         ).distinct().order_by('-after_viewing_count', 'name')[:8]
         serializer = self.get_serializer(shops, many=True)
         return Response(serializer.data)

@@ -29,6 +29,7 @@ class TheaterSerializer(serializers.ModelSerializer):
             'image', 'image_url', 'is_active', 'created_at', 'updated_at',
             'google_place_id', 'source_url', 'prefecture', 'city',
             'created_by', 'is_approved',
+            'display_order',
         ]
-        read_only_fields = ['id', 'created_by', 'is_approved', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_by', 'is_approved', 'display_order', 'created_at', 'updated_at']
         extra_kwargs = {'slug': {'required': False}}

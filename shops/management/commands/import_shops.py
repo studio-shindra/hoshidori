@@ -81,9 +81,14 @@ class Command(BaseCommand):
                                     theater = Theater.objects.get(slug=theater_slug)
                                     sort_order = int(row.get('sort_order', '0').strip() or '0')
                                     is_featured = row.get('is_featured', 'false').strip().lower() in ('true', '1', 'yes')
+                                    is_recognized = row.get('is_recognized', 'false').strip().lower() in ('true', '1', 'yes')
                                     TheaterShop.objects.update_or_create(
                                         theater=theater, shop=shop,
-                                        defaults={'sort_order': sort_order, 'is_featured': is_featured}
+                                        defaults={
+                                            'sort_order': sort_order,
+                                            'is_featured': is_featured,
+                                            'is_recognized': is_recognized,
+                                        }
                                     )
                                 except Theater.DoesNotExist:
                                     self.stderr.write(f'行{i}: 劇場 {theater_slug} が見つかりません')
