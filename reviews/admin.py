@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Like, Review, ViewingLog, ViewingLogImage
+from .models import Like, Review, ReviewReport, UserBlock, ViewingLog, ViewingLogImage
 
 
 @admin.register(Review)
@@ -25,3 +25,16 @@ class ViewingLogImageAdmin(admin.ModelAdmin):
 class LikeAdmin(admin.ModelAdmin):
     list_display = ['user', 'review', 'created_at']
     list_filter = ['created_at']
+
+
+@admin.register(ReviewReport)
+class ReviewReportAdmin(admin.ModelAdmin):
+    list_display = ['review', 'reporter', 'reason', 'status', 'created_at']
+    list_filter = ['reason', 'status', 'created_at']
+    search_fields = ['review__body', 'reporter__username', 'details']
+
+
+@admin.register(UserBlock)
+class UserBlockAdmin(admin.ModelAdmin):
+    list_display = ['blocker', 'blocked', 'created_at']
+    search_fields = ['blocker__username', 'blocked__username']

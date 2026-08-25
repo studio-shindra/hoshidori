@@ -100,3 +100,59 @@ class Like(models.Model):
 
     def __str__(self):
         return f'{self.user} → {self.review}'
+
+
+class ReviewReport(models.Model):
+    REASON_CHOICES = [
+        ('spam', 'スパム・宣伝'),
+        ('harassment', '嫌がらせ・誹謗中傷'),
+        ('hate', '差別的な表現'),
+        ('sexual', '性的・不適切な内容'),
+        ('copyright', '権利侵害'),
+        ('other', 'その他'),
+    ]
+    STATUS_CHOICES = [
+        ('pending', '確認待ち'),
+        ('resolved', '対応済み'),
+        ('dismissed', '問題なし'),
+    ]
+
+    reporter = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='review_reports',
+    )
+    review = models.ForeignKey(
+        Review, on_delete=models.CASCADE, related_name='reports',
+    )
+    reason = models.CharField(max_length=20, choices=REASON_CHOICES)
+    details = models.TextField(blank=True, default='')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(fields=['reporter', 'review'], name='unique_reporter_review'),
+        ]
+
+    def __str__(self):
+        return f'{self.reporter} → Review #{self.review_id} ({self.get_reason_display()})'
+
+
+class UserBlock(models.Model):
+    blocker = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='user_blocks',
+    )
+    blocked = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='blocked_by_users',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(fields=['blocker', 'blocked'], name='unique_user_block'),
+        ]
+
+    def __str__(self):
+        return f'{self.blocker} blocks {self.blocked}'

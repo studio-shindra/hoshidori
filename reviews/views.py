@@ -6,11 +6,15 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.viewsets import ModelViewSet
+from rest_framework import mixins
+from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
 from accounts.permissions import IsOwnerOrReadOnly
-from .models import Like, Review, ViewingLog, ViewingLogImage
-from .serializers import LatestReviewSerializer, ReviewSerializer, ViewingLogImageSerializer, ViewingLogSerializer
+from .models import Like, Review, ReviewReport, UserBlock, ViewingLog, ViewingLogImage
+from .serializers import (
+    LatestReviewSerializer, ReviewReportSerializer, ReviewSerializer,
+    UserBlockSerializer, ViewingLogImageSerializer, ViewingLogSerializer,
+)
 
 
 class ReviewViewSet(ModelViewSet):
@@ -36,6 +40,11 @@ class ReviewViewSet(ModelViewSet):
                     Like.objects.filter(review=OuterRef('pk'), user=self.request.user)
                 )
             )
+            qs = qs.exclude(
+                user_id__in=UserBlock.objects.filter(
+                    blocker=self.request.user,
+                ).values('blocked_id')
+            )
         work = self.request.query_params.get('work')
         if work:
             qs = qs.filter(performance__work_id=work)
@@ -51,7 +60,14 @@ class ReviewViewSet(ModelViewSet):
         ).annotate(
             _after_shop_name=Subquery(matching_log.values('after_shop__name')[:1]),
             _after_shop_slug=Subquery(matching_log.values('after_shop__slug')[:1]),
-        ).filter(body__gt='').order_by('-created_at')[:10]
+        ).filter(body__gt='').order_by('-created_at')
+        if request.user.is_authenticated:
+            qs = qs.exclude(
+                user_id__in=UserBlock.objects.filter(
+                    blocker=request.user,
+                ).values('blocked_id')
+            )
+        qs = qs[:10]
         serializer = LatestReviewSerializer(qs, many=True, context={'request': request})
         return Response(serializer.data)
 
@@ -76,6 +92,48 @@ class ReviewViewSet(ModelViewSet):
             if deleted:
                 return Response(status=status.HTTP_204_NO_CONTENT)
             return Response({'detail': 'いいねしていません。'}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def report(self, request, pk=None):
+        review = self.get_object()
+        if review.user_id == request.user.id:
+            return Response({'detail': '自分の投稿は通報できません。'}, status=400)
+        serializer = ReviewReportSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        report, created = ReviewReport.objects.update_or_create(
+            reporter=request.user,
+            review=review,
+            defaults={
+                'reason': serializer.validated_data['reason'],
+                'details': serializer.validated_data.get('details', ''),
+                'status': 'pending',
+            },
+        )
+        return Response(
+            ReviewReportSerializer(report).data,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
+
+    @action(detail=True, methods=['post'], url_path='block-user', permission_classes=[IsAuthenticated])
+    def block_user(self, request, pk=None):
+        review = self.get_object()
+        if review.user_id == request.user.id:
+            return Response({'detail': '自分自身はブロックできません。'}, status=400)
+        block, created = UserBlock.objects.get_or_create(
+            blocker=request.user, blocked=review.user,
+        )
+        return Response(
+            UserBlockSerializer(block).data,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
+
+
+class UserBlockViewSet(mixins.ListModelMixin, mixins.DestroyModelMixin, GenericViewSet):
+    serializer_class = UserBlockSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return UserBlock.objects.filter(blocker=self.request.user).select_related('blocked')
 
 
 class ViewingLogViewSet(ModelViewSet):

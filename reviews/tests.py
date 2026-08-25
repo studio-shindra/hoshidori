@@ -9,7 +9,7 @@ from shops.models import Shop, TheaterShop
 from theaters.models import Theater
 from works.models import Performance, Work
 
-from .models import Review, ViewingLog
+from .models import Review, ReviewReport, UserBlock, ViewingLog
 
 
 class AfterShopViewingLogTests(TestCase):
@@ -99,3 +99,70 @@ class AfterShopViewingLogTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn('watched_on', response.data)
+
+
+class ReviewSafetyTests(TestCase):
+    def setUp(self):
+        self.author = get_user_model().objects.create_user(
+            username='author', password='test-password', display_name='投稿者',
+        )
+        self.viewer = get_user_model().objects.create_user(
+            username='viewer', password='test-password', display_name='閲覧者',
+        )
+        theater = Theater.objects.create(
+            name='テスト劇場', slug='safety-theater', area_name='東京',
+        )
+        work = Work.objects.create(title='安全機能テスト', created_by=self.author)
+        self.performance = Performance.objects.create(
+            work=work, theater=theater, created_by=self.author, is_approved=True,
+        )
+        self.review = Review.objects.create(
+            user=self.author, performance=self.performance, body='心に残る舞台でした',
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(self.viewer)
+
+    def test_objectionable_review_is_rejected(self):
+        response = self.client.post('/api/reviews/', {
+            'performance': self.performance.id,
+            'body': 'お前なんか死 ね',
+        }, format='json')
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('body', response.data)
+
+    def test_review_can_be_reported(self):
+        response = self.client.post(f'/api/reviews/{self.review.id}/report/', {
+            'reason': 'harassment',
+            'details': '個人を攻撃しています',
+        }, format='json')
+
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(ReviewReport.objects.filter(
+            reporter=self.viewer, review=self.review, status='pending',
+        ).exists())
+
+    def test_block_hides_reviews_and_can_be_removed(self):
+        block_response = self.client.post(
+            f'/api/reviews/{self.review.id}/block-user/', {}, format='json',
+        )
+        self.assertEqual(block_response.status_code, 201)
+        block = UserBlock.objects.get(blocker=self.viewer, blocked=self.author)
+
+        list_response = self.client.get(
+            f'/api/reviews/?work={self.performance.work_id}',
+        )
+        self.assertEqual(list_response.status_code, 200)
+        self.assertEqual(list_response.data['count'], 0)
+
+        latest_response = self.client.get('/api/reviews/latest/')
+        self.assertEqual(latest_response.status_code, 200)
+        self.assertEqual(len(latest_response.data), 0)
+
+        blocks_response = self.client.get('/api/user-blocks/')
+        self.assertEqual(blocks_response.status_code, 200)
+        self.assertEqual(blocks_response.data['results'][0]['blocked_display_name'], '投稿者')
+
+        delete_response = self.client.delete(f'/api/user-blocks/{block.id}/')
+        self.assertEqual(delete_response.status_code, 204)
+        self.assertFalse(UserBlock.objects.filter(pk=block.id).exists())

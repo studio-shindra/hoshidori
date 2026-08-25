@@ -128,8 +128,9 @@ function invalidateByPath(path) {
     cache.clear()
     return
   }
+  const affected = resource === 'user-blocks' ? ['user-blocks', 'reviews'] : [resource]
   for (const key of cache.keys()) {
-    if (key.includes(`/${resource}`)) {
+    if (affected.some((name) => key.includes(`/${name}`))) {
       cache.delete(key)
     }
   }

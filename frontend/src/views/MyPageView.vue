@@ -5,7 +5,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useRoute, useRouter } from 'vue-router'
 import {
   IconPencil, IconTrash, IconSparkles,
-  IconChevronDown, IconChevronRight, IconBuildingStore, IconTheater, IconLogout,
+  IconChevronDown, IconChevronRight, IconBuildingStore, IconTheater, IconLogout, IconUserOff,
 } from '@tabler/icons-vue'
 import RatingButtons from '@/components/RatingButtons.vue'
 import LogListItem from '@/components/LogListItem.vue'
@@ -294,6 +294,10 @@ async function logout() {
           <RouterLink to="/terms" class="more-row"><span>利用規約</span><IconChevronRight :size="16" /></RouterLink>
           <RouterLink to="/privacy" class="more-row"><span>プライバシーポリシー</span><IconChevronRight :size="16" /></RouterLink>
           <RouterLink to="/guidelines" class="more-row"><span>投稿ガイドライン</span><IconChevronRight :size="16" /></RouterLink>
+          <RouterLink to="/blocked-users" class="more-row">
+            <span class="d-flex align-items-center gap-2"><IconUserOff :size="17" />ブロック中のユーザー</span>
+            <IconChevronRight :size="16" />
+          </RouterLink>
           <RouterLink to="/contact" class="more-row"><span>お問い合わせ</span><IconChevronRight :size="16" /></RouterLink>
           <button class="more-row more-logout" @click="logout">
             <span class="d-flex align-items-center gap-2"><IconLogout :size="17" />ログアウト</span>

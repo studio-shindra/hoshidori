@@ -1,6 +1,7 @@
 from django.contrib.auth import authenticate
 from rest_framework import serializers
 
+from config.content_moderation import find_objectionable_phrase
 from .models import User
 
 
@@ -9,6 +10,19 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'email', 'display_name', 'bio', 'avatar_url', 'role', 'date_joined']
         read_only_fields = ['id', 'username', 'role', 'date_joined']
+
+    def _validate_public_text(self, value):
+        if find_objectionable_phrase(value):
+            raise serializers.ValidationError(
+                '他の利用者を傷つける可能性のある表現が含まれています。表現を変えてください。'
+            )
+        return value
+
+    def validate_display_name(self, value):
+        return self._validate_public_text(value)
+
+    def validate_bio(self, value):
+        return self._validate_public_text(value)
 
 
 class RegisterSerializer(serializers.Serializer):

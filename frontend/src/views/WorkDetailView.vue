@@ -4,7 +4,8 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import Multiselect from '@vueform/multiselect'
 import {
   IconCalendarEvent, IconCamera, IconHeart, IconHeartFilled,
-  IconExternalLink, IconMapPin, IconPencil, IconSparkles, IconStarFilled, IconTicket, IconX,
+  IconDots, IconExternalLink, IconFlag, IconMapPin, IconPencil, IconSparkles,
+  IconStarFilled, IconTicket, IconUserOff, IconX,
 } from '@tabler/icons-vue'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
@@ -44,6 +45,13 @@ const logLoading = ref(false)
 const logSuccess = ref('')
 const logImages = ref([])
 const logImageInput = ref(null)
+const activeReviewMenuId = ref(null)
+const reportingReview = ref(null)
+const reportReason = ref('harassment')
+const reportDetails = ref('')
+const reportError = ref('')
+const reportLoading = ref(false)
+const moderationNotice = ref('')
 const todayDate = formatDate(new Date())
 
 const perfOptions = computed(() => performances.value.map((performance) => ({
@@ -250,6 +258,44 @@ async function toggleLike(review) {
     // Keep the current visual state if the request fails.
   }
 }
+
+function openReport(review) {
+  reportingReview.value = review
+  reportReason.value = 'harassment'
+  reportDetails.value = ''
+  reportError.value = ''
+  activeReviewMenuId.value = null
+}
+
+async function submitReport() {
+  if (!reportingReview.value) return
+  reportLoading.value = true
+  reportError.value = ''
+  try {
+    await api.post(`/api/reviews/${reportingReview.value.id}/report/`, {
+      reason: reportReason.value,
+      details: reportDetails.value,
+    })
+    reportingReview.value = null
+    moderationNotice.value = '通報を受け付けました。内容を確認します。'
+  } catch (error) {
+    reportError.value = error.data ? Object.values(error.data).flat().join(' ') : '通報を送信できませんでした'
+  } finally {
+    reportLoading.value = false
+  }
+}
+
+async function blockReviewUser(review) {
+  activeReviewMenuId.value = null
+  if (!confirm(`${review.user_display_name}さんをブロックしますか？\nこのユーザーの投稿は表示されなくなります。`)) return
+  try {
+    await api.post(`/api/reviews/${review.id}/block-user/`)
+    reviews.value = reviews.value.filter((item) => item.user_id !== review.user_id)
+    moderationNotice.value = `${review.user_display_name}さんをブロックしました。`
+  } catch {
+    moderationNotice.value = 'ブロックできませんでした。時間をおいてお試しください。'
+  }
+}
 </script>
 
 <template>
@@ -380,19 +426,65 @@ async function toggleLike(review) {
         </Transition>
       </Teleport>
 
+      <Teleport to="body">
+        <Transition name="fade">
+          <div v-if="reportingReview" class="log-modal-backdrop" @click.self="reportingReview = null">
+            <form class="log-modal d-flex flex-column gap-3" @submit.prevent="submitReport">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <h2 class="small fw-semibold mb-1">この投稿を通報</h2>
+                  <p class="tiny text-secondary mb-0">運営が内容を確認し、必要に応じて対応します。</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" aria-label="通報画面を閉じる" @click="reportingReview = null"></button>
+              </div>
+              <div>
+                <label class="form-label tiny text-secondary">理由</label>
+                <select v-model="reportReason" class="form-select bg-dark border-secondary text-light form-select-sm">
+                  <option value="spam">スパム・宣伝</option>
+                  <option value="harassment">嫌がらせ・誹謗中傷</option>
+                  <option value="hate">差別的な表現</option>
+                  <option value="sexual">性的・不適切な内容</option>
+                  <option value="copyright">権利侵害</option>
+                  <option value="other">その他</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label tiny text-secondary">補足（任意）</label>
+                <textarea v-model="reportDetails" rows="3" maxlength="1000" class="form-control bg-dark border-secondary text-light form-control-sm" placeholder="問題だと思う点を教えてください"></textarea>
+              </div>
+              <p v-if="reportError" class="small text-danger mb-0">{{ reportError }}</p>
+              <button class="btn btn-primary-rose btn-sm" :disabled="reportLoading">{{ reportLoading ? '送信中...' : '通報する' }}</button>
+            </form>
+          </div>
+        </Transition>
+      </Teleport>
+
       <section class="mt-5">
         <div class="d-flex align-items-center justify-content-between mb-3">
           <h2 class="fs-6 fw-bold mb-0">観劇メモ <span v-if="reviews.length" class="text-secondary">{{ reviews.length }}</span></h2>
           <span v-if="averageRating" class="rating-average">評価 {{ averageRating }}</span>
         </div>
+        <p v-if="moderationNotice" class="moderation-notice">{{ moderationNotice }}</p>
         <div v-if="reviews.length" class="d-flex flex-column gap-3">
           <article v-for="review in reviews" :key="review.id" class="review-card">
             <div class="d-flex align-items-center gap-2">
               <UserAvatar :src="review.user_avatar_url" :name="review.user_display_name" :size="28" />
               <span class="small fw-medium">{{ review.user_display_name }}</span>
-              <span v-if="review.rating_overall" class="review-rating ms-auto">
-                <component :is="ratingIcons[ratingIcon(review.rating_overall)]" :size="13" />{{ ratingLabel(review.rating_overall) }}
-              </span>
+              <div class="review-head-actions ms-auto">
+                <span v-if="review.rating_overall" class="review-rating">
+                  <component :is="ratingIcons[ratingIcon(review.rating_overall)]" :size="13" />{{ ratingLabel(review.rating_overall) }}
+                </span>
+                <button
+                  v-if="auth.isAuthenticated && review.user_id !== auth.user?.id"
+                  class="review-menu-button"
+                  aria-label="投稿メニュー"
+                  @click="activeReviewMenuId = activeReviewMenuId === review.id ? null : review.id"
+                ><IconDots :size="17" /></button>
+              </div>
+              <div v-if="activeReviewMenuId === review.id" class="review-action-menu">
+                <button @click="openReport(review)"><IconFlag :size="14" />この投稿を通報</button>
+                <button @click="blockReviewUser(review)"><IconUserOff :size="14" />このユーザーをブロック</button>
+              </div>
             </div>
             <p v-if="review.is_spoiler" class="tiny color-rose mt-2 mb-0">ネタバレあり</p>
             <p class="small text-light lh-base py-2 my-2 border-top border-secondary">{{ review.body }}</p>
@@ -472,7 +564,15 @@ async function toggleLike(review) {
 .missing-description { display: inline-flex; width: fit-content; align-items: center; gap: 4px; color: #52525b; font-size: .68rem; text-decoration: none; }
 a.missing-description:hover { color: #a1a1aa; }
 .time-input { max-width: 8rem; }
-.review-card { padding: 14px; border: 1px solid rgba(255,255,255,.09); border-radius: 13px; background: #18181b; }
+.review-card { position: relative; padding: 14px; border: 1px solid rgba(255,255,255,.09); border-radius: 13px; background: #18181b; }
+.review-head-actions { display: flex; align-items: center; gap: 8px; }
+.review-menu-button { display: grid; width: 28px; height: 28px; padding: 0; place-items: center; border: 0; border-radius: 50%; background: transparent; color: #71717a; }
+.review-menu-button:active { background: rgba(255,255,255,.07); color: #fff; }
+.review-action-menu { position: absolute; z-index: 10; top: 45px; right: 12px; min-width: 190px; overflow: hidden; border: 1px solid rgba(255,255,255,.12); border-radius: 11px; background: #242428; box-shadow: 0 12px 30px rgba(0,0,0,.35); }
+.review-action-menu button { display: flex; width: 100%; align-items: center; gap: 8px; padding: .72rem .8rem; border: 0; border-bottom: 1px solid rgba(255,255,255,.07); background: transparent; color: #d4d4d8; font-size: .72rem; text-align: left; }
+.review-action-menu button:last-child { border-bottom: 0; }
+.review-action-menu button:active { background: rgba(255,255,255,.07); }
+.moderation-notice { padding: .6rem .75rem; border: 1px solid rgba(244,63,94,.18); border-radius: 9px; background: rgba(244,63,94,.07); color: #fda4af; font-size: .7rem; }
 .review-rating, .rating-average { display: inline-flex; align-items: center; gap: 3px; color: #f59e0b; font-size: .7rem; font-weight: 700; }
 .rating-average { padding: .25rem .55rem; border-radius: 99px; background: rgba(245,158,11,.12); }
 .after-shop-link { display: inline-flex; align-items: center; gap: 4px; color: #fda4af; font-size: .72rem; text-decoration: none; }
