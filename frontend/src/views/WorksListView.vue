@@ -24,6 +24,7 @@ const searchType = ref(
 const popularPeople = ref([])
 const theaters = ref([])
 const theaterPlaces = ref({})
+const theaterPhotoLoadingSlugs = ref(new Set())
 const theatersLoading = ref(false)
 const theatersLoadingMore = ref(false)
 const theaterPage = ref(1)
@@ -62,6 +63,7 @@ function usesGoogleTheaterImage(theater) {
 
 async function fetchTheaterPhotos(batch, reset = false) {
   const generation = reset ? ++theaterPhotoGeneration : theaterPhotoGeneration
+  const batchSlugs = batch.map((theater) => theater.slug)
   try {
     const chunks = []
     for (let index = 0; index < batch.length; index += 12) {
@@ -69,6 +71,9 @@ async function fetchTheaterPhotos(batch, reset = false) {
     }
     if (!chunks.length) return
     if (reset) theaterPlaces.value = {}
+    theaterPhotoLoadingSlugs.value = reset
+      ? new Set(batchSlugs)
+      : new Set([...theaterPhotoLoadingSlugs.value, ...batchSlugs])
     const responses = await Promise.all(chunks.map((chunk) => {
       const slugs = chunk.map((theater) => theater.slug).join(',')
       const url = `/api/theaters/google-places/?slugs=${encodeURIComponent(slugs)}`
@@ -81,6 +86,12 @@ async function fetchTheaterPhotos(batch, reset = false) {
     }
   } catch {
     if (generation === theaterPhotoGeneration && reset) theaterPlaces.value = {}
+  } finally {
+    if (generation === theaterPhotoGeneration) {
+      const loadingSlugs = new Set(theaterPhotoLoadingSlugs.value)
+      batchSlugs.forEach((slug) => loadingSlugs.delete(slug))
+      theaterPhotoLoadingSlugs.value = loadingSlugs
+    }
   }
 }
 
@@ -130,7 +141,7 @@ async function fetchTheaters({ append = false } = {}) {
     theaters.value = append ? [...theaters.value, ...results] : results
     theaterPage.value = page
     theaterHasNext.value = Boolean(data.next)
-    await fetchTheaterPhotos(results, !append)
+    fetchTheaterPhotos(results, !append)
   } catch {
     if (!append) theaters.value = []
   } finally {
@@ -245,7 +256,11 @@ onMounted(() => {
       <RouterLink v-for="theater in theaters" :key="theater.id" :to="`/theaters/${theater.slug}`" class="theater-result-row">
         <div class="theater-result-thumb">
           <img v-if="theaterImage(theater)" :src="theaterImage(theater)" :alt="theater.name" loading="lazy" />
-          <div v-else class="theater-result-placeholder"><IconTheater :size="23" /></div>
+          <div
+            v-else
+            class="theater-result-placeholder"
+            :class="{ 'is-loading': theaterPhotoLoadingSlugs.has(theater.slug) }"
+          ><IconTheater :size="23" /></div>
           <span v-if="usesGoogleTheaterImage(theater)" class="theater-google-credit" translate="no">Google</span>
         </div>
         <div class="min-w-0 flex-grow-1">
@@ -302,6 +317,9 @@ onMounted(() => {
 .theater-result-thumb img { width: 100%; height: 100%; object-fit: cover; }
 .theater-google-credit { position: absolute; right: 3px; bottom: 3px; padding: 1px 3px; border-radius: 3px; background: rgba(0,0,0,.66); color: #fff; font: 500 .44rem/1.25 Roboto, sans-serif; }
 .theater-result-placeholder { width: 100%; height: 100%; display: grid; place-items: center; color: rgba(255,255,255,.55); background: radial-gradient(circle at 20% 25%, rgba(244,63,94,.32), transparent 35%), radial-gradient(circle at 82% 75%, rgba(251,191,36,.2), transparent 38%), #202023; }
+.theater-result-placeholder.is-loading { position: relative; overflow: hidden; color: rgba(255,255,255,.28); }
+.theater-result-placeholder.is-loading::after { content: ''; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,.09) 47%, transparent 64%); transform: translateX(-100%); animation: theater-photo-loading 1.25s ease-in-out infinite; }
+@keyframes theater-photo-loading { to { transform: translateX(100%); } }
 .load-more-theaters { display: block; width: 100%; margin: .85rem 0 0; padding: .7rem; border: 1px solid rgba(255,255,255,.12); border-radius: 11px; background: rgba(255,255,255,.035); color: #a1a1aa; font-size: .73rem; font-weight: 700; }
 .load-more-theaters:disabled { opacity: .5; }
 </style>
