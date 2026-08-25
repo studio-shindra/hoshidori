@@ -134,7 +134,7 @@ function openManualShop() {
           <span v-else-if="shop.listing_tier === 'listed'" class="shop-listed-tag shop-tag-static">掲載店</span>
         </div>
         <div class="shop-name-row">
-          <span v-if="shop.listing_tier === 'sponsored'" class="listing-mark" aria-hidden="true"></span>
+          <span v-if="['sponsored', 'recognized'].includes(shop.listing_tier)" class="listing-mark" aria-hidden="true"></span>
           <div class="fw-bold text-white">{{ shop.name }}</div>
         </div>
         <div
@@ -144,7 +144,7 @@ function openManualShop() {
           <IconMapPin :size="11" />
           <span class="tiny text-truncate">{{ [shop.nearest_station, shop.distance_note].filter(Boolean).join(' · ') }}</span>
         </div>
-        <div v-if="shop.benefit_text || shop.after_viewing_count || shop.listing_tier === 'sponsored'" class="shop-info-footer mt-auto pt-2">
+        <div v-if="shop.benefit_text || shop.after_viewing_count || ['sponsored', 'recognized'].includes(shop.listing_tier)" class="shop-info-footer mt-auto pt-2">
           <span v-if="shop.benefit_text" class="benefit-pill">
             <IconSparkles :size="11" />{{ shop.benefit_text }}
           </span>
@@ -152,7 +152,7 @@ function openManualShop() {
             感想戦に選ばれた {{ shop.after_viewing_count }}回
           </span>
           <span v-else></span>
-          <span v-if="shop.listing_tier === 'sponsored'" class="listing-pr">PR</span>
+          <span v-if="['sponsored', 'recognized'].includes(shop.listing_tier)" class="listing-pr">PR</span>
         </div>
       </div>
     </template>
