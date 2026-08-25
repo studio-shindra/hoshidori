@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "ホシドリ",
+    "slug": "hoshidori",
+    "version": "2.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "hoshidori",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#09090b",
+    "ios": {
+      "bundleIdentifier": "com.studio-shindra.hoshidori",
+      "supportsTablet": false,
+      "config": {
+        "usesNonExemptEncryption": false
+      }
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#09090b",
+          "image": "./assets/splash.png",
+          "imageWidth": 96
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "2a6d9b10-e6f4-4b28-9484-dca76e6969e4"
+      }
+    },
+    "owner": "shindra"
+  }
+}
