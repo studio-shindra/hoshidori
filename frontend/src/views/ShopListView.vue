@@ -108,7 +108,11 @@ onMounted(async () => {
       </div>
       <div v-else class="text-center py-5">
         <IconCoffee :size="40" class="text-secondary mb-2" />
-        <p class="text-secondary">条件に合う店舗が見つかりませんでした</p>
+        <template v-if="!keyword && !activeCategory && !route.query.theater">
+          <p class="text-secondary mb-1">ホシドリ掲載店は準備中です</p>
+          <p class="small text-secondary opacity-75">劇場ページでは、Google Mapsの周辺店を探せます</p>
+        </template>
+        <p v-else class="text-secondary">条件に合う店舗が見つかりませんでした</p>
       </div>
     </template>
   </div>

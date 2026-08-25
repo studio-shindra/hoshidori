@@ -117,6 +117,7 @@ onMounted(async () => {
           <ShopCard v-for="shop in googleShops" :key="shop.id" :shop="shop" />
         </div>
         <RouterLink
+          v-if="sponsoredShops.length || recognizedShops.length"
           :to="{ path: '/shops', query: { theater: route.params.slug } }"
           class="btn btn-dark btn-sm text-secondary w-100 mt-3"
         >
