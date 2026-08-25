@@ -66,7 +66,6 @@ onMounted(async () => {
         <button class="btn btn-dark btn-sm position-absolute top-0 start-0 m-3 rounded-circle back-btn" aria-label="戻る" @click="router.back()">
           <IconArrowLeft :size="16" />
         </button>
-        <div class="theater-hero-fade"></div>
         <div v-if="usesGooglePhoto" class="google-photo-credit">
           <a :href="theaterPlace.photo_google_maps_uri || theaterPlace.google_maps_uri" target="_blank" rel="noopener noreferrer">Google Maps</a>
           <template v-for="author in theaterPlace.author_attributions" :key="author.display_name">
@@ -76,7 +75,7 @@ onMounted(async () => {
       </div>
 
       <!-- Info -->
-      <div class="px-3 position-relative" style="margin-top: -1.5rem; z-index: 2">
+      <div class="px-3 pt-3 position-relative" style="z-index: 2">
         <h1 class="fs-4 fw-bold mb-1">{{ theater.name }}</h1>
         <div v-if="theater.area_name" class="d-flex align-items-center gap-1 small text-secondary">
           <IconMapPin :size="14" />{{ theater.area_name }}
@@ -147,13 +146,7 @@ onMounted(async () => {
   z-index: 1;
   inset: 0 0 auto;
   height: calc(88px + env(safe-area-inset-top));
-  background: linear-gradient(
-    to bottom,
-    #0a0a0b 0%,
-    rgba(10, 10, 11, .72) 38%,
-    rgba(10, 10, 11, 0) 100%
-  );
-  backdrop-filter: blur(6px);
+  background: linear-gradient(to bottom, #0a0a0b 30%, transparent 100%);
   pointer-events: none;
 }
 .theater-hero img { object-position: center 54%; }
@@ -187,15 +180,7 @@ onMounted(async () => {
   text-decoration: none;
 }
 .map-link-card:hover { color: #fff; background: #202023; }
-.theater-hero-fade {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 8rem;
-  background: linear-gradient(transparent, #0a0a0b 70%);
-}
-.google-photo-credit { position: absolute; right: 10px; bottom: 26px; z-index: 2; padding: 3px 6px; border-radius: 5px; background: rgba(0,0,0,.62); color: #d4d4d8; font: 500 .56rem/1.3 Roboto, sans-serif; }
+.google-photo-credit { position: absolute; right: 10px; bottom: 8px; z-index: 2; padding: 3px 6px; border-radius: 5px; background: rgba(0,0,0,.62); color: #d4d4d8; font: 500 .56rem/1.3 Roboto, sans-serif; }
 .google-photo-credit a { color: #fff; text-decoration: none; }
 .google-attribution { display: inline-flex; align-items: center; gap: 4px; color: #a1a1aa; font-family: Roboto, sans-serif; font-size: .72rem; text-decoration: none; white-space: nowrap; }
 .google-shop-list { margin-top: .2rem; }
