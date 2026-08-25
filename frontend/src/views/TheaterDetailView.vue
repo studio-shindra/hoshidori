@@ -133,6 +133,7 @@ onMounted(async () => {
   width: 100%;
   aspect-ratio: 16 / 9;
   overflow: hidden;
+  border-radius: 0 0 22px 22px;
 }
 .theater-hero-shell {
   margin-top: calc(-1rem - 16px - env(safe-area-inset-top));
