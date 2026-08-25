@@ -2,8 +2,12 @@ import django, os
 os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings'
 django.setup()
 
+from django.conf import settings
 from shops.models import Shop, TheaterShop, Coupon
 from theaters.models import Theater
+
+if not settings.DEBUG:
+    raise RuntimeError('本番環境ではサンプル店舗を投入できません。')
 
 # ---- Shop images (4枚をローテーション) ----
 SHOP_IMAGES = [

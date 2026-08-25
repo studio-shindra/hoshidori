@@ -54,7 +54,7 @@ onMounted(async () => {
     <p v-if="loading" class="text-center text-secondary py-4">読み込み中...</p>
     <template v-else-if="theater">
       <!-- Hero -->
-      <div class="position-relative">
+      <div class="position-relative theater-hero-shell">
         <div class="theater-hero">
           <img v-if="heroImage" :src="cloudinaryUrl(heroImage, IMG_HERO)" :alt="theater.name" class="w-100 h-100 object-fit-cover" />
           <div v-else class="theater-hero-placeholder">
@@ -133,6 +133,25 @@ onMounted(async () => {
   aspect-ratio: 16 / 9;
   overflow: hidden;
 }
+.theater-hero-shell {
+  margin-top: calc(-1rem - var(--header-height) - env(safe-area-inset-top));
+}
+.theater-hero-shell::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  inset: 0 0 auto;
+  height: calc(88px + env(safe-area-inset-top));
+  background: linear-gradient(
+    to bottom,
+    #0a0a0b 0%,
+    rgba(10, 10, 11, .72) 38%,
+    rgba(10, 10, 11, 0) 100%
+  );
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+}
+.theater-hero img { object-position: center 54%; }
 .theater-hero-placeholder {
   width: 100%;
   height: 100%;
@@ -180,6 +199,7 @@ onMounted(async () => {
 .venue-owner-card p { margin: 0; color: #71717a; font-size: .65rem; line-height: 1.55; }
 .venue-owner-card a { flex-shrink: 0; color: #fda4af; font-size: .68rem; font-weight: 700; text-decoration: none; }
 .back-btn {
+  z-index: 2;
   width: 36px;
   height: 36px;
   display: flex;

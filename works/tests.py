@@ -1,11 +1,23 @@
 from datetime import date
+from io import StringIO
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.core.management import call_command
+from django.test import SimpleTestCase, TestCase, override_settings
 from rest_framework.test import APIClient
 
 from theaters.models import Theater
 from .models import Performance, Work, WorkEditProposal
+
+
+class SeedDemoSafetyTests(SimpleTestCase):
+    @override_settings(DEBUG=False)
+    def test_seed_demo_is_blocked_in_production(self):
+        stderr = StringIO()
+
+        call_command('seed_demo', stderr=stderr)
+
+        self.assertIn('本番環境ではデモデータを投入できません', stderr.getvalue())
 
 
 class WorkEditProposalTests(TestCase):

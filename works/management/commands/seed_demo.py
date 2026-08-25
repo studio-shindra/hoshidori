@@ -1,10 +1,17 @@
 from django.core.management.base import BaseCommand
+from django.conf import settings
 
 
 class Command(BaseCommand):
     help = 'デモ用ダミーデータを投入（既存の作品データはクリアされます）'
 
     def handle(self, *args, **options):
+        if not settings.DEBUG:
+            self.stderr.write(self.style.ERROR(
+                '本番環境ではデモデータを投入できません。'
+            ))
+            return
+
         from accounts.models import User
         from theaters.models import Theater
         from works.models import Work, Performance, Person, PosterSubmission
