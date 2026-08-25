@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import { IconMapPin, IconTicket, IconHeart, IconHeartFilled } from '@tabler/icons-vue'
+import { IconExternalLink, IconMapPin, IconSparkles, IconHeart, IconHeartFilled } from '@tabler/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { api } from '@/lib/api'
 import { cloudinaryUrl, IMG_CARD } from '@/lib/cloudinary'
@@ -18,6 +18,7 @@ const emit = defineEmits(['want-to-go-changed'])
 const auth = useAuthStore()
 const router = useRouter()
 const optimizedImage = computed(() => cloudinaryUrl(props.shop.image_src, IMG_CARD))
+const isGooglePlace = computed(() => props.shop.source === 'google_places')
 const wantToGo = ref(!!props.shop.is_want_to_go)
 const toggling = ref(false)
 
@@ -48,48 +49,85 @@ async function toggleWantToGo(e) {
 </script>
 
 <template>
-  <RouterLink
-    :to="`/shops/${shop.slug}`"
+  <component
+    :is="isGooglePlace ? 'a' : RouterLink"
+    :to="isGooglePlace ? undefined : `/shops/${shop.slug}`"
+    :href="isGooglePlace ? shop.google_map_url : undefined"
+    :target="isGooglePlace ? '_blank' : undefined"
+    :rel="isGooglePlace ? 'noopener noreferrer' : undefined"
     class="shop-card text-decoration-none d-block rounded-3 overflow-hidden"
-    :class="shop.is_featured ? 'shop-card-featured' : 'bg-dark'"
+    :class="{
+      'shop-card-sponsored': shop.listing_tier === 'sponsored',
+      'shop-card-recognized': shop.listing_tier === 'recognized',
+      'shop-card-google': isGooglePlace,
+      'shop-card-text-only': !isGooglePlace && !shop.image_src,
+    }"
   >
-    <!-- Thumbnail -->
-    <div class="shop-thumb position-relative">
-      <img v-if="shop.image_src" :src="optimizedImage" :alt="shop.name" class="shop-thumb-img" loading="lazy" />
-      <div v-else class="shop-thumb-img" :class="shop.is_featured ? 'shop-thumb-featured' : ''"></div>
-      <span v-if="shop.category" class="shop-tag position-absolute bottom-0 start-0 m-2">
-        {{ shop.category }}
-      </span>
-      <span v-if="shop.is_featured" class="badge badge-featured position-absolute top-0 end-0 m-2">
-        おすすめ
-      </span>
-      <!-- ハートボタン -->
-      <button
-        class="want-to-go-btn position-absolute"
-        @click="toggleWantToGo"
-      >
+    <template v-if="isGooglePlace">
+      <div class="google-place-row">
+        <div class="d-flex align-items-center justify-content-between gap-3">
+          <div class="google-place-name">{{ shop.name }}</div>
+          <IconExternalLink :size="15" class="google-external-icon" />
+        </div>
+        <div class="google-place-meta">
+          <span v-if="shop.category" class="google-category">{{ shop.category }}</span>
+          <span v-if="shop.distance_note || shop.address" class="google-distance">
+            <IconMapPin :size="12" />{{ shop.distance_note || shop.address }}
+          </span>
+        </div>
+      </div>
+    </template>
+
+    <template v-else>
+      <!-- Thumbnail -->
+      <div v-if="shop.image_src" class="shop-thumb position-relative">
+        <img :src="optimizedImage" :alt="shop.name" class="shop-thumb-img" loading="lazy" />
+        <div v-if="shop.category || shop.listing_tier === 'sponsored'" class="shop-labels position-absolute bottom-0 start-0 m-2">
+          <span v-if="shop.category" class="shop-tag">{{ shop.category }}</span>
+          <span v-if="shop.listing_tier === 'sponsored'" class="shop-recommend-tag">ホシドリおすすめ店</span>
+        </div>
+        <!-- ハートボタン -->
+        <button class="want-to-go-btn position-absolute" :aria-label="wantToGo ? `${shop.name}の行きたいを取り消す` : `${shop.name}を行きたいに追加`" @click="toggleWantToGo">
+          <IconHeartFilled v-if="wantToGo" :size="18" class="text-rose" />
+          <IconHeart v-else :size="18" />
+        </button>
+      </div>
+
+      <button v-else class="want-to-go-btn want-to-go-text position-absolute" :aria-label="wantToGo ? `${shop.name}の行きたいを取り消す` : `${shop.name}を行きたいに追加`" @click="toggleWantToGo">
         <IconHeartFilled v-if="wantToGo" :size="18" class="text-rose" />
         <IconHeart v-else :size="18" />
       </button>
-    </div>
 
-    <!-- Info -->
-    <div class="p-3 d-flex flex-column flex-grow-1">
-      <div class="fw-bold text-white">{{ shop.name }}</div>
-      <div
-        v-if="shop.nearest_station || shop.distance_note"
-        class="d-flex align-items-center gap-1 small text-white mt-1"
-      >
-        <IconMapPin :size="11" />
-        <span class="tiny">{{ [shop.nearest_station, shop.distance_note].filter(Boolean).join(' · ') }}</span>
+      <!-- Info -->
+      <div class="p-3 d-flex flex-column flex-grow-1">
+        <div v-if="!shop.image_src && (shop.category || shop.listing_tier === 'sponsored')" class="shop-labels mb-2">
+          <span v-if="shop.category" class="shop-tag shop-tag-static">{{ shop.category }}</span>
+          <span v-if="shop.listing_tier === 'sponsored'" class="shop-recommend-tag shop-tag-static">ホシドリおすすめ店</span>
+        </div>
+        <div class="shop-name-row">
+          <span v-if="shop.listing_tier === 'sponsored'" class="listing-mark" aria-hidden="true"></span>
+          <div class="fw-bold text-white">{{ shop.name }}</div>
+        </div>
+        <div
+          v-if="shop.nearest_station || shop.distance_note"
+          class="d-flex align-items-center gap-1 small text-white mt-1"
+        >
+          <IconMapPin :size="11" />
+          <span class="tiny text-truncate">{{ [shop.nearest_station, shop.distance_note].filter(Boolean).join(' · ') }}</span>
+        </div>
+        <div v-if="shop.benefit_text || shop.after_viewing_count || shop.listing_tier === 'sponsored'" class="shop-info-footer mt-auto pt-2">
+          <span v-if="shop.benefit_text" class="benefit-pill">
+            <IconSparkles :size="11" />{{ shop.benefit_text }}
+          </span>
+          <span v-else-if="shop.after_viewing_count" class="tiny color-rose">
+            感想戦に選ばれた {{ shop.after_viewing_count }}回
+          </span>
+          <span v-else></span>
+          <span v-if="shop.listing_tier === 'sponsored'" class="listing-pr">PR</span>
+        </div>
       </div>
-      <div v-if="shop.coupon_text" class="mt-auto pt-2">
-        <span class="coupon-pill">
-          <IconTicket :size="11" />{{ shop.coupon_text }}
-        </span>
-      </div>
-    </div>
-  </RouterLink>
+    </template>
+  </component>
 </template>
 
 <style scoped>
@@ -100,10 +138,24 @@ async function toggleWantToGo(e) {
   transition: opacity 0.15s;
   &:hover { opacity: 0.85; }
 }
-.shop-card-featured {
+.shop-card-sponsored {
   background: #1c1917;
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  border: 0;
 }
+.shop-card-recognized { background: #18181b; border: 0; }
+.shop-card-text-only {
+  position: relative;
+  width: 100%;
+  height: auto;
+  min-height: 126px;
+  align-self: flex-start;
+  background: #18181b;
+  border: 1px solid rgba(255,255,255,.08);
+}
+.shop-card-text-only > .p-3 { padding-right: 3rem !important; }
+.shop-card-text-only.shop-card-sponsored { background: #1c1917; border-color: rgba(251,191,36,.12); }
+.shop-card-google { background: transparent; border: 0; border-bottom: 1px solid rgba(255,255,255,.08); border-radius: 0 !important; }
+.shop-card-google:hover { opacity: 1; background: rgba(255,255,255,.025); }
 .shop-thumb {
   width: 100%;
   aspect-ratio: 16 / 9;
@@ -115,9 +167,6 @@ async function toggleWantToGo(e) {
   object-fit: cover;
   background: linear-gradient(135deg, #27272a 0%, #3f3f46 100%);
 }
-.shop-thumb-featured {
-  background: linear-gradient(135deg, #44403c 0%, #57534e 50%, #44403c 100%);
-}
 .shop-tag {
   background: rgba(0, 0, 0, 0.6);
   color: #e4e4e7;
@@ -126,7 +175,20 @@ async function toggleWantToGo(e) {
   border-radius: 4px;
   backdrop-filter: blur(4px);
 }
-.coupon-pill {
+.shop-labels { display: flex; align-items: center; gap: .35rem; }
+.shop-tag-static { background: rgba(255,255,255,.06); backdrop-filter: none; }
+.shop-recommend-tag { padding: .2rem .5rem; border-radius: 4px; background: rgba(10,10,11,.68); color: #fde68a; font-size: .62rem; font-weight: 700; backdrop-filter: blur(4px); }
+.shop-name-row { display: flex; align-items: center; gap: .4rem; }
+.listing-mark { width: 19px; height: 19px; flex: 0 0 auto; background: #fff; filter: drop-shadow(0 0 4px rgba(251,191,36,.9)) drop-shadow(0 0 9px rgba(245,158,11,.5)); -webkit-mask: url('/icon.svg') center / contain no-repeat; mask: url('/icon.svg') center / contain no-repeat; }
+.shop-info-footer { display: flex; align-items: flex-end; justify-content: space-between; gap: .5rem; }
+.listing-pr { flex: 0 0 auto; padding-bottom: .08rem; color: rgba(255,255,255,.28); font-size: .5rem; font-weight: 700; letter-spacing: .08em; }
+.google-place-row { padding: .85rem .15rem .9rem; }
+.google-place-name { color: #f4f4f5; font-size: .9rem; font-weight: 700; }
+.google-external-icon { flex: 0 0 auto; color: #71717a; }
+.google-place-meta { display: flex; align-items: center; flex-wrap: wrap; gap: .45rem .6rem; margin-top: .45rem; }
+.google-category { padding: .15rem .45rem; border: 1px solid rgba(255,255,255,.1); border-radius: 99px; color: #a1a1aa; font-size: .64rem; }
+.google-distance { display: inline-flex; align-items: center; gap: 3px; color: #a1a1aa; font-size: .68rem; }
+.benefit-pill {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
@@ -138,7 +200,8 @@ async function toggleWantToGo(e) {
   border-radius: 99px;
 }
 .want-to-go-btn {
-  bottom: 0.4rem;
+  top: 0.4rem;
+  bottom: auto;
   right: 0.4rem;
   background: rgba(0, 0, 0, 0.5);
   border: none;
@@ -158,6 +221,7 @@ async function toggleWantToGo(e) {
 .want-to-go-btn:hover {
   transform: scale(1.1);
 }
+.want-to-go-text { top: .65rem; right: .65rem; background: rgba(255,255,255,.05); }
 .text-rose {
   color: #f43f5e;
 }

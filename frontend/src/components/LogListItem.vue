@@ -1,14 +1,12 @@
 <script setup>
 import { RouterLink } from 'vue-router'
-import { IconTheater, IconMapPin, IconThumbUp, IconHeartHandshake, IconSparkles } from '@tabler/icons-vue'
-import PosterImage from '@/components/PosterImage.vue'
-import { ratingLabel, ratingIcon } from '@/lib/rating'
+import { IconMapPin, IconSparkles, IconThumbUp, IconHeartHandshake, IconStarFilled } from '@tabler/icons-vue'
+import { ratingIcon, ratingLabel } from '@/lib/rating'
 import { cloudinaryUrl, IMG_TINY } from '@/lib/cloudinary'
 
-const icons = { IconThumbUp, IconHeartHandshake, IconSparkles }
+const icons = { IconThumbUp, IconHeartHandshake, IconSparkles, IconStarFilled }
 
 defineProps({
-  posterUrl: { type: String, default: null },
   workTitle: { type: String, default: '' },
   workSlug: { type: String, default: null },
   watchedOn: { type: String, default: '' },
@@ -18,98 +16,47 @@ defineProps({
   memo: { type: String, default: '' },
   rating: { type: Number, default: null },
   images: { type: Array, default: () => [] },
+  afterShopName: { type: String, default: '' },
   compact: { type: Boolean, default: false },
 })
 </script>
 
 <template>
-  <RouterLink v-if="workSlug" :to="`/works/${workSlug}`" class="card bg-dark border-0 p-2 position-relative text-decoration-none text-white d-block">
-    <div class="df-center gap-2">
-      <div class="card-sm">
-        <PosterImage :src="posterUrl" :alt="workTitle" :work-slug="workSlug" size="sm" />
+  <div class="log-row">
+    <component :is="workSlug ? RouterLink : 'div'" :to="workSlug ? `/works/${workSlug}` : undefined" class="log-row-main text-decoration-none text-white">
+      <div class="log-date">
+        <strong>{{ watchedOn ? watchedOn.slice(8, 10) : '--' }}</strong>
+        <span>{{ watchedOn ? `${Number(watchedOn.slice(5, 7))}月` : '' }}</span>
       </div>
-      <div class="d-flex flex-column gap-1 min-w-0 flex-grow-1">
-        <div class="d-flex justify-content-between align-items-start">
-          <div class="fw-bold text-truncate">{{ workTitle }}</div>
-          <slot name="action" />
-        </div>
-        <div class="d-flex align-items-center gap-1 flex-wrap">
-          <div v-if="theaterName" class="small text-truncate d-flex align-items-center gap-1">
-            <IconTheater size="16" /> {{ theaterName }}
-          </div>
-          <div v-if="theaterArea" class="small text-truncate d-flex align-items-center gap-1">
-            <IconMapPin size="16" /> {{ theaterArea }}
-          </div>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-          <div class="small d-flex align-items-center gap-1" v-if="watchedOn">{{ watchedOn }}<span v-if="watchedTime"> {{ watchedTime.slice(0, 5) }}</span></div>
-          <span v-if="rating" class="log-rating-badge">
-            <component :is="icons[ratingIcon(rating)]" :size="14" />
-            {{ ratingLabel(rating) }}
-          </span>
-        </div>
-        <div v-if="images && images.length" class="d-flex gap-1 mt-1">
-          <img v-for="img in images" :key="img.id" :src="cloudinaryUrl(img.image_url, IMG_TINY)" class="log-img-thumb rounded" loading="lazy" />
-        </div>
-        <div v-if="memo" class="small log-memo" :class="compact ? 'text-truncate' : ''">{{ memo }}</div>
+      <div class="min-w-0 flex-grow-1">
+      <div class="d-flex justify-content-between align-items-start gap-2">
+        <div class="fw-bold text-truncate">{{ workTitle }}</div>
       </div>
-    </div>
-  </RouterLink>
-  <div v-else class="card bg-dark border-0 p-2 position-relative">
-    <div class="df-center gap-2">
-      <div class="card-sm">
-        <PosterImage :src="posterUrl" :alt="workTitle" :work-slug="workSlug" size="sm" />
+      <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
+        <span v-if="watchedTime" class="tiny text-secondary">{{ watchedTime.slice(0, 5) }}</span>
+        <span v-if="theaterName" class="tiny text-secondary text-truncate"><IconMapPin :size="11" />{{ theaterName }}<template v-if="theaterArea">・{{ theaterArea }}</template></span>
+        <span v-if="rating" class="log-rating"><component :is="icons[ratingIcon(rating)]" :size="12" />{{ ratingLabel(rating) }}</span>
       </div>
-      <div class="d-flex flex-column gap-1 min-w-0 flex-grow-1">
-        <div class="d-flex justify-content-between align-items-start">
-          <div class="fw-bold text-truncate">{{ workTitle }}</div>
-          <slot name="action" />
-        </div>
-        <div class="d-flex align-items-center gap-1 flex-wrap">
-          <div v-if="theaterName" class="small text-truncate d-flex align-items-center gap-1">
-            <IconTheater size="16" /> {{ theaterName }}
-          </div>
-          <div v-if="theaterArea" class="small text-truncate d-flex align-items-center gap-1">
-            <IconMapPin size="16" /> {{ theaterArea }}
-          </div>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-          <div class="small d-flex align-items-center gap-1" v-if="watchedOn">{{ watchedOn }}<span v-if="watchedTime"> {{ watchedTime.slice(0, 5) }}</span></div>
-          <span v-if="rating" class="log-rating-badge">
-            <component :is="icons[ratingIcon(rating)]" :size="14" />
-            {{ ratingLabel(rating) }}
-          </span>
-        </div>
-        <div v-if="images && images.length" class="d-flex gap-1 mt-1">
-          <img v-for="img in images" :key="img.id" :src="cloudinaryUrl(img.image_url, IMG_TINY)" class="log-img-thumb rounded" loading="lazy" />
-        </div>
-        <div v-if="memo" class="small log-memo" :class="compact ? 'text-truncate' : ''">{{ memo }}</div>
+      <div v-if="afterShopName" class="after-shop mt-2"><IconSparkles :size="12" />感想戦：{{ afterShopName }}</div>
+      <div v-if="images.length" class="d-flex gap-1 mt-2">
+        <img v-for="image in images" :key="image.id" :src="cloudinaryUrl(image.image_url, IMG_TINY)" class="log-img-thumb rounded" loading="lazy" />
       </div>
-    </div>
+      <div v-if="memo" class="small text-white-50 mt-2" :class="{ 'text-truncate': compact }">{{ memo }}</div>
+      </div>
+    </component>
+    <div v-if="$slots.action" class="log-row-action"><slot name="action" /></div>
   </div>
 </template>
 
 <style scoped>
-.log-rating-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  background: rgba(245, 158, 11, 0.15);
-  color: #f59e0b;
-  font-size: 0.7rem;
-  font-weight: 600;
-  padding: 1px 6px;
-  border-radius: 4px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.log-img-thumb {
-  width: 48px;
-  height: 48px;
-  object-fit: cover;
-  flex-shrink: 0;
-}
-.log-memo {
-  max-width: 100%;
-}
+.log-row { position: relative; border: 1px solid rgba(255,255,255,.09); border-radius: 12px; background: #18181b; }
+.log-row-main { display: flex; width: 100%; gap: 12px; padding: 13px 44px 13px 13px; }
+.log-row-action { position: absolute; top: 0; right: 0; z-index: 2; padding: 12px; }
+.log-row:hover { color: #fff; border-color: rgba(255,255,255,.2); }
+.log-date { width: 48px; min-width: 48px; height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px dashed rgba(255,255,255,.18); color: #a1a1aa; font-size: .66rem; }
+.log-date strong { color: #fff; font-size: 1.25rem; line-height: 1; }
+.log-row .tiny { display: inline-flex; align-items: center; gap: 3px; }
+.log-rating { display: inline-flex; align-items: center; gap: 3px; color: #f59e0b; font-size: .68rem; font-weight: 700; }
+.after-shop { display: flex; align-items: center; gap: 4px; color: #fda4af; font-size: .72rem; }
+.log-img-thumb { width: 42px; height: 42px; object-fit: cover; }
 </style>

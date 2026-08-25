@@ -145,6 +145,8 @@ export const api = {
     setCache(path, data)
     return data
   },
+  // Google Places等、保存・キャッシュしないデータ向け。
+  getFresh: async (path) => request('GET', path),
   post: async (path, body) => {
     invalidateByPath(path)
     return request('POST', path, body)

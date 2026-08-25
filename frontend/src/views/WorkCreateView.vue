@@ -1,11 +1,13 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { api } from '@/lib/api'
 import { IconArrowLeft, IconPlus, IconX, IconSearch } from '@tabler/icons-vue'
+import TheaterPicker from '@/components/TheaterPicker.vue'
 
 const router = useRouter()
-const title = ref('')
+const route = useRoute()
+const title = ref(route.query.title || '')
 const description = ref('')
 const companyName = ref('')
 const castList = ref([])
@@ -13,6 +15,8 @@ const theaters = ref([])
 const loading = ref(true)
 const submitting = ref(false)
 const error = ref('')
+const showOptionalDetails = ref(false)
+const duplicateWork = ref(null)
 
 // 公演（劇場+日程）リスト — 複数追加可能
 const perfEntries = ref([{ theater: '', startDate: '', endDate: '' }])
@@ -23,6 +27,13 @@ function addPerfEntry() {
 
 function removePerfEntry(index) {
   perfEntries.value.splice(index, 1)
+}
+
+function addTheaterOption(theater) {
+  if (!theaters.value.some((item) => item.id === theater.id)) {
+    theaters.value.push(theater)
+    theaters.value.sort((a, b) => a.name.localeCompare(b.name, 'ja'))
+  }
 }
 
 // 出演者・スタッフ検索
@@ -107,24 +118,40 @@ onMounted(async () => {
 
 async function submit() {
   if (!title.value.trim()) return
+  const validEntries = perfEntries.value.filter(e => e.theater)
+  if (!validEntries.length) {
+    error.value = '劇場を選んでください'
+    return
+  }
   submitting.value = true
   error.value = ''
+  duplicateWork.value = null
   try {
+    const existingData = await api.getFresh(`/api/works/?q=${encodeURIComponent(title.value.trim())}`)
+    const existingWorks = existingData.results || existingData
+    const normalizedTitle = title.value.trim().normalize('NFKC').toLocaleLowerCase('ja')
+    const existing = existingWorks.find((item) => item.title.trim().normalize('NFKC').toLocaleLowerCase('ja') === normalizedTitle)
+    if (existing) {
+      duplicateWork.value = existing
+      error.value = '同じタイトルの作品がすでに登録されています'
+      return
+    }
     const work = await api.post('/api/works/', {
       title: title.value.trim(),
       description: description.value.trim(),
     })
 
     // 各劇場ごとに公演を作成
-    const validEntries = perfEntries.value.filter(e => e.theater && e.startDate && e.endDate)
+    let firstPerformanceId = null
     for (const entry of validEntries) {
       const perf = await api.post('/api/performances/', {
         work: work.id,
         theater: Number(entry.theater),
         company_name: companyName.value.trim(),
-        start_date: entry.startDate,
-        end_date: entry.endDate,
+        start_date: entry.startDate || null,
+        end_date: entry.endDate || null,
       })
+      if (!firstPerformanceId) firstPerformanceId = perf.id
 
       // キャスト追加（最初の公演にだけ紐づけ）
       if (entry === validEntries[0]) {
@@ -136,7 +163,11 @@ async function submit() {
       }
     }
 
-    router.push(`/works/${work.slug}`)
+    if (route.query.next === '/logs/new' && firstPerformanceId) {
+      router.push({ path: '/logs/new', query: { performance: firstPerformanceId } })
+    } else {
+      router.push(`/works/${work.slug}`)
+    }
   } catch (e) {
     error.value = e.data ? Object.values(e.data).flat().join(' ') : '作成に失敗しました'
   } finally {
@@ -147,15 +178,20 @@ async function submit() {
 
 <template>
   <div>
-    <header class="d-flex align-items-center gap-2 pt-4 pb-3">
-      <button class="btn btn-link text-secondary p-0" @click="router.back()">
-        <IconArrowLeft :size="16" />
+    <header class="d-flex align-items-center justify-content-between pt-4 pb-3">
+      <button class="btn btn-link text-secondary p-0 small text-decoration-none page-back" @click="router.back()">
+        <IconArrowLeft :size="16" class="me-1" />戻る
       </button>
       <h1 class="fs-6 fw-bold mb-0">作品を登録</h1>
+      <div class="page-back-spacer"></div>
     </header>
 
     <p v-if="loading" class="text-center text-secondary py-4">読み込み中...</p>
     <form v-else @submit.prevent="submit" class="px-3 d-flex flex-column gap-3">
+      <div class="quick-create-note">
+        <strong>まずは作品名と劇場だけで登録できます。</strong>
+        <span>足りない情報は、あとからみんなで編集できます。</span>
+      </div>
       <div>
         <label class="form-label tiny text-secondary">タイトル *</label>
         <input
@@ -166,6 +202,45 @@ async function submit() {
           class="form-control bg-dark border-secondary text-light"
         />
       </div>
+      <!-- 公演エントリ（複数追加可能） -->
+      <div v-for="(entry, ei) in perfEntries" v-show="ei === 0 || showOptionalDetails" :key="ei" class="perf-entry" :class="{ 'primary-entry': ei === 0 }">
+        <div v-if="ei > 0" class="d-flex align-items-center justify-content-between mb-2">
+          <span class="tiny text-secondary fw-bold">公演 {{ ei + 1 }}</span>
+          <button type="button" class="btn-icon-sm" @click="removePerfEntry(ei)">
+            <IconX :size="14" />
+          </button>
+        </div>
+        <div class="d-flex flex-column gap-2">
+          <div>
+            <label class="form-label tiny text-secondary">劇場{{ ei === 0 ? ' *' : '' }}</label>
+            <TheaterPicker
+              v-model="entry.theater"
+              :theaters="theaters"
+              @theater-created="addTheaterOption"
+            />
+          </div>
+          <div v-if="showOptionalDetails" class="row g-2">
+            <div class="col-6">
+              <label class="form-label tiny text-secondary">開始日（任意）</label>
+              <input v-model="entry.startDate" type="date" class="form-control form-control-sm bg-dark border-secondary text-light" />
+            </div>
+            <div class="col-6">
+              <label class="form-label tiny text-secondary">終了日（任意）</label>
+              <input v-model="entry.endDate" type="date" class="form-control form-control-sm bg-dark border-secondary text-light" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button v-if="!showOptionalDetails" type="button" class="optional-toggle" @click="showOptionalDetails = true">
+        詳しい情報も追加する
+      </button>
+
+      <template v-if="showOptionalDetails">
+      <button type="button" class="btn btn-outline-secondary btn-sm align-self-start" @click="addPerfEntry">
+        <IconPlus :size="14" class="me-1" />別の公演を追加（地方公演など）
+      </button>
+
       <div>
         <label class="form-label tiny text-secondary">説明（任意）</label>
         <textarea
@@ -176,43 +251,8 @@ async function submit() {
         ></textarea>
       </div>
 
-      <hr class="border-secondary my-1" />
-      <p class="tiny text-secondary mb-0">公演情報（任意・あとから追加も可）</p>
-
-      <!-- 公演エントリ（複数追加可能） -->
-      <div v-for="(entry, ei) in perfEntries" :key="ei" class="perf-entry">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="tiny text-secondary fw-bold">公演 {{ ei + 1 }}</span>
-          <button v-if="perfEntries.length > 1" type="button" class="btn-icon-sm" @click="removePerfEntry(ei)">
-            <IconX :size="14" />
-          </button>
-        </div>
-        <div class="d-flex flex-column gap-2">
-          <div>
-            <label class="form-label tiny text-secondary">劇場</label>
-            <select v-model="entry.theater" class="form-select form-select-sm bg-dark border-secondary text-light">
-              <option value="">未選択</option>
-              <option v-for="t in theaters" :key="t.id" :value="t.id">{{ t.name }}</option>
-            </select>
-          </div>
-          <div class="row g-2">
-            <div class="col-6">
-              <label class="form-label tiny text-secondary">開始日</label>
-              <input v-model="entry.startDate" type="date" class="form-control form-control-sm bg-dark border-secondary text-light" />
-            </div>
-            <div class="col-6">
-              <label class="form-label tiny text-secondary">終了日</label>
-              <input v-model="entry.endDate" type="date" class="form-control form-control-sm bg-dark border-secondary text-light" />
-            </div>
-          </div>
-        </div>
-      </div>
-      <button type="button" class="btn btn-outline-secondary btn-sm align-self-start" @click="addPerfEntry">
-        <IconPlus :size="14" class="me-1" />公演を追加（地方公演など）
-      </button>
-
       <div>
-        <label class="form-label tiny text-secondary">カンパニー名</label>
+        <label class="form-label tiny text-secondary">カンパニー名（任意）</label>
         <input v-model="companyName" type="text" placeholder="劇団名など" class="form-control bg-dark border-secondary text-light" />
       </div>
 
@@ -264,23 +304,32 @@ async function submit() {
           </span>
         </div>
       </div>
+      </template>
 
       <p v-if="error" class="small text-danger mb-0">{{ error }}</p>
-      <button type="submit" :disabled="submitting || !title.trim()" class="btn btn-primary-rose w-100 fw-medium py-2">
-        {{ submitting ? '作成中...' : '作品を登録' }}
+      <RouterLink v-if="duplicateWork" :to="`/works/${duplicateWork.slug}`" class="btn btn-outline-light btn-sm">
+        登録済みの「{{ duplicateWork.title }}」を見る
+      </RouterLink>
+      <button type="submit" :disabled="submitting || !title.trim() || !perfEntries[0].theater" class="btn btn-primary-rose w-100 fw-medium py-2">
+        {{ submitting ? '作成中...' : (route.query.next === '/logs/new' ? '登録して記録へ' : '作品を登録') }}
       </button>
-      <p class="tiny text-secondary mb-4">slug は自動生成されます。登録後に作品ページへ移動します。</p>
+      <p class="tiny text-secondary text-center mb-4">未入力の情報は、作品ページからいつでも追加できます。</p>
     </form>
   </div>
 </template>
 
 <style scoped>
+.quick-create-note { display: flex; flex-direction: column; gap: .25rem; padding: .85rem 1rem; border-radius: 12px; background: rgba(255,255,255,.045); }
+.quick-create-note strong { color: #e4e4e7; font-size: .78rem; }
+.quick-create-note span { color: #71717a; font-size: .67rem; }
 .perf-entry {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   padding: 0.75rem;
 }
+.perf-entry.primary-entry { padding: 0; border: 0; background: transparent; }
+.optional-toggle { align-self: flex-start; padding: .25rem 0; border: 0; background: transparent; color: #a1a1aa; font-size: .72rem; text-decoration: underline; text-underline-offset: 3px; }
 .btn-icon-sm {
   background: none;
   border: none;

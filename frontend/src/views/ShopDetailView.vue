@@ -1,109 +1,80 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '@/lib/api'
 import { cloudinaryUrl, IMG_HERO } from '@/lib/cloudinary'
 import {
-  IconArrowLeft, IconExternalLink, IconTicket,
-  IconBrandInstagram, IconWorld, IconPhone, IconToolsKitchen2, IconMap,
+  IconExternalLink, IconSparkles,
+  IconArrowLeft, IconBrandInstagram, IconWorld, IconPhone, IconToolsKitchen2, IconMap,
+  IconBuildingStore, IconBooks, IconShirt, IconCoffee,
 } from '@tabler/icons-vue'
-import CouponDetailModal from '@/components/CouponDetailModal.vue'
 
 const route = useRoute()
 const router = useRouter()
 const shop = ref(null)
-const coupons = ref([])
-const selectedCoupon = ref(null)
 const loading = ref(true)
-
-// per-coupon feedback
-const couponStates = ref({})
+const googleMapsUrl = computed(() => {
+  if (!shop.value) return ''
+  if (shop.value.google_map_url) return shop.value.google_map_url
+  return shop.value.address
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shop.value.address)}`
+    : ''
+})
+const detailUrl = computed(() => shop.value?.tabelog_url || shop.value?.website_url || '')
+const categoryIcon = computed(() => {
+  const category = shop.value?.category || ''
+  if (/書店|本屋|古本/.test(category)) return IconBooks
+  if (/古着|衣料|アパレル/.test(category)) return IconShirt
+  if (/カフェ|喫茶|コーヒー|珈琲/.test(category)) return IconCoffee
+  if (/飲食|居酒屋|バー|料理|ビストロ|カレー/.test(category)) return IconToolsKitchen2
+  return IconBuildingStore
+})
 
 onMounted(async () => {
   try {
     const slug = route.params.slug
     shop.value = await api.get(`/api/shops/${slug}/`)
     api.post(`/api/shops/${slug}/click/`).catch(() => {})
-    try {
-      const data = await api.get(`/api/shops/${slug}/coupons/`)
-      coupons.value = Array.isArray(data) ? data : data.results || []
-    } catch {
-      /* empty */
-    }
+  } catch (error) {
+    if (error.status === 404) router.replace({ name: 'not-found' })
   } finally {
     loading.value = false
   }
 })
 
-async function useCoupon(coupon) {
-  const state = { loading: true, msg: '', type: '', cooldown: null }
-  couponStates.value[coupon.id] = state
-  try {
-    const result = await api.post(`/api/coupons/${coupon.id}/use/`, { performance: null })
-    state.msg = 'クーポンを利用しました！'
-    state.type = 'success'
-    if (result.used_at) {
-      const d = new Date(result.used_at)
-      state.msg += ` (${d.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })})`
-    }
-  } catch (e) {
-    if (e.status === 429) {
-      state.type = 'cooldown'
-      const remaining = e.data?.cooldown_minutes_remaining
-      if (remaining) {
-        state.msg = `短時間での再利用はできません（残り約${Math.ceil(remaining)}分）`
-        state.cooldown = Math.ceil(remaining)
-      } else {
-        state.msg = '短時間での再利用はできません'
-      }
-    } else if (e.status === 401) {
-      state.msg = 'ログインが必要です'
-      state.type = 'error'
-    } else {
-      state.msg = 'エラーが発生しました'
-      state.type = 'error'
-    }
-  } finally {
-    state.loading = false
-  }
-}
 </script>
 
 <template>
   <div class="pb-5">
-    <!-- <header class="d-flex align-items-center gap-2 pt-4 pb-3">
-      <button class="btn btn-link text-secondary p-0" @click="router.back()">
-        <IconArrowLeft :size="16" />
-      </button>
-      <h1 class="fs-6 fw-bold mb-0">お店</h1>
-    </header> -->
-
     <p v-if="loading" class="text-center text-secondary py-4">読み込み中...</p>
     <template v-else-if="shop">
       <!-- Hero image -->
       <div class="shop-hero position-relative">
         <img v-if="shop.image_src" :src="cloudinaryUrl(shop.image_src, IMG_HERO)" :alt="shop.name" class="w-100 h-100 object-fit-cover" />
         <div v-else class="w-100 h-100 d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, #27272a, #3f3f46)">
-          <IconToolsKitchen2 :size="48" class="text-secondary" />
+          <component :is="categoryIcon" :size="48" class="text-secondary" />
         </div>
         <div class="shop-hero-fade"></div>
+        <button class="btn btn-dark btn-sm position-absolute top-0 start-0 m-3 rounded-circle back-btn" aria-label="戻る" @click="router.back()">
+          <IconArrowLeft :size="16" />
+        </button>
       </div>
 
       <div class="position-relative" style="margin-top: -1.5rem; z-index: 2">
-        <h2 class="fs-3 fw-bold mb-1">{{ shop.name }}</h2>
+        <h1 class="fs-3 fw-bold mb-1">{{ shop.name }}</h1>
 
         <!-- SNS icons -->
         <div class="d-flex align-items-center gap-3 mt-2">
-          <component :is="shop.website_url ? 'a' : 'span'" :href="shop.website_url || undefined" :target="shop.website_url ? '_blank' : undefined" class="sns-circle" :style="{ background: shop.website_url ? '#a1a1aa' : '#3f3f46' }">
+          <component :is="shop.website_url ? 'a' : 'span'" :href="shop.website_url || undefined" :target="shop.website_url ? '_blank' : undefined" :rel="shop.website_url ? 'noopener noreferrer' : undefined" aria-label="公式サイト" class="sns-circle" :style="{ background: shop.website_url ? '#a1a1aa' : '#3f3f46' }">
             <IconWorld :size="20" />
           </component>
-          <component :is="shop.instagram_url ? 'a' : 'span'" :href="shop.instagram_url || undefined" :target="shop.instagram_url ? '_blank' : undefined" class="sns-circle" :style="{ background: shop.instagram_url ? '#E1306C' : '#3f3f46' }">
+          <component :is="shop.instagram_url ? 'a' : 'span'" :href="shop.instagram_url || undefined" :target="shop.instagram_url ? '_blank' : undefined" :rel="shop.instagram_url ? 'noopener noreferrer' : undefined" aria-label="Instagram" class="sns-circle" :style="{ background: shop.instagram_url ? '#E1306C' : '#3f3f46' }">
             <IconBrandInstagram :size="20" />
           </component>
-          <component :is="shop.tabelog_url ? 'a' : 'span'" :href="shop.tabelog_url || undefined" :target="shop.tabelog_url ? '_blank' : undefined" class="sns-circle" :style="{ background: shop.tabelog_url ? '#f59e0b' : '#3f3f46' }">
-            <IconToolsKitchen2 :size="20" />
+          <component :is="shop.tabelog_url ? 'a' : 'span'" :href="shop.tabelog_url || undefined" :target="shop.tabelog_url ? '_blank' : undefined" :rel="shop.tabelog_url ? 'noopener noreferrer' : undefined" aria-label="店舗詳細" class="sns-circle" :style="{ background: shop.tabelog_url ? '#f59e0b' : '#3f3f46' }">
+            <IconBuildingStore :size="20" />
           </component>
-          <component :is="shop.google_map_url ? 'a' : 'span'" :href="shop.google_map_url || undefined" :target="shop.google_map_url ? '_blank' : undefined" class="sns-circle" :style="{ background: shop.google_map_url ? '#34d399' : '#3f3f46' }">
+          <component :is="shop.google_map_url ? 'a' : 'span'" :href="shop.google_map_url || undefined" :target="shop.google_map_url ? '_blank' : undefined" :rel="shop.google_map_url ? 'noopener noreferrer' : undefined" aria-label="Google Maps" class="sns-circle" :style="{ background: shop.google_map_url ? '#34d399' : '#3f3f46' }">
             <IconMap :size="20" />
           </component>
         </div>
@@ -112,62 +83,33 @@ async function useCoupon(coupon) {
         <div v-if="shop.address" class="small text-white mt-1">{{ shop.address }}</div>
         <p v-if="shop.description" class="text-light border-top border-secondary mt-3 pt-3 lh-base">{{ shop.description }}</p>
 
-        <!-- Google Map embed -->
-        <div v-if="shop.address" class="mt-3 overflow-hidden">
-          <iframe
-            :src="`https://maps.google.com/maps?q=${encodeURIComponent(shop.address)}&output=embed&z=16`"
-            width="100%"
-            height="200"
-            style="border:0"
-            loading="lazy"
-            referrerpolicy="no-referrer-when-downgrade"
-          ></iframe>
-        </div>
+        <a v-if="googleMapsUrl" :href="googleMapsUrl" target="_blank" rel="noopener noreferrer" class="map-link-card mt-3">
+          <span class="d-flex align-items-center gap-2"><IconMap :size="18" />Google Mapsで場所を見る</span>
+          <IconExternalLink :size="16" />
+        </a>
 
         <!-- Action buttons -->
         <div class="d-flex gap-2 mt-3">
           <component :is="shop.phone_number ? 'a' : 'span'" :href="shop.phone_number ? `tel:${shop.phone_number}` : undefined" class="btn flex-fill d-flex align-items-center justify-content-center gap-1" :class="shop.phone_number ? 'btn-dark text-white' : 'btn-dark text-secondary opacity-50'" :style="{ pointerEvents: shop.phone_number ? 'auto' : 'none' }">
-            <IconPhone :size="16" />電話する
+            <IconPhone :size="16" />{{ shop.phone_number ? '電話する' : '電話情報なし' }}
           </component>
-          <component :is="shop.tabelog_url ? 'a' : 'span'" :href="shop.tabelog_url || undefined" :target="shop.tabelog_url ? '_blank' : undefined" class="btn flex-fill d-flex align-items-center justify-content-center gap-1 fw-bold" :class="shop.tabelog_url ? 'text-white' : 'btn-dark text-secondary opacity-50'" :style="{ background: shop.tabelog_url ? '#f59e0b' : undefined, pointerEvents: shop.tabelog_url ? 'auto' : 'none' }">
-            <IconExternalLink :size="16" />詳細を見る
+          <component :is="detailUrl ? 'a' : 'span'" :href="detailUrl || undefined" :target="detailUrl ? '_blank' : undefined" class="btn flex-fill d-flex align-items-center justify-content-center gap-1 fw-bold" :class="detailUrl ? 'text-white' : 'btn-dark text-secondary opacity-50'" :style="{ background: detailUrl ? '#f59e0b' : undefined, pointerEvents: detailUrl ? 'auto' : 'none' }">
+            <IconExternalLink :size="16" />{{ detailUrl ? '詳細を見る' : '詳細情報なし' }}
           </component>
         </div>
 
-        <!-- Coupons -->
-        <section v-if="coupons.length" class="mt-4 mb-5">
-          <h3 class="df-center fw-semibold text-white mb-3">
-            <IconTicket :size="28" class="me-1" />クーポン
-          </h3>
-          <div class="d-flex flex-column gap-2">
-            <div
-              v-for="c in coupons"
-              :key="c.id"
-              class="coupon-card"
-            >
-              <div class="d-flex align-items-center gap-2">
-                <IconTicket :size="16" class="color-rose flex-shrink-0" />
-                <div class="flex-grow-1 min-w-0" role="button" @click="selectedCoupon = c">
-                  <div class="fw-bold">{{ c.title }}</div>
-                  <div v-if="c.discount_text" class="small color-rose">{{ c.discount_text }}</div>
-                </div>
-                <button class="btn btn-sm btn-primary-rose flex-shrink-0" @click="selectedCoupon = c">使う</button>
-              </div>
-              <div v-if="couponStates[c.id]?.msg" class="mt-2 small" :class="{ 'color-green': couponStates[c.id].type === 'success', 'color-amber': couponStates[c.id].type === 'cooldown', 'text-danger': couponStates[c.id].type === 'error' }">
-                {{ couponStates[c.id].msg }}
-              </div>
+        <section v-if="shop.benefit_text" class="benefit-card mt-4 mb-5">
+          <div class="d-flex align-items-start gap-2">
+            <IconSparkles :size="18" class="color-rose flex-shrink-0 mt-1" />
+            <div>
+              <h3 class="small fw-bold mb-1">観劇客へのご案内</h3>
+              <p class="small text-light mb-0">{{ shop.benefit_text }}</p>
+              <p class="tiny text-secondary mt-2 mb-0">内容や利用方法は店舗でご確認ください。</p>
             </div>
           </div>
         </section>
       </div>
 
-      <!-- Coupon modal -->
-      <CouponDetailModal
-        :coupon="selectedCoupon"
-        :shop-name="shop.name"
-        @close="selectedCoupon = null"
-        @use="useCoupon($event); selectedCoupon = null"
-      />
     </template>
   </div>
 </template>
@@ -186,6 +128,7 @@ async function useCoupon(coupon) {
   height: 6rem;
   background: linear-gradient(transparent, #0a0a0b 70%);
 }
+.back-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; opacity: .82; }
 .sns-circle {
   width: 32px;
   height: 32px;
@@ -201,19 +144,26 @@ async function useCoupon(coupon) {
     opacity: 0.85;
   }
 }
-.coupon-card {
-  background: white;
-  border: 2px dashed #e11d48;
+.map-link-card {
+  min-height: 58px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 12px;
+  color: #e4e4e7;
+  background: #18181b;
+  font-size: .78rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.map-link-card:hover { color: #fff; background: #202023; }
+.benefit-card {
+  background: rgba(244, 63, 94, 0.08);
+  border: 1px solid rgba(244, 63, 94, 0.24);
   border-radius: 0.5rem;
   padding: 0.75rem 1rem;
   width: 100%;
-  cursor: pointer;
-  color: #e11d48;
-
-  &:hover,
-  &:active,
-  &:focus {
-    background: white;
-  }
 }
 </style>

@@ -58,5 +58,16 @@ async function submit() {
     <p class="text-center mt-3 small text-secondary">
       アカウントをお持ちの方は <RouterLink to="/login">ログイン</RouterLink>
     </p>
+    <p class="tiny text-secondary text-center mt-4 mb-2">登録すると利用規約とプライバシーポリシーに同意したものとみなされます。</p>
+    <nav class="auth-legal-links" aria-label="規約とお問い合わせ">
+      <RouterLink to="/terms">利用規約</RouterLink>
+      <RouterLink to="/privacy">プライバシー</RouterLink>
+      <RouterLink to="/contact">お問い合わせ</RouterLink>
+    </nav>
   </div>
 </template>
+
+<style scoped>
+.auth-legal-links { display: flex; justify-content: center; flex-wrap: wrap; gap: .6rem 1rem; }
+.auth-legal-links a { color: #71717a; font-size: .64rem; text-decoration: none; }
+</style>

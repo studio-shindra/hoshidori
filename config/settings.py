@@ -100,6 +100,9 @@ CLOUDINARY_STORAGE = {
 }
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
+# Google Places API (New). Empty by default; manual shops remain available.
+GOOGLE_PLACES_API_KEY = config('GOOGLE_PLACES_API_KEY', default='')
+
 # Auth
 AUTH_USER_MODEL = 'accounts.User'
 

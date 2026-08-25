@@ -24,7 +24,7 @@ shops_data = [
         'nearest_station': '日比谷駅',
         'distance_note': '日比谷駅直結／帝国劇場から徒歩2分',
         'opening_hours_text': '8:00〜22:00',
-        'benefit_text': 'ケーキセット100円引き（半券提示）',
+        'benefit_text': '',
         'is_featured': True,
         'featured_order': 1,
         'theaters': ['teikoku', 'nissei', 'theatre-crea', 'tokyo-takarazuka'],
@@ -38,7 +38,7 @@ shops_data = [
         'nearest_station': '初台駅',
         'distance_note': '新国立劇場直結',
         'opening_hours_text': '11:00〜22:00（L.O. 21:30）',
-        'benefit_text': '観劇割あり（チケット半券提示で全品5%OFF）',
+        'benefit_text': '',
         'is_featured': True,
         'featured_order': 2,
         'theaters': ['shin-kokuritsu'],
@@ -66,42 +66,10 @@ shops_data = [
         'nearest_station': '人形町駅',
         'distance_note': '明治座から徒歩3分',
         'opening_hours_text': '10:00〜18:00',
-        'benefit_text': '明治座チケット半券で甘酒1杯サービス',
+        'benefit_text': '',
         'is_featured': True,
         'featured_order': 4,
         'theaters': ['meijiza'],
-    },
-]
-
-# ---- Coupons ----
-coupons_data = [
-    {
-        'shop': 'cafe-de-crie-hibiya',
-        'title': 'ケーキセット100円引き',
-        'discount_text': '100円OFF',
-        'description': '日比谷エリアの劇場チケット半券でケーキセットが100円引き',
-        'conditions': '当日の半券をご提示\nケーキセットご注文時のみ',
-    },
-    {
-        'shop': 'saizeriya-operacity',
-        'title': '観劇割 全品5%OFF',
-        'discount_text': '5%OFF',
-        'description': '観劇チケットの半券ご提示で全品5%オフ',
-        'conditions': '注文時に半券をご提示ください\n1グループ1回まで\n他割引との併用不可',
-    },
-    {
-        'shop': 'ty-harbor',
-        'title': 'クラフトビール1杯10%OFF',
-        'discount_text': '10%OFF',
-        'description': '銀河劇場のチケット半券でクラフトビールが10%オフ',
-        'conditions': '当日の半券をご提示\nおひとり様1杯まで',
-    },
-    {
-        'shop': 'hatsune-amazake',
-        'title': '甘酒1杯サービス',
-        'discount_text': '甘酒無料',
-        'description': '明治座のチケット半券で甘酒1杯サービス',
-        'conditions': '当日の半券をご提示\nおひとり様1杯限り',
     },
 ]
 
@@ -131,17 +99,4 @@ for i, s in enumerate(shops_data):
 print(f'\nShops: {Shop.objects.count()}')
 print(f'TheaterShops: {TheaterShop.objects.count()}')
 
-for c in coupons_data:
-    shop_slug = c.pop('shop')
-    shop = Shop.objects.filter(slug=shop_slug).first()
-    if shop:
-        coupon, created = Coupon.objects.update_or_create(
-            shop=shop,
-            title=c['title'],
-            defaults=c,
-        )
-        action = 'Created' if created else 'Updated'
-        print(f'  {action} coupon: {coupon.title} ({shop.name})')
-
-print(f'\nCoupons: {Coupon.objects.count()}')
 print('=== Shop Seed Done ===')

@@ -5,7 +5,7 @@ django.setup()
 from accounts.models import User
 from theaters.models import Theater
 from works.models import Work, Performance, Person, PosterSubmission
-from shops.models import Shop, TheaterShop, Coupon
+from shops.models import Shop, TheaterShop
 
 # ---- 既存の作品関連データをクリア ----
 from reviews.models import ViewingLog, Review
@@ -86,7 +86,7 @@ for w in works_data:
         )
 print(f'Works: {Work.objects.count()}, Performances: {Performance.objects.count()}')
 
-# ---- Shops + Coupons (seed_shops.py を実行) ----
+# ---- Shops (seed_shops.py を実行) ----
 # django.setup() は冪等なので二重呼び出しOK
 exec(open(os.path.join(os.path.dirname(__file__) or '.', 'seed_shops.py')).read())
 

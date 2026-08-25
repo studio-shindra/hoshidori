@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { api } from '@/lib/api'
-import PosterImage from '@/components/PosterImage.vue'
+import LogListItem from '@/components/LogListItem.vue'
 
 const tab = ref('planned')
 const logs = ref([])
@@ -25,7 +25,7 @@ watch(tab, fetchLogs)
 
 <template>
   <div class="pt-4">
-    <h2 class="fw-bold mb-3 fs-2">Logs</h2>
+    <h1 class="fw-bold mb-3 fs-3">観劇記録</h1>
     <div class="d-flex gap-2 mb-3">
       <button
         class="btn flex-fill fw-medium"
@@ -42,18 +42,19 @@ watch(tab, fetchLogs)
     <p v-if="loading" class="text-secondary">読み込み中...</p>
     <template v-else>
       <div v-if="logs.length" class="d-flex flex-column gap-2">
-        <div v-for="log in logs" :key="log.id" class="card bg-dark border-0 p-3">
-          <div class="d-flex gap-3">
-            <div class="card-sm">
-              <PosterImage :src="log.poster_url" :alt="log.work_title" :work-slug="log.work_slug" size="sm" />
-            </div>
-            <div class="d-flex flex-column gap-1">
-              <div class="fw-medium small text-truncate">{{ log.work_title }}</div>
-              <div v-if="log.watched_on" class="tiny text-secondary">{{ log.watched_on }}</div>
-              <div v-if="log.memo" class="tiny text-secondary text-truncate">{{ log.memo }}</div>
-            </div>
-          </div>
-        </div>
+        <LogListItem
+          v-for="log in logs"
+          :key="log.id"
+          :work-title="log.work_title"
+          :work-slug="log.work_slug"
+          :watched-on="log.watched_on"
+          :watched-time="log.watched_time"
+          :theater-name="log.theater_name"
+          :theater-area="log.theater_area"
+          :memo="log.memo"
+          :rating="log.rating"
+          :after-shop-name="log.after_shop_name"
+        />
       </div>
       <p v-else class="text-secondary text-center mt-4">まだ記録がありません</p>
     </template>

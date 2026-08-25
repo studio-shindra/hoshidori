@@ -73,8 +73,8 @@ class Performance(models.Model):
         'theaters.Theater', on_delete=models.CASCADE, related_name='performances',
     )
     company_name = models.CharField(max_length=200, blank=True, default='')
-    start_date = models.DateField()
-    end_date = models.DateField()
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
     note = models.TextField(blank=True, default='')
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
@@ -106,6 +106,35 @@ class PerformanceCast(models.Model):
 
     def __str__(self):
         return f'{self.person.name} ({self.role_name})' if self.role_name else self.person.name
+
+
+class WorkEditProposal(models.Model):
+    STATUS_CHOICES = [
+        ('pending', '確認待ち'),
+        ('approved', '反映済み'),
+        ('rejected', '見送り'),
+    ]
+
+    work = models.ForeignKey(Work, on_delete=models.CASCADE, related_name='edit_proposals')
+    performance = models.ForeignKey(
+        Performance, on_delete=models.CASCADE, related_name='edit_proposals',
+        null=True, blank=True,
+    )
+    proposed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+        related_name='work_edit_proposals',
+    )
+    changes = models.JSONField(default=dict)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        target = self.performance or self.work
+        return f'{target} / {self.get_status_display()}'
 
 
 class PosterSubmission(models.Model):

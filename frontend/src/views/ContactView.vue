@@ -1,17 +1,20 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { IconSend } from '@tabler/icons-vue'
 
 const name = ref('')
 const email = ref('')
 const category = ref('general')
 const body = ref('')
+const route = useRoute()
 
 const categories = [
   { value: 'general', label: '一般的なお問い合わせ' },
   { value: 'delete', label: 'コンテンツ削除依頼' },
   { value: 'report', label: '不適切なコンテンツの通報' },
   { value: 'bug', label: '不具合・バグ報告' },
+  { value: 'theater', label: '劇場情報・公式写真の掲載' },
   { value: 'other', label: 'その他' },
 ]
 
@@ -26,6 +29,18 @@ const mailtoLink = computed(() => {
 })
 
 const canSend = computed(() => body.value.trim().length > 0)
+
+onMounted(() => {
+  if (categories.some((item) => item.value === route.query.category)) {
+    category.value = route.query.category
+  }
+  if (route.query.theater) {
+    const sourceLine = route.query.source
+      ? `対象ページ: ${window.location.origin}${route.query.source}\n`
+      : ''
+    body.value = `劇場名: ${route.query.theater}\n${sourceLine}\n修正内容・公式写真について:\n`
+  }
+})
 </script>
 
 <template>

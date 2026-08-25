@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
-import { IconCamera, IconX } from '@tabler/icons-vue'
+import { IconArrowLeft, IconCamera, IconX } from '@tabler/icons-vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
@@ -114,10 +114,13 @@ async function deleteAccount() {
 
 <template>
   <div class="px-3 pt-4 pb-3">
-    <div class="d-flex align-items-center justify-content-between mb-4">
-      <h2 class="fs-5 fw-bold mb-0">プロフィール編集</h2>
-      <RouterLink to="/mypage" class="btn btn-sm btn-dark text-secondary">戻る</RouterLink>
-    </div>
+    <header class="d-flex align-items-center justify-content-between mb-4">
+      <RouterLink to="/mypage" class="btn btn-link text-secondary p-0 small text-decoration-none page-back">
+        <IconArrowLeft :size="16" class="me-1" />戻る
+      </RouterLink>
+      <h1 class="fs-6 fw-bold mb-0">プロフィール編集</h1>
+      <div class="page-back-spacer"></div>
+    </header>
 
     <!-- Avatar -->
     <div class="card bg-dark border-0 p-3 mb-4">
@@ -195,7 +198,7 @@ async function deleteAccount() {
         <div class="modal-content bg-dark text-light border-secondary">
           <div class="modal-header border-secondary">
             <h5 class="modal-title fs-6">アカウント削除</h5>
-            <button type="button" class="btn-close btn-close-white" @click="showDeleteModal = false"></button>
+            <button type="button" class="btn-close btn-close-white" aria-label="退会確認を閉じる" @click="showDeleteModal = false"></button>
           </div>
           <div class="modal-body small">
             アカウントを削除すると、保存された観劇ログやプロフィール情報は削除され、元に戻せません。<br />

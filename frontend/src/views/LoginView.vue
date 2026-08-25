@@ -67,6 +67,11 @@ async function submit() {
     <p class="text-center mt-3 small text-secondary">
       アカウントがない方は <RouterLink to="/register">新規登録</RouterLink>
     </p>
+    <nav class="auth-legal-links" aria-label="規約とお問い合わせ">
+      <RouterLink to="/terms">利用規約</RouterLink>
+      <RouterLink to="/privacy">プライバシー</RouterLink>
+      <RouterLink to="/contact">お問い合わせ</RouterLink>
+    </nav>
   </div>
 </template>
 
@@ -84,4 +89,6 @@ async function submit() {
   display: flex;
   align-items: center;
 }
+.auth-legal-links { margin-top: 2.5rem; display: flex; justify-content: center; flex-wrap: wrap; gap: .6rem 1rem; }
+.auth-legal-links a { color: #71717a; font-size: .64rem; text-decoration: none; }
 </style>

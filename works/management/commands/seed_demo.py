@@ -8,7 +8,7 @@ class Command(BaseCommand):
         from accounts.models import User
         from theaters.models import Theater
         from works.models import Work, Performance, Person, PosterSubmission
-        from shops.models import Shop, TheaterShop, Coupon
+        from shops.models import Shop, TheaterShop
         from reviews.models import ViewingLog, Review
 
         # ---- 既存の作品関連データをクリア ----
@@ -115,69 +115,5 @@ class Command(BaseCommand):
                 if theater:
                     TheaterShop.objects.get_or_create(theater=theater, shop=shop)
         self.stdout.write(f'Shops: {Shop.objects.count()}, TheaterShops: {TheaterShop.objects.count()}')
-
-        # ---- Coupons ----
-        coupons_data = [
-            {'shop': 'saizeriya-operacity', 'title': '観劇割 全品5%OFF', 'discount_text': '全品5%OFF', 'description': '観劇チケットの半券ご提示で割引', 'conditions': '注文時に半券をご提示ください\n1グループ1回まで'},
-            {'shop': 'tullys-hatsudai', 'title': 'ドリンク50円引き', 'discount_text': '50円OFF', 'description': '観劇チケット提示でドリンク割引', 'conditions': 'チケット半券ご提示'},
-            {'shop': 'cafe-de-crie-hibiya', 'title': 'ケーキセット100円引き', 'discount_text': '100円OFF', 'description': '日比谷エリアの劇場チケット半券で割引', 'conditions': '当日の半券をご提示'},
-            {'shop': 'sakura-cafe-ikebukuro', 'title': 'ランチ10%OFF', 'discount_text': '10%OFF', 'description': '池袋エリアの劇場チケットで割引', 'conditions': '当日の半券をご提示\nランチタイム限定'},
-        ]
-        for c in coupons_data:
-            shop = Shop.objects.filter(slug=c.pop('shop')).first()
-            if shop:
-                Coupon.objects.get_or_create(shop=shop, title=c['title'], defaults=c)
-        self.stdout.write(f'Coupons: {Coupon.objects.count()}')
-
-        # ---- Posters ----
-        poster_urls = [
-            'https://res.cloudinary.com/dbvisrqec/image/upload/v1773818756/f-01_cymgcg.png',
-            'https://res.cloudinary.com/dbvisrqec/image/upload/v1773818756/f-02_wmbepd.png',
-            'https://res.cloudinary.com/dbvisrqec/image/upload/v1773818756/f-03_sahsdd.png',
-            'https://res.cloudinary.com/dbvisrqec/image/upload/v1773818755/f-04_b5q4ec.png',
-            'https://res.cloudinary.com/dbvisrqec/image/upload/v1773818756/f-05_fex9rf.png',
-            'https://res.cloudinary.com/dbvisrqec/image/upload/v1773818756/f-06_gozpyo.png',
-            'https://res.cloudinary.com/dbvisrqec/image/upload/v1773819696/f-08_enfjal.png',
-            'https://res.cloudinary.com/dbvisrqec/image/upload/v1773819696/f-09_j324h0.png',
-            'https://res.cloudinary.com/dbvisrqec/image/upload/v1773819695/f-10_gmzvwz.png',
-            'https://res.cloudinary.com/dbvisrqec/image/upload/v1773819697/f-11_g3qyro.png',
-            'https://res.cloudinary.com/dbvisrqec/image/upload/v1773819697/f-12_bukcuw.png',
-            'https://res.cloudinary.com/dbvisrqec/image/upload/v1773819698/f-13_duv3ng.png',
-            'https://res.cloudinary.com/dbvisrqec/image/upload/v1773819699/f-14_dcwhkj.png',
-            'https://res.cloudinary.com/dbvisrqec/image/upload/v1773819697/f-15_esedn7.png',
-            'https://res.cloudinary.com/dbvisrqec/image/upload/v1773819704/f-16_j6ydwm.png',
-            'https://res.cloudinary.com/dbvisrqec/image/upload/v1773819699/f-17_egirbj.png',
-            'https://res.cloudinary.com/dbvisrqec/image/upload/v1773819699/f-18_vuy0ag.png',
-            'https://res.cloudinary.com/dbvisrqec/image/upload/v1773819699/f-19_qapv85.png',
-            'https://res.cloudinary.com/dbvisrqec/image/upload/v1773819700/f-20_biaqdp.png',
-            'https://res.cloudinary.com/dbvisrqec/image/upload/v1773819909/f-21_nfqd2b.png',
-        ]
-        poster_public_ids = [
-            'f-01_cymgcg', 'f-02_wmbepd', 'f-03_sahsdd',
-            'f-04_b5q4ec', 'f-05_fex9rf', 'f-06_gozpyo',
-            'f-08_enfjal', 'f-09_j324h0', 'f-10_gmzvwz',
-            'f-11_g3qyro', 'f-12_bukcuw', 'f-13_duv3ng',
-            'f-14_dcwhkj', 'f-15_esedn7', 'f-16_j6ydwm',
-            'f-17_egirbj', 'f-18_vuy0ag', 'f-19_qapv85',
-            'f-20_biaqdp', 'f-21_nfqd2b',
-        ]
-
-        works_all = list(Work.objects.order_by('id'))
-        for i, work in enumerate(works_all):
-            url = poster_urls[i % len(poster_urls)]
-            public_id = poster_public_ids[i % len(poster_public_ids)]
-            PosterSubmission.objects.get_or_create(
-                work=work,
-                user=admin_user,
-                defaults={
-                    'image_url': url,
-                    'image_public_id': public_id,
-                    'image_width': 600,
-                    'image_height': 900,
-                    'image_format': 'png',
-                    'is_selected': True,
-                },
-            )
-        self.stdout.write(f'Posters: {PosterSubmission.objects.count()}')
 
         self.stdout.write(self.style.SUCCESS('Done!'))

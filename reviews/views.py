@@ -1,4 +1,6 @@
-from django.db.models import Count, Exists, OuterRef, Prefetch, Subquery
+from django.db.models import Count, Exists, OuterRef, Subquery
+from django.db.models.functions import ExtractYear
+from django.utils import timezone
 
 from rest_framework import status
 from rest_framework.decorators import action
@@ -7,7 +9,6 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from accounts.permissions import IsOwnerOrReadOnly
-from works.models import PosterSubmission
 from .models import Like, Review, ViewingLog, ViewingLogImage
 from .serializers import LatestReviewSerializer, ReviewSerializer, ViewingLogImageSerializer, ViewingLogSerializer
 
@@ -17,9 +18,17 @@ class ReviewViewSet(ModelViewSet):
     permission_classes = [IsOwnerOrReadOnly]
 
     def get_queryset(self):
+        matching_log = ViewingLog.objects.filter(
+            user=OuterRef('user'), performance=OuterRef('performance'),
+        )
         qs = Review.objects.select_related(
             'user', 'performance__work', 'performance__theater',
-        ).annotate(_like_count=Count('likes'))
+        ).annotate(
+            _like_count=Count('likes'),
+            _after_shop_id=Subquery(matching_log.values('after_shop_id')[:1]),
+            _after_shop_name=Subquery(matching_log.values('after_shop__name')[:1]),
+            _after_shop_slug=Subquery(matching_log.values('after_shop__slug')[:1]),
+        ).order_by('-created_at')
 
         if self.request.user.is_authenticated:
             qs = qs.annotate(
@@ -34,14 +43,14 @@ class ReviewViewSet(ModelViewSet):
 
     @action(detail=False, methods=['get'], permission_classes=[AllowAny])
     def latest(self, request):
+        matching_log = ViewingLog.objects.filter(
+            user=OuterRef('user'), performance=OuterRef('performance'),
+        )
         qs = Review.objects.select_related(
             'user', 'performance__work', 'performance__theater',
-        ).prefetch_related(
-            Prefetch(
-                'performance__work__poster_submissions',
-                queryset=PosterSubmission.objects.filter(is_selected=True),
-                to_attr='_prefetched_selected_posters',
-            ),
+        ).annotate(
+            _after_shop_name=Subquery(matching_log.values('after_shop__name')[:1]),
+            _after_shop_slug=Subquery(matching_log.values('after_shop__slug')[:1]),
         ).filter(body__gt='').order_by('-created_at')[:10]
         serializer = LatestReviewSerializer(qs, many=True, context={'request': request})
         return Response(serializer.data)
@@ -77,13 +86,8 @@ class ViewingLogViewSet(ModelViewSet):
         qs = ViewingLog.objects.filter(
             user=self.request.user,
         ).select_related(
-            'performance__work', 'performance__theater',
+            'performance__work', 'performance__theater', 'after_shop',
         ).prefetch_related(
-            Prefetch(
-                'performance__work__poster_submissions',
-                queryset=PosterSubmission.objects.filter(is_selected=True),
-                to_attr='_prefetched_selected_posters',
-            ),
             'images',
         ).annotate(
             _rating=Subquery(
@@ -96,7 +100,82 @@ class ViewingLogViewSet(ModelViewSet):
         status_filter = self.request.query_params.get('status')
         if status_filter in ('planned', 'watched'):
             qs = qs.filter(status=status_filter)
+        year = self.request.query_params.get('year')
+        month = self.request.query_params.get('month')
+        if year and year.isdigit():
+            qs = qs.filter(watched_on__year=int(year))
+        if month and month.isdigit() and 1 <= int(month) <= 12:
+            qs = qs.filter(watched_on__month=int(month))
+        scope = self.request.query_params.get('scope')
+        if scope == 'upcoming':
+            qs = qs.filter(status='planned', watched_on__gte=timezone.localdate()).order_by(
+                'watched_on', 'watched_time', 'created_at',
+            )
+        elif scope == 'recent':
+            qs = qs.filter(status='watched').order_by(
+                '-watched_on', '-watched_time', '-created_at',
+            )
         return qs
+
+    @action(detail=False, methods=['get'], url_path='calendar')
+    def calendar(self, request):
+        today = timezone.localdate()
+        try:
+            year = int(request.query_params.get('year', today.year))
+            month = int(request.query_params.get('month', today.month))
+        except (TypeError, ValueError):
+            return Response({'detail': 'year と month を確認してください。'}, status=400)
+        if not 1 <= month <= 12:
+            return Response({'detail': 'month は1〜12で指定してください。'}, status=400)
+        qs = self.get_queryset().filter(
+            watched_on__year=year,
+            watched_on__month=month,
+        ).order_by('watched_on', 'watched_time', 'created_at')
+        serializer = self.get_serializer(qs, many=True)
+        return Response({'year': year, 'month': month, 'results': serializer.data})
+
+    @action(detail=False, methods=['get'], url_path='archive')
+    def archive(self, request):
+        today = timezone.localdate()
+        try:
+            year = int(request.query_params.get('year', today.year))
+        except (TypeError, ValueError):
+            return Response({'detail': 'year を確認してください。'}, status=400)
+        status_filter = request.query_params.get('status', 'watched')
+        if status_filter not in ('planned', 'watched'):
+            return Response({'detail': 'status を確認してください。'}, status=400)
+        qs = self.get_queryset().filter(
+            status=status_filter,
+            watched_on__year=year,
+        )
+        if status_filter == 'planned':
+            qs = qs.order_by('watched_on', 'watched_time', 'created_at')
+        else:
+            qs = qs.order_by('-watched_on', '-watched_time', '-created_at')
+        serializer = self.get_serializer(qs, many=True)
+        return Response({
+            'year': year,
+            'status': status_filter,
+            'count': qs.count(),
+            'results': serializer.data,
+        })
+
+    @action(detail=False, methods=['get'], url_path='archive-meta')
+    def archive_meta(self, request):
+        rows = ViewingLog.objects.filter(
+            user=request.user,
+            watched_on__isnull=False,
+        ).annotate(
+            year=ExtractYear('watched_on'),
+        ).values('year', 'status').annotate(
+            count=Count('id'),
+        ).order_by('-year')
+        years = {}
+        for row in rows:
+            year = int(row['year'])
+            years.setdefault(year, {'year': year, 'planned': 0, 'watched': 0})
+            years[year][row['status']] = row['count']
+        return Response({'years': list(years.values())})
 
     def create(self, request, *args, **kwargs):
         performance_id = request.data.get('performance')

@@ -1,7 +1,7 @@
 <template>
   <div class="container py-4" style="max-width: 720px;">
     <h1 class="h3 mb-4">プライバシーポリシー</h1>
-    <p class="text-muted small mb-4">最終更新日: 2026年3月12日</p>
+    <p class="text-muted small mb-4">最終更新日: 2026年8月24日</p>
 
     <section class="mb-4">
       <h2 class="h5">1. はじめに</h2>
@@ -14,8 +14,8 @@
       <ul>
         <li><strong>アカウント情報:</strong> ユーザー名、メールアドレス、表示名</li>
         <li><strong>投稿コンテンツ:</strong> 観劇記録、感想テキスト、コメント</li>
-        <li><strong>投稿画像:</strong> ポスター画像等、ユーザーがアップロードした画像</li>
-        <li><strong>クーポン利用ログ:</strong> クーポンの利用日時、対象クーポン情報</li>
+        <li><strong>投稿画像:</strong> 観劇記録にユーザーがアップロードした写真</li>
+        <li><strong>観劇後の店舗記録:</strong> 観劇後に行った店舗と観劇記録との関連情報</li>
         <li><strong>アクセスログ:</strong> IPアドレス、ブラウザ情報、アクセス日時、ページ閲覧履歴等</li>
       </ul>
     </section>
@@ -30,6 +30,7 @@
         <li>利用状況の分析・統計（個人を特定しない形での集計を含む）</li>
         <li>お問い合わせへの対応</li>
       </ul>
+      <p class="small text-muted">劇場周辺の店舗検索にはGoogle Maps Platformを利用する場合があります。検索時には劇場名・所在地がGoogleへ送信されます。Googleによる情報の取扱いは、<a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Googleプライバシーポリシー</a>をご確認ください。</p>
     </section>
 
     <section class="mb-4">

@@ -1,15 +1,12 @@
-from datetime import timedelta
-
-from django.db.models import Case, Exists, IntegerField, OuterRef, Prefetch, Q, Value, When
-from django.utils import timezone
+from django.db.models import Case, Count, Exists, IntegerField, OuterRef, Q, Value, When
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
-from .models import Coupon, CouponUseLog, Shop, ShopClickLog, ShopWantToGo, TheaterShop
-from .serializers import CouponSerializer, ShopSerializer
+from .models import Shop, ShopClickLog, ShopWantToGo, TheaterShop
+from .serializers import ShopSerializer
 
 
 class ShopViewSet(ReadOnlyModelViewSet):
@@ -19,13 +16,7 @@ class ShopViewSet(ReadOnlyModelViewSet):
     permission_classes = [AllowAny]
 
     def get_queryset(self):
-        qs = super().get_queryset().prefetch_related(
-            Prefetch(
-                'coupons',
-                queryset=Coupon.objects.filter(is_active=True),
-                to_attr='_prefetched_active_coupons',
-            ),
-        )
+        qs = super().get_queryset()
         q = self.request.query_params.get('q', '').strip()
         category = self.request.query_params.get('category', '').strip()
         theater = self.request.query_params.get('theater', '').strip()
@@ -49,26 +40,69 @@ class ShopViewSet(ReadOnlyModelViewSet):
                 ),
             )
 
+        featured_link = TheaterShop.objects.filter(
+            shop_id=OuterRef('pk'),
+            is_featured=True,
+        )
+        recognized_link = TheaterShop.objects.filter(
+            shop_id=OuterRef('pk'),
+            is_featured=False,
+        )
         qs = qs.annotate(
-            _featured_rank=Case(
+            after_viewing_count=Count(
+                'after_viewing_logs',
+                filter=Q(after_viewing_logs__status='watched'),
+                distinct=True,
+            ),
+            _has_featured_link=Exists(featured_link),
+            _has_recognized_link=Exists(recognized_link),
+        ).annotate(
+            _listing_rank=Case(
                 When(is_featured=True, then=Value(0)),
-                default=Value(1),
+                When(_has_featured_link=True, then=Value(0)),
+                When(_has_recognized_link=True, then=Value(1)),
+                default=Value(2),
                 output_field=IntegerField(),
             ),
-        ).order_by('_featured_rank', 'featured_order', 'name')
+        ).order_by('_listing_rank', 'featured_order', 'name')
         return qs
 
     @action(detail=False, methods=['get'], permission_classes=[AllowAny])
     def featured(self, request):
         shops = Shop.objects.filter(
             is_active=True, is_featured=True,
-        ).prefetch_related(
-            Prefetch(
-                'coupons',
-                queryset=Coupon.objects.filter(is_active=True),
-                to_attr='_prefetched_active_coupons',
+        ).annotate(
+            after_viewing_count=Count(
+                'after_viewing_logs',
+                filter=Q(after_viewing_logs__status='watched'),
+                distinct=True,
             ),
         ).order_by('featured_order')[:6]
+        serializer = self.get_serializer(shops, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], permission_classes=[AllowAny])
+    def recognized(self, request):
+        featured_link = TheaterShop.objects.filter(
+            shop_id=OuterRef('pk'),
+            is_featured=True,
+        )
+        shops = Shop.objects.filter(
+            is_active=True,
+            theater_shops__isnull=False,
+        ).annotate(
+            _has_featured_link=Exists(featured_link),
+            _has_recognized_link=Exists(
+                TheaterShop.objects.filter(shop_id=OuterRef('pk'), is_featured=False)
+            ),
+            after_viewing_count=Count(
+                'after_viewing_logs',
+                filter=Q(after_viewing_logs__status='watched'),
+                distinct=True,
+            ),
+        ).filter(
+            _has_featured_link=False,
+        ).distinct().order_by('-after_viewing_count', 'name')[:8]
         serializer = self.get_serializer(shops, many=True)
         return Response(serializer.data)
 
@@ -82,13 +116,6 @@ class ShopViewSet(ReadOnlyModelViewSet):
             clicked_target=request.data.get('clicked_target', ''),
         )
         return Response({'detail': '記録しました。'}, status=status.HTTP_201_CREATED)
-
-    @action(detail=True, methods=['get'], url_path='coupons', permission_classes=[AllowAny])
-    def coupons(self, request, slug=None):
-        shop = self.get_object()
-        coupons = Coupon.objects.filter(shop=shop, is_active=True)
-        serializer = CouponSerializer(coupons, many=True)
-        return Response(serializer.data)
 
     @action(detail=True, methods=['post', 'delete'], url_path='want-to-go', permission_classes=[IsAuthenticated])
     def want_to_go(self, request, slug=None):
@@ -109,11 +136,11 @@ class ShopViewSet(ReadOnlyModelViewSet):
         shop_ids = ShopWantToGo.objects.filter(
             user=request.user,
         ).order_by('-created_at').values_list('shop_id', flat=True)
-        shops = Shop.objects.filter(id__in=shop_ids, is_active=True).prefetch_related(
-            Prefetch(
-                'coupons',
-                queryset=Coupon.objects.filter(is_active=True),
-                to_attr='_prefetched_active_coupons',
+        shops = Shop.objects.filter(id__in=shop_ids, is_active=True).annotate(
+            after_viewing_count=Count(
+                'after_viewing_logs',
+                filter=Q(after_viewing_logs__status='watched'),
+                distinct=True,
             ),
         )
         # 元の順序（新しい順）を維持
@@ -121,24 +148,3 @@ class ShopViewSet(ReadOnlyModelViewSet):
         ordered = [shop_map[sid] for sid in shop_ids if sid in shop_map]
         serializer = self.get_serializer(ordered, many=True)
         return Response(serializer.data)
-
-
-class CouponViewSet(ReadOnlyModelViewSet):
-    queryset = Coupon.objects.filter(is_active=True).select_related('shop')
-    serializer_class = CouponSerializer
-    permission_classes = [AllowAny]
-
-    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
-    def use(self, request, pk=None):
-        coupon = self.get_object()
-        performance_id = request.data.get('performance')
-        log = CouponUseLog.objects.create(
-            coupon=coupon,
-            user=request.user,
-            performance_id=performance_id,
-        )
-        return Response({
-            'detail': 'クーポンを利用しました。',
-            'coupon_title': coupon.title,
-            'used_at': log.used_at.isoformat(),
-        }, status=status.HTTP_201_CREATED)

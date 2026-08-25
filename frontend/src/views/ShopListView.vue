@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api } from '@/lib/api'
 import { IconSearch, IconCoffee } from '@tabler/icons-vue'
@@ -11,13 +11,12 @@ const shops = ref([])
 const loading = ref(true)
 const keyword = ref('')
 const activeCategory = ref('')
+const availableCategories = ref([])
 
-const categories = [
+const categories = computed(() => [
   { label: 'すべて', value: '' },
-  { label: 'カフェ', value: 'カフェ' },
-  { label: '居酒屋', value: '居酒屋' },
-  { label: 'バー', value: 'バー' },
-]
+  ...availableCategories.value.map((category) => ({ label: category, value: category })),
+])
 
 function buildQuery() {
   const params = new URLSearchParams()
@@ -30,7 +29,7 @@ function buildQuery() {
 async function search() {
   loading.value = true
   try {
-    const data = await api.get(`/api/shops/${buildQuery()}`)
+    const data = await api.getFresh(`/api/shops/${buildQuery()}`)
     shops.value = data.results || data
   } catch {
     shops.value = []
@@ -48,10 +47,17 @@ function selectCategory(val) {
   search()
 }
 
-onMounted(() => {
+onMounted(async () => {
   keyword.value = route.query.q || ''
   activeCategory.value = route.query.category || ''
-  search()
+  try {
+    const data = await api.getFresh('/api/shops/')
+    const allShops = data.results || data
+    availableCategories.value = [...new Set(allShops.map((shop) => shop.category).filter(Boolean))]
+  } catch {
+    availableCategories.value = []
+  }
+  await search()
 })
 </script>
 
@@ -70,7 +76,7 @@ onMounted(() => {
         class="form-control bg-dark text-white border-secondary"
         placeholder="店名で探す"
       />
-      <button type="submit" class="btn btn-outline-light flex-shrink-0">
+      <button type="submit" class="btn btn-outline-light flex-shrink-0" aria-label="店を検索">
         <IconSearch :size="18" />
       </button>
     </form>

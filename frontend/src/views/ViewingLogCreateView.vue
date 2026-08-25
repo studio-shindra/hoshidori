@@ -1,8 +1,11 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute, RouterLink } from 'vue-router'
 import { api } from '@/lib/api'
-import { IconArrowLeft, IconTicket, IconStar, IconCamera, IconX } from '@tabler/icons-vue'
+import {
+  IconArrowLeft, IconCalendarEvent, IconCamera, IconChevronRight, IconMapPin,
+  IconSearch, IconSparkles, IconStar, IconTicket, IconX,
+} from '@tabler/icons-vue'
 import Multiselect from '@vueform/multiselect'
 import RatingButtons from '@/components/RatingButtons.vue'
 
@@ -22,17 +25,24 @@ function formatDate(d) {
 }
 
 const performances = ref([])
+const shops = ref([])
 const performance = ref(route.query.performance || '')
+const performanceQuery = ref('')
 const status = ref(route.query.status || 'planned')
 const watchedOn = ref(formatDate(new Date()))
+const today = formatDate(new Date())
+const watchedDatePresets = [
+  { label: '昨日', offset: -1 },
+  { label: '今日', offset: 0 },
+]
 const watchedTime = ref('13:00')
 const memo = ref('')
 const rating = ref('')
 const spoiler = ref(false)
+const afterShop = ref('')
 const error = ref('')
 const loading = ref(false)
 const perfLoading = ref(true)
-const showAddPerf = ref(false)
 
 // 画像アップロード（観た時のみ）
 const selectedImages = ref([])
@@ -79,8 +89,12 @@ async function uploadImages(logId) {
 
 onMounted(async () => {
   try {
-    const data = await api.get('/api/performances/')
-    performances.value = data.results || data
+    const [performanceData, shopData] = await Promise.all([
+      api.get('/api/performances/'),
+      api.get('/api/shops/'),
+    ])
+    performances.value = performanceData.results || performanceData
+    shops.value = shopData.results || shopData
   } catch {
     /* empty */
   } finally {
@@ -88,17 +102,31 @@ onMounted(async () => {
   }
 })
 
-function perfLabel(p) {
-  const parts = []
-  if (p.work_title || p.work_name) parts.push(p.work_title || p.work_name)
-  if (p.theater_name) parts.push(p.theater_name)
-  if (p.start_date) parts.push(p.start_date)
-  return parts.length ? parts.join(' / ') : `公演 #${p.id}`
+const selectedPerformance = computed(() => performances.value.find((item) => String(item.id) === String(performance.value)) || null)
+const matchingPerformances = computed(() => {
+  const q = performanceQuery.value.trim().toLocaleLowerCase('ja')
+  if (!q) return []
+  return performances.value.filter((item) => [
+    item.work_title || item.work_name,
+    item.theater_name,
+    item.company_name,
+  ].filter(Boolean).some((text) => text.toLocaleLowerCase('ja').includes(q))).slice(0, 12)
+})
+const shopOptions = computed(() => shops.value.map((shop) => ({
+  value: shop.id,
+  label: [shop.name, shop.nearest_station || shop.category].filter(Boolean).join(' / '),
+})))
+
+function choosePerformance(item) {
+  performance.value = item.id
+  performanceQuery.value = ''
+  error.value = ''
 }
 
-const perfOptions = computed(() =>
-  performances.value.map((p) => ({ value: p.id, label: perfLabel(p) })),
-)
+function clearPerformance() {
+  performance.value = ''
+  performanceQuery.value = ''
+}
 
 function setDateOffset(offset) {
   const d = new Date()
@@ -108,8 +136,16 @@ function setDateOffset(offset) {
 
 const timePresets = ['13:00', '14:00', '18:00', '19:00']
 
+watch(status, (nextStatus) => {
+  if (nextStatus === 'watched' && watchedOn.value > today) watchedOn.value = today
+})
+
 async function submit() {
   error.value = ''
+  if (!performance.value) {
+    error.value = 'まず作品を選んでください'
+    return
+  }
   loading.value = true
   try {
     const body = {
@@ -120,6 +156,9 @@ async function submit() {
     if (watchedOn.value) {
       body.watched_on = watchedOn.value
       if (watchedTime.value) body.watched_time = watchedTime.value
+    }
+    if (status.value === 'watched' && afterShop.value) {
+      body.after_shop = Number(afterShop.value)
     }
     const log = await api.post('/api/viewing-logs/', body)
     // 画像アップロード（観た時のみ）
@@ -136,7 +175,7 @@ async function submit() {
       if (rating.value) reviewBody.rating_overall = Number(rating.value)
       await api.post('/api/reviews/', reviewBody)
     }
-    router.push('/logs')
+    router.push('/mypage')
   } catch (e) {
     const d = e.data
     if (d) {
@@ -153,49 +192,57 @@ async function submit() {
 <template>
   <div>
     <header class="d-flex align-items-center justify-content-between pt-4 pb-3">
-      <button class="btn btn-link text-secondary p-0 small text-decoration-none" @click="router.back()">
+      <button class="btn btn-link text-secondary p-0 small text-decoration-none page-back" @click="router.back()">
         <IconArrowLeft :size="16" class="me-1" />戻る
       </button>
       <h1 class="fs-6 fw-bold mb-0">記録する</h1>
-      <div style="width: 48px"></div>
+      <div class="page-back-spacer"></div>
     </header>
 
     <div class="px-3 d-flex flex-column gap-4">
-      <!-- 作品 / 公演選択 -->
-      <div>
-        <label class="form-label small text-secondary">作品 / 公演</label>
-        <p v-if="perfLoading" class="small text-secondary">読み込み中...</p>
-        <Multiselect
-          v-else
-          v-model="performance"
-          :options="perfOptions"
-          :searchable="true"
-          placeholder="作品名・劇場名で検索..."
-          no-results-text="該当する公演がありません"
-          no-options-text="公演データがありません"
-          class="multiselect-dark"
-        >
-          <template #noresults>
-            <div class="px-3 py-2 text-center">
-              <span class="small text-secondary">該当する公演がありません</span>
-              <RouterLink to="/performances/new" class="d-block small mt-1 color-rose">公演を新しく登録する →</RouterLink>
-            </div>
-          </template>
-        </Multiselect>
-        <div class="mt-2">
-          <button
-            v-if="!showAddPerf"
-            class="border-0 bg-transparent small text-secondary p-0"
-            @click="showAddPerf = true"
-          >見つかりませんか？</button>
-          <RouterLink
-            v-else
-            to="/performances/new"
-            class="small color-rose fw-medium text-decoration-none"
-          >公演を新しく登録する →</RouterLink>
+      <!-- まず作品を検索して選ぶ -->
+      <div v-if="!performance" class="performance-search-step">
+        <h2 class="fs-4 fw-bold mb-1">作品名を検索</h2>
+        <p class="small text-secondary mb-4">記録したい作品を先に選んでください。</p>
+        <div class="performance-search-input">
+          <IconSearch :size="19" :stroke="1.6" />
+          <input v-model="performanceQuery" type="search" autofocus placeholder="作品名を入力" aria-label="作品名を検索" />
         </div>
+        <p v-if="perfLoading" class="small text-secondary mt-3">作品を読み込み中...</p>
+        <div v-else-if="performanceQuery.trim()" class="performance-results mt-3">
+          <button v-for="item in matchingPerformances" :key="item.id" class="performance-result" @click="choosePerformance(item)">
+            <span class="min-w-0">
+              <strong>{{ item.work_title || item.work_name }}</strong>
+              <small>
+                <span v-if="item.theater_name"><IconMapPin :size="11" />{{ item.theater_name }}</span>
+                <span v-if="item.start_date"><IconCalendarEvent :size="11" />{{ item.start_date.replaceAll('-', '.') }}</span>
+              </small>
+            </span>
+            <IconChevronRight :size="17" :stroke="1.5" />
+          </button>
+          <p v-if="!matchingPerformances.length" class="small text-secondary text-center py-3 mb-0">該当する作品が見つかりません</p>
+          <RouterLink
+            v-if="!matchingPerformances.length"
+            :to="{ path: '/works/new', query: { title: performanceQuery.trim(), next: '/logs/new' } }"
+            class="register-missing-work"
+          >「{{ performanceQuery.trim() }}」を新しく登録する</RouterLink>
+        </div>
+        <p v-else class="tiny text-secondary text-center mt-4">作品名を入力すると候補が表示されます</p>
       </div>
 
+      <div v-else-if="selectedPerformance" class="selected-performance">
+        <div class="min-w-0">
+          <span class="tiny text-secondary">選択した作品</span>
+          <div class="fw-bold mt-1">{{ selectedPerformance.work_title || selectedPerformance.work_name }}</div>
+          <div class="selected-performance-meta">
+            <span v-if="selectedPerformance.theater_name"><IconMapPin :size="11" />{{ selectedPerformance.theater_name }}</span>
+            <span v-if="selectedPerformance.start_date"><IconCalendarEvent :size="11" />{{ selectedPerformance.start_date.replaceAll('-', '.') }}</span>
+          </div>
+        </div>
+        <button @click="clearPerformance">変更</button>
+      </div>
+
+      <template v-if="performance">
       <!-- ステータス切替 -->
       <div>
         <label class="form-label small text-secondary">ステータス</label>
@@ -231,12 +278,12 @@ async function submit() {
         <label class="form-label small text-secondary">観劇日</label>
         <div class="d-flex gap-2 mb-2">
           <button
-            v-for="(offset, label) in { '昨日': -1, '今日': 0, '明日': 1 }"
-            :key="label"
+            v-for="preset in watchedDatePresets"
+            :key="preset.label"
             class="toggle-btn flex-fill small"
-            :class="{ 'is-active-light': watchedOn === formatDate(new Date(Date.now() + offset * 86400000)) }"
-            @click="setDateOffset(offset)"
-          >{{ label }}</button>
+            :class="{ 'is-active-light': watchedOn === formatDate(new Date(Date.now() + preset.offset * 86400000)) }"
+            @click="setDateOffset(preset.offset)"
+          >{{ preset.label }}</button>
         </div>
         <div class="d-flex gap-2 mb-2">
           <button
@@ -248,7 +295,7 @@ async function submit() {
           >{{ t }}</button>
         </div>
         <div class="d-flex gap-2">
-          <input v-model="watchedOn" type="date" class="form-control bg-dark border-secondary text-light" />
+          <input v-model="watchedOn" type="date" :max="today" class="form-control bg-dark border-secondary text-light" />
           <input v-model="watchedTime" type="time" class="form-control bg-dark border-secondary text-light" style="max-width: 8rem" />
         </div>
       </div>
@@ -270,18 +317,38 @@ async function submit() {
         ></textarea>
       </div>
 
+      <!-- 観劇後に行った店 -->
+      <div v-if="status === 'watched'">
+        <label class="form-label small text-secondary d-flex align-items-center gap-1">
+          <IconSparkles :size="14" />その後行った店（任意）
+        </label>
+        <Multiselect
+          v-model="afterShop"
+          :options="shopOptions"
+          :searchable="true"
+          :can-clear="true"
+          placeholder="感想戦をした店を選ぶ"
+          no-results-text="該当する店がありません"
+          no-options-text="店舗データがありません"
+          class="multiselect-dark"
+        />
+        <p class="tiny text-secondary mt-2 mb-0">あとからマイページで追加・変更できます。</p>
+      </div>
+
       <!-- 画像（観た時のみ） -->
       <div v-if="status === 'watched'">
         <label class="form-label small text-secondary">写真（最大{{ MAX_IMAGES }}枚）</label>
+        <p class="tiny text-secondary">自分で撮影し、公開してよい写真だけを追加してください。舞台・ポスターの転載はできません。</p>
         <input ref="imageFileInput" type="file" accept="image/*" multiple class="d-none" @change="onImageSelect" />
         <div class="d-flex gap-2 flex-wrap">
           <div v-for="(img, i) in selectedImages" :key="i" class="img-thumb">
             <img :src="img.preview" class="w-100 h-100 object-fit-cover rounded" />
-            <button class="img-thumb-remove" @click="removeImage(i)"><IconX :size="12" /></button>
+            <button class="img-thumb-remove" :aria-label="`写真${i + 1}を削除`" @click="removeImage(i)"><IconX :size="12" /></button>
           </div>
           <button
             v-if="selectedImages.length < MAX_IMAGES"
             class="img-thumb img-thumb-add"
+            aria-label="写真を追加"
             @click="imageFileInput?.click()"
           >
             <IconCamera :size="24" class="text-secondary" />
@@ -305,12 +372,25 @@ async function submit() {
           {{ loading ? '保存中...' : '投稿する' }}
         </button>
       </div>
+      </template>
     </div>
   </div>
 </template>
 
 <style src="@vueform/multiselect/themes/default.css"></style>
 <style scoped>
+.performance-search-step { padding-top: 2.4rem; }
+.performance-search-input { display: flex; align-items: center; gap: .65rem; padding: .8rem .9rem; border: 1px solid rgba(255,255,255,.16); border-radius: 14px; background: #18181b; color: #71717a; }
+.performance-search-input:focus-within { border-color: rgba(244,63,94,.55); }
+.performance-search-input input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; color: #fff; font-size: 1rem; }
+.performance-results { border-top: 1px solid rgba(255,255,255,.08); }
+.performance-result { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 1rem; padding: .9rem .15rem; border: 0; border-bottom: 1px solid rgba(255,255,255,.08); background: transparent; color: #fff; text-align: left; }
+.performance-result strong { display: block; overflow: hidden; font-size: .86rem; text-overflow: ellipsis; white-space: nowrap; }
+.performance-result small, .selected-performance-meta { display: flex; flex-wrap: wrap; gap: .4rem .75rem; margin-top: .4rem; color: #71717a; font-size: .65rem; }
+.performance-result small span, .selected-performance-meta span { display: inline-flex; align-items: center; gap: 3px; }
+.register-missing-work { display: block; margin-top: 1rem; padding: .75rem; border: 1px dashed rgba(244,63,94,.28); border-radius: 11px; color: #fda4af; font-size: .75rem; text-align: center; text-decoration: none; }
+.selected-performance { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .9rem 1rem; border: 1px solid rgba(255,255,255,.1); border-radius: 13px; background: #18181b; }
+.selected-performance button { padding: .3rem .6rem; border: 0; border-radius: 8px; background: #3f3f46; color: #d4d4d8; font-size: .68rem; }
 .toggle-btn {
   background: #444444;
   color: #a1a1aa;

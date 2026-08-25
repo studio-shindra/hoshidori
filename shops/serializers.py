@@ -1,12 +1,13 @@
 from rest_framework import serializers
 
-from .models import Coupon, CouponUseLog, Shop
+from .models import Shop
 
 
 class ShopSerializer(serializers.ModelSerializer):
     image_src = serializers.SerializerMethodField()
-    coupon_text = serializers.SerializerMethodField()
     is_want_to_go = serializers.SerializerMethodField()
+    after_viewing_count = serializers.IntegerField(read_only=True, default=0)
+    listing_tier = serializers.SerializerMethodField()
 
     class Meta:
         model = Shop
@@ -15,7 +16,8 @@ class ShopSerializer(serializers.ModelSerializer):
             'address', 'nearest_station', 'distance_note',
             'website_url', 'instagram_url', 'tabelog_url', 'google_map_url',
             'phone_number', 'opening_hours_text', 'benefit_text',
-            'image_url', 'image_src', 'coupon_text',
+            'image_url', 'image_src', 'after_viewing_count',
+            'listing_tier',
             'is_featured', 'is_active', 'created_at', 'updated_at',
             'is_want_to_go',
         ]
@@ -28,16 +30,6 @@ class ShopSerializer(serializers.ModelSerializer):
             return obj._is_want_to_go
         return obj.want_to_go.filter(user=request.user).exists()
 
-    def get_coupon_text(self, obj):
-        coupons = getattr(obj, '_prefetched_active_coupons', None)
-        if coupons is not None:
-            coupon = coupons[0] if coupons else None
-        else:
-            coupon = obj.coupons.filter(is_active=True).first()
-        if coupon:
-            return coupon.discount_text or coupon.title
-        return None
-
     def get_image_src(self, obj):
         if obj.image_url:
             return obj.image_url
@@ -48,21 +40,9 @@ class ShopSerializer(serializers.ModelSerializer):
             return obj.image.url
         return None
 
-
-class CouponSerializer(serializers.ModelSerializer):
-    shop_name = serializers.CharField(source='shop.name', read_only=True)
-
-    class Meta:
-        model = Coupon
-        fields = [
-            'id', 'shop', 'shop_name', 'title', 'description',
-            'discount_text', 'conditions',
-            'start_date', 'end_date', 'is_active', 'created_at',
-        ]
-
-
-class CouponUseLogSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CouponUseLog
-        fields = ['id', 'coupon', 'user', 'performance', 'used_at']
-        read_only_fields = ['id', 'user', 'used_at']
+    def get_listing_tier(self, obj):
+        if obj.is_featured or getattr(obj, '_has_featured_link', False):
+            return 'sponsored'
+        if getattr(obj, '_has_recognized_link', False):
+            return 'recognized'
+        return 'standard'

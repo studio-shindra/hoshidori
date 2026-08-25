@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.utils import timezone
 
 from .models import Like, Review, ViewingLog, ViewingLogImage
 
@@ -10,6 +11,9 @@ class ReviewSerializer(serializers.ModelSerializer):
     performance_str = serializers.StringRelatedField(source='performance', read_only=True)
     like_count = serializers.SerializerMethodField()
     is_liked = serializers.SerializerMethodField()
+    after_shop = serializers.SerializerMethodField()
+    after_shop_name = serializers.SerializerMethodField()
+    after_shop_slug = serializers.SerializerMethodField()
 
     class Meta:
         model = Review
@@ -17,6 +21,7 @@ class ReviewSerializer(serializers.ModelSerializer):
             'id', 'user', 'user_display_name', 'user_avatar_url',
             'performance', 'performance_str',
             'title', 'body', 'rating_overall', 'is_spoiler',
+            'after_shop', 'after_shop_name', 'after_shop_slug',
             'like_count', 'is_liked',
             'created_at', 'updated_at',
         ]
@@ -46,19 +51,31 @@ class ReviewSerializer(serializers.ModelSerializer):
             return obj._liked_by_user
         return obj.likes.filter(user=request.user).exists()
 
+    def get_after_shop(self, obj):
+        return getattr(obj, '_after_shop_id', None)
+
+    def get_after_shop_name(self, obj):
+        return getattr(obj, '_after_shop_name', None)
+
+    def get_after_shop_slug(self, obj):
+        return getattr(obj, '_after_shop_slug', None)
+
 
 class LatestReviewSerializer(serializers.ModelSerializer):
     user_display_name = serializers.SerializerMethodField()
     user_avatar_url = serializers.SerializerMethodField()
     work_title = serializers.CharField(source='performance.work.title', read_only=True)
     work_slug = serializers.CharField(source='performance.work.slug', read_only=True)
-    poster_url = serializers.SerializerMethodField()
+    theater_name = serializers.CharField(source='performance.theater.name', read_only=True)
+    after_shop_name = serializers.SerializerMethodField()
+    after_shop_slug = serializers.SerializerMethodField()
 
     class Meta:
         model = Review
         fields = [
             'id', 'user_display_name', 'user_avatar_url',
-            'work_title', 'work_slug', 'poster_url',
+            'work_title', 'work_slug', 'theater_name',
+            'after_shop_name', 'after_shop_slug',
             'title', 'body', 'rating_overall',
             'created_at',
         ]
@@ -69,22 +86,11 @@ class LatestReviewSerializer(serializers.ModelSerializer):
     def get_user_avatar_url(self, obj):
         return obj.user.avatar_url or None
 
-    def get_poster_url(self, obj):
-        posters = getattr(obj.performance.work, '_prefetched_selected_posters', None)
-        if posters is not None:
-            poster = posters[0] if posters else None
-        else:
-            poster = obj.performance.work.poster_submissions.filter(is_selected=True).first()
-        if not poster:
-            return None
-        if poster.image_url:
-            return poster.image_url
-        if poster.image:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(poster.image.url)
-            return poster.image.url
-        return None
+    def get_after_shop_name(self, obj):
+        return getattr(obj, '_after_shop_name', None)
+
+    def get_after_shop_slug(self, obj):
+        return getattr(obj, '_after_shop_slug', None)
 
 
 class ViewingLogImageSerializer(serializers.ModelSerializer):
@@ -100,7 +106,8 @@ class ViewingLogSerializer(serializers.ModelSerializer):
     work_slug = serializers.CharField(source='performance.work.slug', read_only=True)
     theater_name = serializers.CharField(source='performance.theater.name', read_only=True)
     theater_area = serializers.CharField(source='performance.theater.area_name', read_only=True)
-    poster_url = serializers.SerializerMethodField()
+    after_shop_name = serializers.CharField(source='after_shop.name', read_only=True)
+    after_shop_slug = serializers.CharField(source='after_shop.slug', read_only=True)
     rating = serializers.SerializerMethodField()
     images = ViewingLogImageSerializer(many=True, read_only=True)
 
@@ -109,27 +116,11 @@ class ViewingLogSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'user', 'performance',
             'work_title', 'work_slug', 'theater_name', 'theater_area',
-            'poster_url', 'status', 'watched_on', 'watched_time', 'memo',
+            'status', 'watched_on', 'watched_time', 'memo',
+            'after_shop', 'after_shop_name', 'after_shop_slug',
             'rating', 'images', 'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'user', 'created_at', 'updated_at']
-
-    def get_poster_url(self, obj):
-        posters = getattr(obj.performance.work, '_prefetched_selected_posters', None)
-        if posters is not None:
-            poster = posters[0] if posters else None
-        else:
-            poster = obj.performance.work.poster_submissions.filter(is_selected=True).first()
-        if not poster:
-            return None
-        if poster.image_url:
-            return poster.image_url
-        if poster.image:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(poster.image.url)
-            return poster.image.url
-        return None
 
     def get_rating(self, obj):
         if hasattr(obj, '_rating'):
@@ -147,6 +138,10 @@ class ViewingLogSerializer(serializers.ModelSerializer):
         if log_status == 'watched' and not watched_on:
             raise serializers.ValidationError(
                 {'watched_on': 'status が watched の場合、watched_on は必須です。'}
+            )
+        if log_status == 'watched' and watched_on and watched_on > timezone.localdate():
+            raise serializers.ValidationError(
+                {'watched_on': '観劇日は今日以前の日付を選んでください。'}
             )
         return data
 

@@ -35,18 +35,30 @@ class Command(BaseCommand):
                             'nearest_station': row.get('nearest_station', '').strip(),
                             'description': row.get('description', '').strip(),
                             'website_url': row.get('website_url', '').strip(),
+                            'source_url': row.get('source_url', '').strip(),
+                            'prefecture': row.get('prefecture', '').strip(),
+                            'city': row.get('city', '').strip(),
+                            'google_place_id': row.get('google_place_id', '').strip() or None,
+                            'is_approved': row.get('is_approved', 'true').strip().lower() in ('true', '1', 'yes'),
                             'is_active': row.get('is_active', 'true').strip().lower() in ('true', '1', 'yes'),
                         }
 
                         if dry_run:
                             self.stdout.write(f'[DRY-RUN] 行{i}: {defaults["name"]} ({slug})')
                         else:
-                            _, is_created = Theater.objects.update_or_create(
-                                slug=slug, defaults=defaults
-                            )
-                            if is_created:
+                            theater = Theater.objects.filter(slug=slug).first()
+                            if theater is None:
+                                theater = Theater.objects.filter(name__iexact=defaults['name']).first()
+
+                            if theater is None:
+                                Theater.objects.create(slug=slug, **defaults)
                                 created += 1
                             else:
+                                # 既存のサンプルや人手で補った説明を、空欄で消さない。
+                                for field, value in defaults.items():
+                                    if value not in ('', None):
+                                        setattr(theater, field, value)
+                                theater.save()
                                 updated += 1
                     except Exception as e:
                         errors += 1

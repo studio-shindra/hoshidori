@@ -54,6 +54,7 @@ class Command(BaseCommand):
                             'phone_number': row.get('phone_number', '').strip(),
                             'opening_hours_text': row.get('opening_hours_text', '').strip(),
                             'benefit_text': row.get('benefit_text', '').strip(),
+                            'image_url': row.get('image_url', '').strip(),
                             'is_active': row.get('is_active', 'true').strip().lower() in ('true', '1', 'yes'),
                         }
                         if owner:

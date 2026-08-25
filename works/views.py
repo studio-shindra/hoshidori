@@ -1,17 +1,17 @@
-from django.db.models import Prefetch, Subquery, OuterRef
+from django.db.models import Prefetch
 
 from rest_framework.decorators import action
 from rest_framework.mixins import DestroyModelMixin
-from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
 from accounts.permissions import IsOwnerOrReadOnly
-from .models import Performance, PerformanceCast, Person, PosterSubmission, Work
+from .models import Performance, PerformanceCast, Person, Work, WorkEditProposal
 from .serializers import (
     PerformanceCastSerializer, PerformanceSerializer, PersonSerializer,
-    PosterSubmissionSerializer, WorkSerializer,
+    WorkEditProposalSerializer, WorkSerializer,
 )
 
 
@@ -19,17 +19,10 @@ class WorkViewSet(ModelViewSet):
     queryset = Work.objects.all()
     serializer_class = WorkSerializer
     lookup_field = 'slug'
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
 
     def get_queryset(self):
         qs = super().get_queryset().prefetch_related(
-            Prefetch(
-                'poster_submissions',
-                queryset=PosterSubmission.objects.filter(
-                    is_selected=True,
-                ).select_related('user'),
-                to_attr='_prefetched_selected_posters',
-            ),
             Prefetch(
                 'performances',
                 queryset=Performance.objects.select_related('theater').order_by('-start_date'),
@@ -47,38 +40,24 @@ class WorkViewSet(ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
 
-    @action(detail=True, methods=['get', 'post'], url_path='posters',
-            parser_classes=[JSONParser, MultiPartParser, FormParser])
-    def posters(self, request, slug=None):
+    @action(detail=True, methods=['post'], url_path='propose-edit',
+            permission_classes=[IsAuthenticated])
+    def propose_edit(self, request, slug=None):
         work = self.get_object()
-        if request.method == 'GET':
-            posters = PosterSubmission.objects.filter(work=work).select_related('user')
-            serializer = PosterSubmissionSerializer(posters, many=True, context={'request': request})
-            return Response(serializer.data)
-        serializer = PosterSubmissionSerializer(data=request.data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        serializer.save(work=work, user=request.user, is_selected=True)
-        return Response(serializer.data, status=201)
-
-    @action(detail=False, methods=['get'], url_path='my-posters',
-            permission_classes=[IsAuthenticated])
-    def my_posters(self, request):
-        posters = PosterSubmission.objects.filter(
-            user=request.user,
-        ).select_related('work', 'user').order_by('-created_at')
-        serializer = PosterSubmissionSerializer(posters, many=True, context={'request': request})
-        return Response(serializer.data)
-
-    @action(detail=False, methods=['delete'], url_path='my-posters/(?P<poster_id>[0-9]+)',
-            permission_classes=[IsAuthenticated])
-    def delete_my_poster(self, request, poster_id=None):
-        try:
-            poster = PosterSubmission.objects.get(id=poster_id, user=request.user)
-        except PosterSubmission.DoesNotExist:
-            return Response(status=404)
-        poster.delete()
-        return Response(status=204)
-
+        submitted = {
+            key: request.data[key]
+            for key in ('title', 'description')
+            if key in request.data
+        }
+        if not submitted:
+            return Response({'detail': '変更内容を入力してください。'}, status=status.HTTP_400_BAD_REQUEST)
+        validator = WorkSerializer(work, data=submitted, partial=True)
+        validator.is_valid(raise_exception=True)
+        changes = dict(validator.validated_data)
+        proposal = WorkEditProposal.objects.create(
+            work=work, proposed_by=request.user, changes=changes,
+        )
+        return Response(WorkEditProposalSerializer(proposal).data, status=status.HTTP_201_CREATED)
 
 class PerformanceViewSet(ModelViewSet):
     queryset = Performance.objects.select_related('work', 'theater').prefetch_related('casts__person')
@@ -94,6 +73,35 @@ class PerformanceViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
+
+    @action(detail=True, methods=['post'], url_path='propose-edit',
+            permission_classes=[IsAuthenticated])
+    def propose_edit(self, request, pk=None):
+        performance = self.get_object()
+        submitted = {
+            key: request.data[key]
+            for key in ('theater', 'company_name', 'start_date', 'end_date', 'note')
+            if key in request.data
+        }
+        if not submitted:
+            return Response({'detail': '変更内容を入力してください。'}, status=status.HTTP_400_BAD_REQUEST)
+        validator = PerformanceSerializer(performance, data=submitted, partial=True)
+        validator.is_valid(raise_exception=True)
+        changes = {}
+        for key, value in validator.validated_data.items():
+            if key == 'theater':
+                changes[key] = value.pk
+            elif hasattr(value, 'isoformat'):
+                changes[key] = value.isoformat()
+            else:
+                changes[key] = value
+        proposal = WorkEditProposal.objects.create(
+            work=performance.work,
+            performance=performance,
+            proposed_by=request.user,
+            changes=changes,
+        )
+        return Response(WorkEditProposalSerializer(proposal).data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['post'], url_path='add_cast',
             permission_classes=[IsAuthenticatedOrReadOnly])

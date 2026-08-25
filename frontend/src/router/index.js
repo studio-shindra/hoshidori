@@ -37,21 +37,14 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
-      path: '/works/:slug/poster',
-      name: 'poster-upload',
-      component: () => import('../views/PosterUploadView.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
       path: '/performances/new',
       name: 'performance-create',
-      component: () => import('../views/PerformanceCreateView.vue'),
-      meta: { requiresAuth: true },
+      redirect: { name: 'works' },
     },
     {
       path: '/logs',
       name: 'logs',
-      component: () => import('../views/ViewingLogsListView.vue'),
+      redirect: { name: 'mypage' },
       meta: { requiresAuth: true },
     },
     {
@@ -86,12 +79,7 @@ const router = createRouter({
       path: '/dashboard',
       name: 'dashboard',
       component: () => import('../views/DashboardView.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/mock',
-      name: 'mock',
-      component: () => import('../views/MockView.vue'),
+      meta: { requiresAuth: true, requiresShop: true },
     },
     {
       path: '/terms',
@@ -113,13 +101,18 @@ const router = createRouter({
       name: 'contact',
       component: () => import('../views/ContactView.vue'),
     },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: () => import('../views/NotFoundView.vue'),
+    },
   ],
 })
 
 let authReady = false
 
 router.beforeEach(async (to) => {
-  if (to.meta.requiresAuth) {
+  if (to.meta.requiresAuth || to.meta.requiresShop) {
     const auth = useAuthStore()
     if (!authReady) {
       await auth.fetchMe()
@@ -127,6 +120,9 @@ router.beforeEach(async (to) => {
     }
     if (!auth.isAuthenticated) {
       return { name: 'login', query: { next: to.fullPath } }
+    }
+    if (to.meta.requiresShop && !auth.isShopUser) {
+      return { name: 'mypage' }
     }
   }
 })

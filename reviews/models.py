@@ -49,6 +49,10 @@ class ViewingLog(models.Model):
     watched_on = models.DateField(null=True, blank=True)
     watched_time = models.TimeField(null=True, blank=True)
     memo = models.TextField(blank=True, default='')
+    after_shop = models.ForeignKey(
+        'shops.Shop', on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='after_viewing_logs',
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
