@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { api } from '@/lib/api'
 import { cloudinaryUrl, IMG_HERO } from '@/lib/cloudinary'
-import { IconMapPin, IconArrowLeft, IconTheater, IconExternalLink } from '@tabler/icons-vue'
+import { IconMapPin, IconTheater, IconExternalLink } from '@tabler/icons-vue'
 import ShopCard from '@/components/ShopCard.vue'
 
 const route = useRoute()
@@ -63,9 +63,6 @@ onMounted(async () => {
             <span>HOSHIDORI THEATER</span>
           </div>
         </div>
-        <button class="btn btn-dark btn-sm position-absolute top-0 start-0 m-3 rounded-circle back-btn" aria-label="戻る" @click="router.back()">
-          <IconArrowLeft :size="16" />
-        </button>
         <div v-if="usesGooglePhoto" class="google-photo-credit">
           <a :href="theaterPlace.photo_google_maps_uri || theaterPlace.google_maps_uri" target="_blank" rel="noopener noreferrer">Google Maps</a>
           <template v-for="author in theaterPlace.author_attributions" :key="author.display_name">
@@ -138,15 +135,20 @@ onMounted(async () => {
   overflow: hidden;
 }
 .theater-hero-shell {
-  margin-top: calc(-1rem - var(--header-height) - env(safe-area-inset-top));
+  margin-top: calc(-1rem - 16px - env(safe-area-inset-top));
 }
 .theater-hero-shell::before {
   content: '';
   position: absolute;
   z-index: 1;
   inset: 0 0 auto;
-  height: calc(88px + env(safe-area-inset-top));
-  background: linear-gradient(to bottom, #0a0a0b 30%, transparent 100%);
+  height: calc(130px + env(safe-area-inset-top));
+  background: linear-gradient(
+    to bottom,
+    #0a0a0b 0%,
+    rgba(10, 10, 11, .76) 44%,
+    transparent 100%
+  );
   pointer-events: none;
 }
 .theater-hero img { object-position: center 54%; }
@@ -188,13 +190,4 @@ onMounted(async () => {
 .venue-owner-card h2 { margin: 0 0 .25rem; font-size: .78rem; font-weight: 800; }
 .venue-owner-card p { margin: 0; color: #71717a; font-size: .65rem; line-height: 1.55; }
 .venue-owner-card a { flex-shrink: 0; color: #fda4af; font-size: .68rem; font-weight: 700; text-decoration: none; }
-.back-btn {
-  z-index: 2;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.8;
-}
 </style>
