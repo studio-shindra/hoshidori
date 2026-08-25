@@ -14,6 +14,7 @@ class Shop(models.Model):
     instagram_url = models.URLField(blank=True, default='')
     tabelog_url = models.URLField(blank=True, default='')
     google_map_url = models.URLField(blank=True, default='')
+    google_place_id = models.CharField(max_length=255, blank=True, default='', db_index=True)
     phone_number = models.CharField(max_length=50, blank=True, default='')
     opening_hours_text = models.TextField(blank=True, default='')
     benefit_text = models.TextField(blank=True, default='')

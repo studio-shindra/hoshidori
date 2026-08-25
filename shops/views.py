@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from .models import Shop, ShopClickLog, ShopWantToGo, TheaterShop
+from .google_places import attach_google_place_data
 from .serializers import ShopSerializer
 
 
@@ -14,6 +15,19 @@ class ShopViewSet(ReadOnlyModelViewSet):
     serializer_class = ShopSerializer
     lookup_field = 'slug'
     permission_classes = [AllowAny]
+
+    def get_serializer(self, *args, **kwargs):
+        """Hydrate transient Google photos before serializing visible shops."""
+        instance = args[0] if args else kwargs.get('instance')
+        if instance is not None and 'data' not in kwargs:
+            many = kwargs.get('many', False)
+            hydrated = attach_google_place_data(instance if many else [instance])
+            instance = hydrated if many else hydrated[0]
+            if args:
+                args = (instance, *args[1:])
+            else:
+                kwargs['instance'] = instance
+        return super().get_serializer(*args, **kwargs)
 
     def get_queryset(self):
         qs = super().get_queryset()

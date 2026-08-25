@@ -1,5 +1,11 @@
+import json
+from io import BytesIO
+from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.test import TestCase
+from django.test import override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
 
@@ -8,6 +14,8 @@ from theaters.models import Theater
 from works.models import Performance, Work
 
 from .models import Shop, TheaterShop
+from .google_places import search_shop_place
+from .serializers import ShopSerializer
 
 
 class ShopDashboardTests(TestCase):
@@ -92,3 +100,73 @@ class RecognizedShopTests(TestCase):
             [shop['listing_tier'] for shop in shops],
             ['sponsored', 'recognized', 'standard'],
         )
+
+
+@override_settings(GOOGLE_PLACES_API_KEY='test-key')
+class ShopGooglePlacesTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.shop = Shop.objects.create(
+            name='燗味処',
+            slug='kanmidokoro',
+            address='東京都世田谷区北沢2-32-8',
+        )
+
+    @patch('shops.google_places.urlopen')
+    def test_searches_by_name_and_address_and_returns_photo_attribution(self, mocked_urlopen):
+        mocked_urlopen.side_effect = [
+            BytesIO(json.dumps({
+                'places': [{
+                    'id': 'google-shop-1',
+                    'displayName': {'text': '燗味処'},
+                    'formattedAddress': self.shop.address,
+                    'googleMapsUri': 'https://maps.google.com/shop/1',
+                    'photos': [{
+                        'name': 'places/google-shop-1/photos/photo-1',
+                        'googleMapsUri': 'https://maps.google.com/photo/1',
+                        'authorAttributions': [{
+                            'displayName': '撮影者',
+                            'uri': 'https://maps.google.com/contributor/1',
+                        }],
+                    }],
+                }],
+            }).encode()),
+            BytesIO(json.dumps({
+                'photoUri': 'https://lh3.googleusercontent.com/shop-photo',
+            }).encode()),
+        ]
+
+        result = search_shop_place(self.shop)
+
+        self.assertEqual(result['place_id'], 'google-shop-1')
+        self.assertEqual(result['photo_uri'], 'https://lh3.googleusercontent.com/shop-photo')
+        self.assertEqual(result['author_attributions'][0]['display_name'], '撮影者')
+        search_request = mocked_urlopen.call_args_list[0].args[0]
+        self.assertIn('燗味処', json.loads(search_request.data)['textQuery'])
+        self.assertIn('places.photos', search_request.headers['X-goog-fieldmask'])
+
+    def test_serializer_prefers_owned_image_over_google_photo(self):
+        self.shop.image_url = 'https://example.com/owned.jpg'
+        self.shop._google_place_data = {
+            'photo_uri': 'https://example.com/google.jpg',
+            'author_attributions': [{'display_name': '撮影者'}],
+        }
+
+        data = ShopSerializer(self.shop).data
+
+        self.assertEqual(data['image_src'], 'https://example.com/owned.jpg')
+        self.assertEqual(data['image_source'], 'owned')
+
+    def test_serializer_uses_google_photo_when_owned_image_is_missing(self):
+        self.shop._google_place_data = {
+            'photo_uri': 'https://example.com/google.jpg',
+            'photo_google_maps_uri': 'https://maps.google.com/photo/1',
+            'author_attributions': [{'display_name': '撮影者'}],
+        }
+
+        data = ShopSerializer(self.shop).data
+
+        self.assertEqual(data['image_src'], 'https://example.com/google.jpg')
+        self.assertEqual(data['image_source'], 'google_places')
+        self.assertEqual(data['google_photo_maps_uri'], 'https://maps.google.com/photo/1')
+        self.assertEqual(data['google_photo_attributions'][0]['display_name'], '撮影者')

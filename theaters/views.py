@@ -9,6 +9,7 @@ from rest_framework import status
 from rest_framework.viewsets import ModelViewSet
 
 from shops.models import TheaterShop
+from shops.google_places import attach_google_place_data
 from shops.serializers import ShopSerializer
 from .google_places import (
     preview_food_places, search_food_places, search_theater_candidates,
@@ -122,6 +123,7 @@ class TheaterViewSet(ModelViewSet):
         ).select_related('shop').order_by('-is_featured', 'sort_order')
         theater_shops = list(theater_shops)
         shops = [ts.shop for ts in theater_shops]
+        attach_google_place_data(shops)
         serializer = ShopSerializer(shops, many=True, context={'request': request})
         manual_results = [
             {

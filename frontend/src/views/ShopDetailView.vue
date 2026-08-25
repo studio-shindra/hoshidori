@@ -55,6 +55,12 @@ onMounted(async () => {
           <component :is="categoryIcon" :size="48" class="text-secondary" />
         </div>
         <div class="shop-hero-fade"></div>
+        <div v-if="shop.image_source === 'google_places'" class="google-photo-credit">
+          <a :href="shop.google_photo_maps_uri || shop.google_map_url" target="_blank" rel="noopener noreferrer">Google Maps</a>
+          <template v-for="author in shop.google_photo_attributions" :key="author.display_name">
+            <span> · </span><a :href="author.uri || shop.google_photo_maps_uri || shop.google_map_url" target="_blank" rel="noopener noreferrer">{{ author.display_name }}</a>
+          </template>
+        </div>
         <button class="btn btn-dark btn-sm position-absolute top-0 start-0 m-3 rounded-circle back-btn" aria-label="戻る" @click="router.back()">
           <IconArrowLeft :size="16" />
         </button>
@@ -128,6 +134,22 @@ onMounted(async () => {
   height: 6rem;
   background: linear-gradient(transparent, #0a0a0b 70%);
 }
+.google-photo-credit {
+  position: absolute;
+  right: 10px;
+  bottom: 26px;
+  z-index: 2;
+  max-width: calc(100% - 20px);
+  padding: 3px 6px;
+  overflow: hidden;
+  border-radius: 5px;
+  color: #d4d4d8;
+  background: rgba(0,0,0,.62);
+  font: 500 .56rem/1.3 Roboto, sans-serif;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.google-photo-credit a { color: #fff; text-decoration: none; }
 .back-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; opacity: .82; }
 .sns-circle {
   width: 32px;

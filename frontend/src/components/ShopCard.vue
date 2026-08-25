@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { IconExternalLink, IconMapPin, IconSparkles, IconHeart, IconHeartFilled } from '@tabler/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { api } from '@/lib/api'
@@ -46,15 +46,20 @@ async function toggleWantToGo(e) {
     toggling.value = false
   }
 }
+
+function openManualShop() {
+  if (!isGooglePlace.value) router.push(`/shops/${props.shop.slug}`)
+}
 </script>
 
 <template>
   <component
-    :is="isGooglePlace ? 'a' : RouterLink"
-    :to="isGooglePlace ? undefined : `/shops/${shop.slug}`"
+    :is="isGooglePlace ? 'a' : 'div'"
     :href="isGooglePlace ? shop.google_map_url : undefined"
     :target="isGooglePlace ? '_blank' : undefined"
     :rel="isGooglePlace ? 'noopener noreferrer' : undefined"
+    :role="isGooglePlace ? undefined : 'link'"
+    :tabindex="isGooglePlace ? undefined : 0"
     class="shop-card text-decoration-none d-block rounded-3 overflow-hidden"
     :class="{
       'shop-card-sponsored': shop.listing_tier === 'sponsored',
@@ -62,6 +67,8 @@ async function toggleWantToGo(e) {
       'shop-card-google': isGooglePlace,
       'shop-card-text-only': !isGooglePlace && !shop.image_src,
     }"
+    @click="openManualShop"
+    @keydown.enter="openManualShop"
   >
     <template v-if="isGooglePlace">
       <div class="google-place-row">
@@ -85,6 +92,23 @@ async function toggleWantToGo(e) {
         <div v-if="shop.category || shop.listing_tier === 'sponsored'" class="shop-labels position-absolute bottom-0 start-0 m-2">
           <span v-if="shop.category" class="shop-tag">{{ shop.category }}</span>
           <span v-if="shop.listing_tier === 'sponsored'" class="shop-recommend-tag">ホシドリおすすめ店</span>
+        </div>
+        <div v-if="shop.image_source === 'google_places'" class="google-photo-credit" @click.stop>
+          <a
+            :href="shop.google_photo_maps_uri || shop.google_map_url"
+            target="_blank"
+            rel="noopener noreferrer"
+            @click.stop
+          >Google Maps</a>
+          <template v-for="author in shop.google_photo_attributions" :key="author.display_name">
+            <span> · </span>
+            <a
+              :href="author.uri || shop.google_photo_maps_uri || shop.google_map_url"
+              target="_blank"
+              rel="noopener noreferrer"
+              @click.stop
+            >{{ author.display_name }}</a>
+          </template>
         </div>
         <!-- ハートボタン -->
         <button class="want-to-go-btn position-absolute" :aria-label="wantToGo ? `${shop.name}の行きたいを取り消す` : `${shop.name}を行きたいに追加`" @click="toggleWantToGo">
@@ -136,8 +160,25 @@ async function toggleWantToGo(e) {
   flex-direction: column;
   height: 100%;
   transition: opacity 0.15s;
+  cursor: pointer;
   &:hover { opacity: 0.85; }
 }
+.google-photo-credit {
+  position: absolute;
+  right: 7px;
+  bottom: 7px;
+  z-index: 2;
+  max-width: calc(100% - 14px);
+  padding: 3px 6px;
+  overflow: hidden;
+  border-radius: 5px;
+  color: #d4d4d8;
+  background: rgba(0,0,0,.66);
+  font: 500 .52rem/1.3 Roboto, sans-serif;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.google-photo-credit a { color: #fff; text-decoration: none; }
 .shop-card-sponsored {
   background: #1c1917;
   border: 0;

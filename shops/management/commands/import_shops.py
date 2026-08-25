@@ -57,6 +57,9 @@ class Command(BaseCommand):
                             'image_url': row.get('image_url', '').strip(),
                             'is_active': row.get('is_active', 'true').strip().lower() in ('true', '1', 'yes'),
                         }
+                        google_place_id = row.get('google_place_id', '').strip()
+                        if google_place_id:
+                            defaults['google_place_id'] = google_place_id
                         if owner:
                             defaults['owner'] = owner
 
