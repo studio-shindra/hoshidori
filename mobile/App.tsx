@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import {
   ActivityIndicator,
+  Image,
   Linking,
   Platform,
   Pressable,
@@ -73,6 +74,10 @@ export default function App() {
           startInLoadingState
           renderLoading={() => (
             <View style={styles.loading}>
+              <Image
+                source={require('./assets/splash-hoshidori.png')}
+                style={styles.loadingLogo}
+              />
               <ActivityIndicator color="#f43f5e" />
             </View>
           )}
@@ -104,6 +109,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#09090b',
+  },
+  loadingLogo: {
+    width: 96,
+    height: 96,
+    marginBottom: 18,
   },
   error: {
     flex: 1,

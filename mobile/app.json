@@ -20,7 +20,7 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#09090b",
-          "image": "./assets/splash.png",
+          "image": "./assets/splash-hoshidori.png",
           "imageWidth": 96
         }
       ]
