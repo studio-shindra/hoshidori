@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
-from .models import Shop
+from theaters.models import Theater
+from .models import Shop, TheaterShop
 
 
 class ShopSerializer(serializers.ModelSerializer):
@@ -71,3 +72,108 @@ class ShopSerializer(serializers.ModelSerializer):
         if getattr(obj, '_has_listed_link', False):
             return 'listed'
         return 'standard'
+
+
+class ShopOwnerSerializer(serializers.ModelSerializer):
+    application_status = serializers.SerializerMethodField()
+    theaters = serializers.SerializerMethodField()
+    theater_ids = serializers.PrimaryKeyRelatedField(
+        many=True,
+        write_only=True,
+        required=False,
+        queryset=Theater.objects.filter(is_active=True, is_approved=True),
+    )
+
+    class Meta:
+        model = Shop
+        fields = [
+            'id', 'name', 'slug', 'category', 'description', 'address',
+            'nearest_station', 'distance_note', 'website_url', 'instagram_url',
+            'tabelog_url', 'google_map_url', 'google_place_id', 'phone_number',
+            'opening_hours_text', 'benefit_text', 'image_url',
+            'theaters', 'theater_ids',
+            'is_active', 'is_featured', 'application_status', 'created_at', 'updated_at',
+        ]
+        read_only_fields = [
+            'id', 'slug', 'is_active', 'is_featured', 'application_status',
+            'created_at', 'updated_at',
+        ]
+
+    def get_application_status(self, obj):
+        if not obj.is_active:
+            return 'pending'
+        if obj.is_featured:
+            return 'recommended'
+        return 'listed'
+
+    def get_theaters(self, obj):
+        return [
+            {'id': link.theater_id, 'name': link.theater.name, 'slug': link.theater.slug}
+            for link in obj.theater_shops.select_related('theater').all()
+        ]
+
+    def update(self, instance, validated_data):
+        theaters = validated_data.pop('theater_ids', None)
+        instance = super().update(instance, validated_data)
+        if theaters is not None:
+            instance.theater_shops.exclude(theater__in=theaters).delete()
+            for theater in theaters:
+                TheaterShop.objects.get_or_create(theater=theater, shop=instance)
+        return instance
+
+
+class ShopApplicationSerializer(serializers.ModelSerializer):
+    theater_ids = serializers.PrimaryKeyRelatedField(
+        many=True,
+        write_only=True,
+        required=False,
+        queryset=Theater.objects.filter(is_active=True, is_approved=True),
+    )
+
+    class Meta:
+        model = Shop
+        fields = [
+            'name', 'category', 'description', 'address', 'nearest_station',
+            'website_url', 'instagram_url', 'google_map_url', 'google_place_id',
+            'phone_number', 'opening_hours_text', 'benefit_text',
+            'theater_ids',
+        ]
+        extra_kwargs = {
+            'address': {'required': True, 'allow_blank': False},
+        }
+
+    def validate(self, attrs):
+        request = self.context['request']
+        if Shop.objects.filter(owner=request.user).exists():
+            raise serializers.ValidationError('このアカウントでは既に店舗を申請しています。')
+        place_id = attrs.get('google_place_id', '')
+        if place_id and Shop.objects.filter(google_place_id=place_id).exists():
+            raise serializers.ValidationError('この店舗は既に登録されています。')
+        return attrs
+
+    def create(self, validated_data):
+        from uuid import uuid4
+
+        from django.utils.text import slugify
+
+        request = self.context['request']
+        theaters = validated_data.pop('theater_ids', [])
+        base_slug = slugify(validated_data['name'], allow_unicode=False) or 'shop'
+        slug = base_slug
+        while Shop.objects.filter(slug=slug).exists():
+            slug = f'{base_slug}-{uuid4().hex[:8]}'
+        shop = Shop.objects.create(
+            **validated_data,
+            slug=slug,
+            owner=request.user,
+            is_active=False,
+            is_featured=False,
+        )
+        TheaterShop.objects.bulk_create([
+            TheaterShop(theater=theater, shop=shop)
+            for theater in theaters
+        ])
+        if request.user.role != 'admin':
+            request.user.role = 'shop'
+            request.user.save(update_fields=['role'])
+        return shop

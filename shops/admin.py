@@ -8,11 +8,30 @@ from .models import (
 
 @admin.register(Shop)
 class ShopAdmin(admin.ModelAdmin):
-    list_display = ['name', 'category', 'nearest_station', 'is_active', 'is_featured', 'featured_order', 'created_at']
+    list_display = ['name', 'owner', 'category', 'application_status', 'is_active', 'is_featured', 'featured_order', 'created_at']
     list_filter = ['is_active', 'category', 'is_featured']
     list_editable = ['is_featured', 'featured_order']
-    search_fields = ['name', 'address', 'google_place_id']
+    search_fields = ['name', 'address', 'google_place_id', 'owner__username', 'owner__email']
     prepopulated_fields = {'slug': ('name',)}
+    actions = ['approve_free_listing', 'mark_recommended', 'remove_recommended']
+
+    @admin.display(description='状態')
+    def application_status(self, obj):
+        if not obj.is_active:
+            return '申請中'
+        return 'おすすめ店' if obj.is_featured else '無料掲載'
+
+    @admin.action(description='選択した申請を無料掲載として承認')
+    def approve_free_listing(self, request, queryset):
+        queryset.update(is_active=True, is_featured=False)
+
+    @admin.action(description='選択した店舗をおすすめ店にする')
+    def mark_recommended(self, request, queryset):
+        queryset.update(is_active=True, is_featured=True)
+
+    @admin.action(description='選択した店舗を無料掲載に戻す')
+    def remove_recommended(self, request, queryset):
+        queryset.update(is_featured=False)
 
 
 @admin.register(TheaterShop)

@@ -13,8 +13,18 @@ import {
 import { StatusBar } from 'expo-status-bar'
 import { WebView } from 'react-native-webview'
 
-const HOSHIDORI_URL = 'https://hoshidori.netlify.app'
+declare const process: { env: Record<string, string | undefined> }
+
+const HOSHIDORI_URL = process.env.EXPO_PUBLIC_HOSHIDORI_URL || 'https://hoshidori.netlify.app'
+const configuredHost = (() => {
+  try {
+    return new URL(HOSHIDORI_URL).hostname
+  } catch {
+    return 'hoshidori.netlify.app'
+  }
+})()
 const HOSHIDORI_HOSTS = new Set([
+  configuredHost,
   'hoshidori.netlify.app',
   'hoshidori-67b44bed2d10.herokuapp.com',
 ])

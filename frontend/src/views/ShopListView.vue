@@ -68,6 +68,11 @@ onMounted(async () => {
       店を探す
     </h1>
 
+    <RouterLink to="/shops/for-business" class="business-link mb-4">
+      <span><strong>店舗関係者の方へ</strong><small>無料掲載を申請できます</small></span>
+      <span aria-hidden="true">→</span>
+    </RouterLink>
+
     <!-- Search bar -->
     <form class="d-flex gap-2 mb-3" @submit.prevent="onSubmit">
       <input
@@ -117,3 +122,10 @@ onMounted(async () => {
     </template>
   </div>
 </template>
+
+<style scoped>
+.business-link { min-height: 58px; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; border: 1px solid rgba(255,255,255,.09); border-radius: 12px; color: #e4e4e7; background: #18181b; text-decoration: none; }
+.business-link span:first-child { display: flex; flex-direction: column; gap: 2px; }
+.business-link small { color: #71717a; font-size: .65rem; }
+.business-link:hover { color: #fff; background: #202023; }
+</style>

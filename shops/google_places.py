@@ -19,6 +19,13 @@ SHOP_FIELD_MASK = ','.join([
     'photos',
 ])
 SHOP_SEARCH_FIELD_MASK = ','.join(f'places.{field}' for field in SHOP_FIELD_MASK.split(','))
+SHOP_CANDIDATE_FIELD_MASK = ','.join([
+    'places.id',
+    'places.displayName',
+    'places.formattedAddress',
+    'places.primaryTypeDisplayName',
+    'places.googleMapsUri',
+])
 
 
 def _cache_key(shop):
@@ -117,6 +124,53 @@ def search_shop_place(shop):
     result = _photo_result(place, api_key) if place else None
     cache.set(cache_key, result, 900)
     return result
+
+
+def search_shop_candidates(query, limit=6):
+    """Return live Google candidates for a merchant-entered shop name."""
+    api_key = settings.GOOGLE_PLACES_API_KEY
+    query = (query or '').strip()
+    if not api_key or len(query) < 2:
+        return []
+
+    digest = hashlib.sha1(f'{query}:{api_key}:{limit}'.encode('utf-8')).hexdigest()
+    cache_key = f'google-places:shop-candidates:{digest}'
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    payload = json.dumps({
+        'textQuery': query,
+        'languageCode': 'ja',
+        'regionCode': 'JP',
+        'maxResultCount': limit,
+    }).encode('utf-8')
+    data = _request_json(Request(
+        PLACES_TEXT_SEARCH_URL,
+        data=payload,
+        method='POST',
+        headers={
+            'Content-Type': 'application/json',
+            'X-Goog-Api-Key': api_key,
+            'X-Goog-FieldMask': SHOP_CANDIDATE_FIELD_MASK,
+        },
+    )) or {}
+
+    results = []
+    for place in data.get('places', []):
+        place_id = place.get('id', '').strip()
+        name = place.get('displayName', {}).get('text', '').strip()
+        if not place_id or not name:
+            continue
+        results.append({
+            'place_id': place_id,
+            'name': name,
+            'address': place.get('formattedAddress', '').strip(),
+            'category': place.get('primaryTypeDisplayName', {}).get('text', '').strip(),
+            'google_map_url': place.get('googleMapsUri', ''),
+        })
+    cache.set(cache_key, results, 300)
+    return results
 
 
 def attach_google_place_data(shops):

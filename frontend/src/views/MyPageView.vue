@@ -283,8 +283,8 @@ async function logout() {
       <section class="more-section mt-5 mb-4">
         <h2 class="tiny text-secondary fw-bold mb-2 px-1">その他</h2>
         <div class="more-list">
-          <RouterLink v-if="auth.isShopUser" to="/dashboard" class="more-row">
-            <span class="d-flex align-items-center gap-2"><IconBuildingStore :size="17" />店舗向け送客レポート</span>
+          <RouterLink :to="auth.isShopUser ? '/dashboard' : '/shops/for-business'" class="more-row">
+            <span class="d-flex align-items-center gap-2"><IconBuildingStore :size="17" />{{ auth.isShopUser ? '店舗ダッシュボード' : '店舗掲載について' }}</span>
             <IconChevronRight :size="16" />
           </RouterLink>
           <RouterLink to="/theaters" class="more-row">

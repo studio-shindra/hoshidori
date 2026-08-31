@@ -43,6 +43,7 @@ onBeforeUnmount(() => {
 })
 
 const isAuthRoute = computed(() => ['login', 'register'].includes(route.name))
+const isStandaloneRoute = computed(() => isAuthRoute.value || route.meta.merchantPage)
 
 // Pull to Refresh
 const pullStart = ref(0)
@@ -85,7 +86,7 @@ async function onTouchEnd() {
       </div>
     </header>
 
-    <main class="container pt-3 pb-5" :class="{ 'main-no-footer': isAuthRoute }" @touchstart="onTouchStart" @touchmove="onTouchMove" @touchend="onTouchEnd">
+    <main class="container pt-3 pb-5" :class="{ 'main-no-footer': isStandaloneRoute, 'merchant-main': route.meta.merchantPage }" @touchstart="onTouchStart" @touchmove="onTouchMove" @touchend="onTouchEnd">
       <div v-if="pullDistance > 0" class="pull-indicator" :style="{ height: pullDistance + 'px' }">
         <div class="pull-spinner" :class="{ active: pullDistance > 50 }" />
       </div>
@@ -97,7 +98,7 @@ async function onTouchEnd() {
     </main>
 
     <footer
-      v-if="!isAuthRoute"
+      v-if="!isStandaloneRoute"
       style="z-index: 99999;"
       class="position-fixed bottom-0 start-0 end-0 bg-cdark">
       <nav class="container d-flex align-items-center justify-content-around pt-3" style="padding-bottom: calc(0.5rem + env(safe-area-inset-bottom))">
@@ -163,6 +164,7 @@ main{
   .page-back-leave-active { transition: opacity .01s linear; }
 }
 .main-no-footer { margin-bottom: 0; }
+.merchant-main { max-width: 1120px; }
 
 /* Pull to Refresh */
 .pull-indicator {

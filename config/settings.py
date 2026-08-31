@@ -103,6 +103,12 @@ DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 # Google Places API (New). Empty by default; manual shops remain available.
 GOOGLE_PLACES_API_KEY = config('GOOGLE_PLACES_API_KEY', default='')
 
+# Merchant subscriptions. Empty values keep free listing flows available locally.
+STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY', default='')
+STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET', default='')
+STRIPE_SHOP_PRICE_ID = config('STRIPE_SHOP_PRICE_ID', default='')
+FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5173')
+
 # Auth
 AUTH_USER_MODEL = 'accounts.User'
 

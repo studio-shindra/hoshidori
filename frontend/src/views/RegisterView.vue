@@ -1,10 +1,11 @@
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 
 const username = ref('')
 const email = ref('')
@@ -28,7 +29,7 @@ async function submit() {
       password_confirm: passwordConfirm.value,
     })
     await auth.fetchMe()
-    router.push('/')
+    router.push(route.query.next || '/')
   } catch (e) {
     const d = e.data
     if (d) {
@@ -56,7 +57,7 @@ async function submit() {
       </button>
     </form>
     <p class="text-center mt-3 small text-secondary">
-      アカウントをお持ちの方は <RouterLink to="/login">ログイン</RouterLink>
+      アカウントをお持ちの方は <RouterLink :to="{ path: '/login', query: route.query.next ? { next: route.query.next } : {} }">ログイン</RouterLink>
     </p>
     <p class="tiny text-secondary text-center mt-4 mb-2">登録すると利用規約とプライバシーポリシーに同意したものとみなされます。</p>
     <nav class="auth-legal-links" aria-label="規約とお問い合わせ">

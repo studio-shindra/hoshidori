@@ -1,7 +1,7 @@
 <template>
   <div class="container py-4" style="max-width: 720px;">
     <h1 class="h3 mb-4">プライバシーポリシー</h1>
-    <p class="text-muted small mb-4">最終更新日: 2026年8月24日</p>
+    <p class="text-muted small mb-4">最終更新日: 2026年8月31日</p>
 
     <section class="mb-4">
       <h2 class="h5">1. はじめに</h2>
@@ -16,6 +16,8 @@
         <li><strong>投稿コンテンツ:</strong> 観劇記録、感想テキスト、コメント</li>
         <li><strong>投稿画像:</strong> 観劇記録にユーザーがアップロードした写真</li>
         <li><strong>観劇後の店舗記録:</strong> 観劇後に行った店舗と観劇記録との関連情報</li>
+        <li><strong>店舗掲載情報:</strong> 店舗名、所在地、連絡先、営業時間、店舗画像、店舗アカウント情報</li>
+        <li><strong>決済関連情報:</strong> 契約プラン、決済状況、Stripeが発行する顧客・契約識別子（カード番号は本サービスでは保持しません）</li>
         <li><strong>アクセスログ:</strong> IPアドレス、ブラウザ情報、アクセス日時、ページ閲覧履歴等</li>
       </ul>
     </section>
@@ -29,8 +31,10 @@
         <li>不正利用の防止・対応</li>
         <li>利用状況の分析・統計（個人を特定しない形での集計を含む）</li>
         <li>お問い合わせへの対応</li>
+        <li>店舗掲載申請の確認、有料掲載プランの提供および請求管理</li>
       </ul>
       <p class="small text-muted">劇場周辺の店舗検索にはGoogle Maps Platformを利用する場合があります。検索時には劇場名・所在地がGoogleへ送信されます。Googleによる情報の取扱いは、<a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Googleプライバシーポリシー</a>をご確認ください。</p>
+      <p class="small text-muted">有料掲載プランの決済にはStripeを利用します。決済に必要な情報はStripeへ送信され、Stripeのプライバシーポリシーに基づいて取り扱われます。</p>
     </section>
 
     <section class="mb-4">

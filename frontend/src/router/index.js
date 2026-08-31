@@ -59,6 +59,12 @@ const router = createRouter({
       component: () => import('../views/ShopListView.vue'),
     },
     {
+      path: '/shops/for-business',
+      name: 'shop-business',
+      component: () => import('../views/ShopBusinessView.vue'),
+      meta: { requiresAuth: true, merchantPage: true },
+    },
+    {
       path: '/shops/:slug',
       name: 'shop-detail',
       component: () => import('../views/ShopDetailView.vue'),
@@ -85,7 +91,7 @@ const router = createRouter({
       path: '/dashboard',
       name: 'dashboard',
       component: () => import('../views/DashboardView.vue'),
-      meta: { requiresAuth: true, requiresShop: true },
+      meta: { requiresAuth: true, requiresShop: true, merchantPage: true },
     },
     {
       path: '/terms',

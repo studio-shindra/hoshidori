@@ -15,6 +15,7 @@ const categories = [
   { value: 'report', label: '不適切なコンテンツの通報' },
   { value: 'bug', label: '不具合・バグ報告' },
   { value: 'theater', label: '劇場情報・公式写真の掲載' },
+  { value: 'shop', label: '店舗掲載・お支払いについて' },
   { value: 'other', label: 'その他' },
 ]
 

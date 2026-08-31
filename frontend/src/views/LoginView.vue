@@ -65,7 +65,7 @@ async function submit() {
       </button>
     </form>
     <p class="text-center mt-3 small text-secondary">
-      アカウントがない方は <RouterLink to="/register">新規登録</RouterLink>
+      アカウントがない方は <RouterLink :to="{ path: '/register', query: route.query.next ? { next: route.query.next } : {} }">新規登録</RouterLink>
     </p>
     <nav class="auth-legal-links" aria-label="規約とお問い合わせ">
       <RouterLink to="/terms">利用規約</RouterLink>
