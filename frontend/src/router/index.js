@@ -62,7 +62,7 @@ const router = createRouter({
       path: '/shops/for-business',
       name: 'shop-business',
       component: () => import('../views/ShopBusinessView.vue'),
-      meta: { requiresAuth: true, merchantPage: true },
+      meta: { merchantPage: true },
     },
     {
       path: '/shops/:slug',
@@ -112,6 +112,12 @@ const router = createRouter({
       path: '/contact',
       name: 'contact',
       component: () => import('../views/ContactView.vue'),
+    },
+    {
+      path: '/commerce',
+      name: 'commerce',
+      component: () => import('../views/CommerceView.vue'),
+      meta: { merchantPage: true },
     },
     {
       path: '/:pathMatch(.*)*',

@@ -222,7 +222,7 @@ function formatDate(dateString) {
               <ul><li>店を探すで優先表示</li><li>劇場周辺で優先表示</li><li>おすすめ店マーク</li></ul>
               <p class="renewal-note">毎月自動更新・いつでも解約可能です。解約後は現在の利用期間末で終了し、日割り返金はありません。</p>
               <button class="upgrade-button" :disabled="status === 'pending' || billingLoading" @click="openCheckout">{{ status === 'pending' ? '承認後に申込できます' : billingLoading ? '準備中...' : 'おすすめ店にする' }}</button>
-              <p class="terms-note">申し込みにより<RouterLink to="/terms">利用規約</RouterLink>に同意したものとみなされます。</p>
+              <p class="terms-note">申し込みにより<RouterLink to="/terms">利用規約</RouterLink>に同意したものとみなされます。<RouterLink to="/commerce">特定商取引法に基づく表記</RouterLink></p>
               <p v-if="!data.recommended_plan.stripe_ready" class="setup-note">現在は決済テスト前の表示です。</p>
             </template>
           </section>

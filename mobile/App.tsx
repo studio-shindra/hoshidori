@@ -28,6 +28,7 @@ const HOSHIDORI_HOSTS = new Set([
   'hoshidori.netlify.app',
   'hoshidori-67b44bed2d10.herokuapp.com',
 ])
+const MERCHANT_PATHS = ['/shops/for-business', '/dashboard']
 
 export default function App() {
   const webView = useRef<WebView>(null)
@@ -38,7 +39,13 @@ export default function App() {
     if (url === 'about:blank') return true
     try {
       const target = new URL(url)
-      if (HOSHIDORI_HOSTS.has(target.hostname)) return true
+      if (HOSHIDORI_HOSTS.has(target.hostname)) {
+        if (MERCHANT_PATHS.some((path) => target.pathname.startsWith(path))) {
+          void Linking.openURL(url)
+          return false
+        }
+        return true
+      }
       void Linking.openURL(url)
       return false
     } catch {

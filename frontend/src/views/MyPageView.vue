@@ -284,7 +284,7 @@ async function logout() {
         <h2 class="tiny text-secondary fw-bold mb-2 px-1">その他</h2>
         <div class="more-list">
           <RouterLink :to="auth.isShopUser ? '/dashboard' : '/shops/for-business'" class="more-row">
-            <span class="d-flex align-items-center gap-2"><IconBuildingStore :size="17" />{{ auth.isShopUser ? '店舗ダッシュボード' : '店舗掲載について' }}</span>
+            <span class="d-flex align-items-center gap-2"><IconBuildingStore :size="17" />{{ auth.isShopUser ? '店舗ダッシュボード（Web）' : '掲載店になりたい方はこちら' }}</span>
             <IconChevronRight :size="16" />
           </RouterLink>
           <RouterLink to="/theaters" class="more-row">
@@ -293,6 +293,7 @@ async function logout() {
           </RouterLink>
           <RouterLink to="/terms" class="more-row"><span>利用規約</span><IconChevronRight :size="16" /></RouterLink>
           <RouterLink to="/privacy" class="more-row"><span>プライバシーポリシー</span><IconChevronRight :size="16" /></RouterLink>
+          <RouterLink to="/commerce" class="more-row"><span>特定商取引法に基づく表記</span><IconChevronRight :size="16" /></RouterLink>
           <RouterLink to="/guidelines" class="more-row"><span>投稿ガイドライン</span><IconChevronRight :size="16" /></RouterLink>
           <RouterLink to="/blocked-users" class="more-row">
             <span class="d-flex align-items-center gap-2"><IconUserOff :size="17" />ブロック中のユーザー</span>

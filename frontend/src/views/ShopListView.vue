@@ -69,7 +69,7 @@ onMounted(async () => {
     </h1>
 
     <RouterLink to="/shops/for-business" class="business-link mb-4">
-      <span><strong>店舗関係者の方へ</strong><small>無料掲載を申請できます</small></span>
+      <span><strong>掲載店になりたい方はこちら</strong><small>店舗向けWebページで無料申請できます</small></span>
       <span aria-hidden="true">→</span>
     </RouterLink>
 

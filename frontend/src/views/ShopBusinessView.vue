@@ -25,6 +25,11 @@ const form = reactive({
 })
 
 onMounted(async () => {
+  await auth.fetchMe()
+  if (!auth.isAuthenticated) {
+    loading.value = false
+    return
+  }
   try {
     const data = await api.getFresh('/api/shop-application/')
     if (data.has_application) router.replace('/dashboard')
@@ -132,7 +137,21 @@ async function submit() {
         <p>おすすめ店へのアップグレードは、掲載承認後にダッシュボードから選べます。</p>
       </aside>
 
-      <form class="application-card" @submit.prevent="submit">
+      <section v-if="!auth.isAuthenticated" class="application-card welcome-card">
+        <div class="form-heading">
+          <div>
+            <span>START FREE</span>
+            <h2>無料掲載をはじめる</h2>
+          </div>
+          <IconMapPin :size="22" />
+        </div>
+        <p class="welcome-copy">アカウントを作成すると、店舗情報の申請に進めます。掲載後の情報編集や送客レポートも、Webの店舗ダッシュボードから確認できます。</p>
+        <RouterLink :to="{ name: 'register', query: { next: '/shops/for-business' } }" class="submit-button welcome-button">無料でアカウントを作る</RouterLink>
+        <RouterLink :to="{ name: 'login', query: { next: '/shops/for-business' } }" class="login-link">すでにアカウントをお持ちの方はログイン</RouterLink>
+        <p class="legal-note">登録前に<RouterLink to="/terms">利用規約</RouterLink>と<RouterLink to="/commerce">特定商取引法に基づく表記</RouterLink>をご確認ください。</p>
+      </section>
+
+      <form v-else class="application-card" @submit.prevent="submit">
         <div class="form-heading">
           <div>
             <span>無料掲載</span>
@@ -189,7 +208,7 @@ async function submit() {
         <button class="submit-button" type="submit" :disabled="submitting">
           {{ submitting ? '送信中...' : '無料掲載を申請する' }}
         </button>
-        <p class="legal-note">申請内容は運営が確認します。掲載開始前に内容確認のためご連絡する場合があります。</p>
+        <p class="legal-note">申請内容は運営が確認します。掲載開始前に内容確認のためご連絡する場合があります。<RouterLink to="/commerce">特定商取引法に基づく表記</RouterLink></p>
       </form>
     </div>
   </div>
@@ -239,6 +258,11 @@ async function submit() {
 .submit-button { width: 100%; min-height: 50px; margin-top: 24px; border: 0; border-radius: 12px; background: #f43f5e; color: #fff; font-size: .8rem; font-weight: 900; }
 .submit-button:disabled { opacity: .55; }
 .legal-note { margin: 10px 0 0; color: #52525b; font-size: .6rem; line-height: 1.6; text-align: center; }
+.legal-note a { color: #a1a1aa; }
+.welcome-card { min-height: 360px; display: flex; flex-direction: column; justify-content: center; }
+.welcome-copy { margin: 0 0 4px; color: #a1a1aa; font-size: .78rem; line-height: 1.9; }
+.welcome-button { display: flex; align-items: center; justify-content: center; text-decoration: none; }
+.login-link { margin-top: 16px; color: #d4d4d8; font-size: .7rem; text-align: center; }
 @media (max-width: 760px) {
   .business-hero { padding: 28px 2px 26px; }
   .business-grid { grid-template-columns: 1fr; }
