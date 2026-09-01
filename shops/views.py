@@ -129,7 +129,7 @@ class ShopViewSet(ReadOnlyModelViewSet):
         ).filter(
             _has_featured_link=False,
             _has_recognized_link=True,
-        ).distinct().order_by('-after_viewing_count', 'name')[:8]
+        ).distinct().order_by('featured_order', '-after_viewing_count', 'name')[:8]
         serializer = self.get_serializer(shops, many=True)
         return Response(serializer.data)
 
