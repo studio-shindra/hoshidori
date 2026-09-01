@@ -205,6 +205,30 @@ class RecognizedShopTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual([shop['name'] for shop in response.data], ['認定食堂'])
 
+    def test_recognized_endpoint_uses_shop_display_order(self):
+        second = Shop.objects.create(
+            name='il Legame', slug='il-legame', featured_order=2,
+        )
+        first = Shop.objects.create(
+            name='燗味処', slug='kanmidokoro', featured_order=1,
+        )
+        TheaterShop.objects.create(
+            theater=self.theater, shop=second,
+            is_featured=False, is_recognized=True,
+        )
+        TheaterShop.objects.create(
+            theater=self.theater, shop=first,
+            is_featured=False, is_recognized=True,
+        )
+
+        response = self.client.get('/api/shops/recognized/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [shop['name'] for shop in response.data],
+            ['燗味処', 'il Legame'],
+        )
+
     def test_shop_list_orders_sponsored_then_recognized_then_standard(self):
         standard = Shop.objects.create(name='通常書店', slug='standard-bookstore')
         recognized = Shop.objects.create(name='認定食堂', slug='recognized-diner')
