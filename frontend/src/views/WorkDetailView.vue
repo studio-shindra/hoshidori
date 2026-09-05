@@ -231,7 +231,9 @@ async function submitLog() {
     logRating.value = ''
     logAfterShop.value = ''
     logSpoiler.value = false
+    for (const image of logImages.value) URL.revokeObjectURL(image.preview)
     logImages.value = []
+    showLogForm.value = false
   } catch (error) {
     logError.value = error.data ? Object.values(error.data).flat().join(' ') : '保存に失敗しました'
   } finally {
@@ -354,14 +356,17 @@ async function blockReviewUser(review) {
       ><IconPencil :size="11" />作品説明 未入力</RouterLink>
       <span v-else class="missing-description mt-3">作品説明 未入力</span>
 
-      <div v-if="auth.isAuthenticated" class="d-flex gap-2 mt-3">
-        <button class="btn btn-light flex-fill d-flex align-items-center justify-content-center" @click="openLogForm('planned')">
-          <IconTicket :size="16" class="me-1" />観る予定
-        </button>
-        <button class="btn btn-primary-rose flex-fill d-flex align-items-center justify-content-center" @click="openLogForm('watched')">
-          <IconStarFilled :size="16" class="me-1" />観た
-        </button>
-      </div>
+      <template v-if="auth.isAuthenticated">
+        <div class="d-flex gap-2 mt-3">
+          <button class="btn btn-light flex-fill d-flex align-items-center justify-content-center" @click="openLogForm('planned')">
+            <IconTicket :size="16" class="me-1" />観る予定
+          </button>
+          <button class="btn btn-primary-rose flex-fill d-flex align-items-center justify-content-center" @click="openLogForm('watched')">
+            <IconStarFilled :size="16" class="me-1" />観た
+          </button>
+        </div>
+        <p v-if="logSuccess" class="record-success mb-0">{{ logSuccess }}</p>
+      </template>
       <RouterLink v-else :to="{ name: 'login', query: { next: route.fullPath } }" class="d-block text-secondary small mt-3">ログインして予定・感想を記録 →</RouterLink>
 
       <Teleport to="body">
@@ -415,7 +420,6 @@ async function blockReviewUser(review) {
                   </div>
                 </template>
                 <p v-if="logError" class="small text-danger mb-0">{{ logError }}</p>
-                <p v-if="logSuccess" class="small color-green mb-0">{{ logSuccess }}</p>
                 <div class="d-flex gap-2">
                   <button class="btn btn-primary-rose btn-sm flex-fill" :disabled="logLoading">{{ logLoading ? '保存中...' : '保存' }}</button>
                   <button type="button" class="btn btn-dark btn-sm flex-fill text-secondary" @click="showLogForm = false">閉じる</button>
@@ -583,8 +587,9 @@ a.missing-description:hover { color: #a1a1aa; }
 .shop-tier-block.google-block { padding: 0; border: 0; background: transparent; }
 .shop-tier-label { font-size: .7rem; font-weight: 800; letter-spacing: .04em; }
 .empty-reviews { padding: 2rem; border: 1px dashed rgba(255,255,255,.13); border-radius: 13px; }
-.log-modal-backdrop { position: fixed; inset: 0; z-index: 1060; display: flex; align-items: flex-end; justify-content: center; padding: 1rem; background: rgba(0,0,0,.76); }
-.log-modal { width: 100%; max-width: 480px; max-height: 88vh; overflow-y: auto; padding: 1.25rem; border: 1px solid rgba(255,255,255,.12); border-radius: 18px 18px 10px 10px; background: #18181b; }
+.record-success { margin-top: .65rem; color: #86efac; font-size: .72rem; text-align: center; }
+.log-modal-backdrop { position: fixed; inset: 0; z-index: 100000; display: flex; align-items: flex-end; justify-content: center; padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom)); background: rgba(0,0,0,.76); }
+.log-modal { width: 100%; max-width: 480px; max-height: 88vh; max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2rem); overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 1.25rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom)); border: 1px solid rgba(255,255,255,.12); border-radius: 18px 18px 10px 10px; background: #18181b; }
 .multiselect-dark {
   --ms-bg: #212529;
   --ms-bg-disabled: #212529;
