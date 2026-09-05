@@ -175,7 +175,7 @@ async function submit() {
       if (rating.value) reviewBody.rating_overall = Number(rating.value)
       await api.post('/api/reviews/', reviewBody)
     }
-    router.push('/mypage')
+    router.replace(log.work_slug ? `/works/${log.work_slug}` : '/mypage')
   } catch (e) {
     const d = e.data
     if (d) {

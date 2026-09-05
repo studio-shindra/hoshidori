@@ -26,7 +26,7 @@ const recognizedShops = ref([])
 const latestReviews = ref([])
 const currentMonth = ref(new Date(new Date().getFullYear(), new Date().getMonth(), 1))
 const selectedDate = ref(formatDate(new Date()))
-const logFilter = ref('planned')
+const logFilter = ref('watched')
 
 function formatDate(d) {
   const y = d.getFullYear()
@@ -208,18 +208,18 @@ onMounted(fetchData)
           <div class="log-segments mb-3" role="tablist" aria-label="観劇一覧の絞り込み">
             <button
               type="button"
-              :class="{ active: logFilter === 'planned' }"
-              role="tab"
-              :aria-selected="logFilter === 'planned'"
-              @click="logFilter = 'planned'"
-            >観る <span>{{ plannedCount }}</span></button>
-            <button
-              type="button"
               :class="{ active: logFilter === 'watched' }"
               role="tab"
               :aria-selected="logFilter === 'watched'"
               @click="logFilter = 'watched'"
             >観た <span>{{ watchedCount }}</span></button>
+            <button
+              type="button"
+              :class="{ active: logFilter === 'planned' }"
+              role="tab"
+              :aria-selected="logFilter === 'planned'"
+              @click="logFilter = 'planned'"
+            >観る <span>{{ plannedCount }}</span></button>
           </div>
           <div v-if="filteredLogs.length" class="d-flex flex-column gap-2">
             <TicketCard
@@ -327,7 +327,7 @@ onMounted(fetchData)
 .review-scroller { width: 100%; padding-bottom: .35rem; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x proximity; touch-action: pan-x; -webkit-overflow-scrolling: touch; }
 .review-scroller .review-note { scroll-snap-align: start; }
 .review-after { display: flex; align-items: center; gap: 4px; color: #fda4af; font-size: .72rem; font-weight: 700; }
-.review-rating { padding: 2px 7px; border-radius: 99px; background: rgba(245,158,11,.12); color: #fbbf24; font-size: .65rem; font-weight: 700; }
+.review-rating { min-width: 38px; padding: 2px 7px; flex: 0 0 auto; border-radius: 99px; background: rgba(245,158,11,.12); color: #fbbf24; font-size: .65rem; font-weight: 700; line-height: 1.35; text-align: center; white-space: nowrap; }
 .review-log { border-top: 1px solid rgba(255,255,255,.08); }
 .review-body { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .recognized-section { padding-top: .35rem; }
