@@ -50,7 +50,8 @@ defineProps({
 
 <style scoped>
 .log-row { position: relative; border: 1px solid rgba(255,255,255,.09); border-radius: 12px; background: #18181b; }
-.log-row-main { display: flex; width: 100%; gap: 12px; padding: 13px 44px 13px 13px; }
+.log-row-main { display: flex; width: 100%; min-width: 0; gap: 12px; padding: 13px 44px 13px 13px; }
+.log-row-main > .min-w-0 { min-width: 0; }
 .log-row-action { position: absolute; top: 0; right: 0; z-index: 2; padding: 12px; }
 .log-row:hover { color: #fff; border-color: rgba(255,255,255,.2); }
 .log-date { width: 48px; min-width: 48px; height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px dashed rgba(255,255,255,.18); color: #a1a1aa; font-size: .66rem; }

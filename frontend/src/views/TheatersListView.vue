@@ -10,6 +10,47 @@ const loadingMore = ref(false)
 const query = ref('')
 const page = ref(1)
 const hasNext = ref(false)
+const theaterPlaces = ref({})
+const theaterPhotoLoadingSlugs = ref(new Set())
+let theaterPhotoGeneration = 0
+
+function theaterImage(theater) {
+  const ownedImage = theater.image_url || theater.image
+  return ownedImage
+    ? cloudinaryUrl(ownedImage, IMG_THUMB)
+    : theaterPlaces.value[theater.slug]?.photo_uri || ''
+}
+
+async function fetchTheaterPhotos(batch, reset = false) {
+  const generation = reset ? ++theaterPhotoGeneration : theaterPhotoGeneration
+  const batchSlugs = batch.map((theater) => theater.slug)
+  if (!batchSlugs.length) return
+  if (reset) theaterPlaces.value = {}
+  theaterPhotoLoadingSlugs.value = reset
+    ? new Set(batchSlugs)
+    : new Set([...theaterPhotoLoadingSlugs.value, ...batchSlugs])
+  try {
+    const chunks = []
+    for (let index = 0; index < batch.length; index += 12) {
+      chunks.push(batch.slice(index, index + 12))
+    }
+    const responses = await Promise.all(chunks.map((chunk) => {
+      const slugs = chunk.map((theater) => theater.slug).join(',')
+      return api.getFresh(`/api/theaters/google-places/?slugs=${encodeURIComponent(slugs)}`).catch(() => ({}))
+    }))
+    if (generation !== theaterPhotoGeneration) return
+    theaterPlaces.value = {
+      ...theaterPlaces.value,
+      ...Object.assign({}, ...responses),
+    }
+  } finally {
+    if (generation === theaterPhotoGeneration) {
+      const loadingSlugs = new Set(theaterPhotoLoadingSlugs.value)
+      batchSlugs.forEach((slug) => loadingSlugs.delete(slug))
+      theaterPhotoLoadingSlugs.value = loadingSlugs
+    }
+  }
+}
 
 async function fetchTheaters({ append = false } = {}) {
   if (append) loadingMore.value = true
@@ -25,6 +66,7 @@ async function fetchTheaters({ append = false } = {}) {
     theaters.value = append ? [...theaters.value, ...results] : results
     page.value = nextPage
     hasNext.value = Boolean(data.next)
+    fetchTheaterPhotos(results, !append)
   } catch {
     if (!append) theaters.value = []
   } finally {
@@ -66,8 +108,8 @@ function onSearch() {
         class="theater-row text-decoration-none"
       >
         <div class="theater-thumb">
-          <img v-if="t.image" :src="cloudinaryUrl(t.image, IMG_THUMB)" :alt="t.name" loading="lazy" />
-          <div v-else class="theater-placeholder">
+          <img v-if="theaterImage(t)" :src="theaterImage(t)" :alt="t.name" loading="lazy" />
+          <div v-else class="theater-placeholder" :class="{ loading: theaterPhotoLoadingSlugs.has(t.slug) }">
             <IconTheater :size="24" />
           </div>
         </div>
@@ -126,6 +168,8 @@ function onSearch() {
     radial-gradient(circle at 82% 75%, rgba(251,191,36,.2), transparent 38%),
     #202023;
 }
+.theater-placeholder.loading { animation: theater-pulse 1.2s ease-in-out infinite alternate; }
+@keyframes theater-pulse { to { opacity: .55; } }
 .load-more {
   width: 100%; margin-top: .85rem; padding: .7rem;
   border: 1px solid rgba(255,255,255,.12); border-radius: 11px;
